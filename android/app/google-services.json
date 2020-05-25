@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "502370531875",
+    "firebase_url": "https://dev-carpooling.firebaseio.com",
+    "project_id": "dev-carpooling",
+    "storage_bucket": "dev-carpooling.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:502370531875:android:9635c959c6eb03cf8d8f96",
+        "android_client_info": {
+          "package_name": "com.example.flutter_carpooling"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "502370531875-mv2gafs5u3fac9mkd51042bkmovilpeo.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBmpFqbuYKQrlKcvnmaGdnoCohJ9lmhu18"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "502370531875-mv2gafs5u3fac9mkd51042bkmovilpeo.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
