@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_carpooling/src/pages/profile_page.dart';
+import 'package:flutter_carpooling/src/pages/routes_list.dart';
 import 'package:flutter_carpooling/src/widgets/navigationbar_widget.dart';
 
 // homepage con el navigatorbar
@@ -13,37 +15,15 @@ class _HomePageState extends State<HomePage> {
 
   // lista de widgets para mostrar en el apppbar
   final List<Widget> _children = [
-    // mostrar pagina de las rutas con el input search
-    // ListView(
-    //   padding: EdgeInsets.all(10.0),
-    //   children: <Widget>[
-    //     Container(padding: EdgeInsets.symmetric(vertical: 20.0), child: SearchTextFrom()),
-    //     CardWidget(),
-    //     // SizedBox(height: 10.0),
-    //   ],
-    // ),
+    // mostrar pagina de las rutas
+    RouteListPage(),
     // mostrar la pagina del perfil de usuario
-    // ProfilePage()
+    ProfilePage()
  ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // NO BORRAR, INPUT DEL SEARCH OPCIONAL
-      // appBar: AppBar(
-      //   backgroundColor: Colors.white,
-      //   centerTitle: false,
-      //   title: Text('Carpooling', style: TextStyle(fontSize: 20.0, fontFamily: "WorkSansSemiBold", color: Tema.Colors.loginGradientEnd)),
-      //   actions: <Widget>[
-      //     IconButton(
-      //       icon: Icon(Icons.search),
-      //       onPressed: (){},
-      //     )
-      //   ],
-      //   iconTheme: IconThemeData(
-      //     color: Tema.Colors.loginGradientEnd,
-      //   ),
-      // ),
       bottomNavigationBar: BottomNavigator(_currentIndex, onTabTapped),
       body: SafeArea(child: _children[_currentIndex])
     );
