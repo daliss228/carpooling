@@ -291,6 +291,13 @@ class _LoginPageState extends State<LoginPage>
                 decoration: new BoxDecoration(
                   borderRadius: BorderRadius.all(Radius.circular(5.0)),
                   color: Theme.Colors.loginGradientEnd,
+                   boxShadow: <BoxShadow>[
+                    BoxShadow(
+                      color: Colors.black45,
+                      offset: Offset(0.0, 2.0),
+                      blurRadius: 10.0,
+                    ),
+                  ],
                 ),
                 child: MaterialButton(
                     highlightColor: Colors.transparent,
@@ -599,7 +606,14 @@ class _LoginPageState extends State<LoginPage>
                 margin: EdgeInsets.only(top: 425.0),
                 decoration: new BoxDecoration(
                   borderRadius: BorderRadius.all(Radius.circular(5.0)),
-                  color: Theme.Colors.loginGradientEnd
+                  color: Theme.Colors.loginGradientEnd,
+                  boxShadow: <BoxShadow>[
+                    BoxShadow(
+                      color: Colors.black45,
+                      offset: Offset(0.0, 2.0),
+                      blurRadius: 10.0,
+                    ),
+                  ],
                 ),
                 child: MaterialButton(
                     highlightColor: Colors.transparent,
