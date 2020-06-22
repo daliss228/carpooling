@@ -15,7 +15,8 @@ class UserModel {
         this.lastName = '',
         this.ci = '',
         this.email = '',
-        this.photo ='/algo.jpg',
+        this.photo,
+        this.uidGroup,
     });
 
     String uid;
@@ -24,6 +25,7 @@ class UserModel {
     String ci;
     String email;
     String photo;
+    String uidGroup;
 
     factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
         uid: json["uid"],
@@ -32,6 +34,7 @@ class UserModel {
         ci: json["ci"],
         email: json["email"],
         photo: json["photo"],
+        uidGroup: json["uidGroup"],
     );
 
     Map<String, dynamic> toJson() => {
@@ -41,5 +44,6 @@ class UserModel {
         "ci": ci,
         "email": email,
         "photo": photo,
+        "uidGroup": uidGroup,
     };
 }

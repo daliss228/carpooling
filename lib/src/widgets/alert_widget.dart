@@ -19,7 +19,7 @@ void mostrarAlerta(BuildContext context, String titulo ,String mensaje){
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              Icon(Icons.error_outline, size: 90.0,),
+              Icon(Icons.sentiment_dissatisfied, size: 90.0,),
               SizedBox(height: 20.0,),
               Text(
                 mensaje,

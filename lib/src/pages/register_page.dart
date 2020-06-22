@@ -89,7 +89,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                 ),
                                 child: Container(
                                   width: screenSize.width * 0.8,
-                                  padding: EdgeInsets.all(10.0),
+                                  padding: EdgeInsets.all(20.0),
                                   child: Column(
                                     children: <Widget>[
                                       InputWidget(
@@ -232,14 +232,14 @@ class _RegisterPageState extends State<RegisterPage> {
               highlightColor: Colors.transparent,
               splashColor: Tema.Colors.loginGradientEnd,
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                    vertical: 10.0, horizontal: 42.0),
+                padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 42.0),
                 child: Text(
                   "REGISTRAME",
                   style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16.0,
-                      fontFamily: "WorkSansBold"),
+                    color: Colors.white,
+                    fontSize: 16.0,
+                    fontFamily: "WorkSansBold"
+                  ),
                 ),
               ),
               onPressed: (){
@@ -288,14 +288,16 @@ class _RegisterPageState extends State<RegisterPage> {
       isloading = true; 
     });
 
-    Map info = await usuarioProvider.nuevousuario(user.email, _password);
+     Map info = await usuarioProvider.singUp(user.email, _password);
+
 
     setState(() {
       isloading = false; 
     });
+
     if(info['ok']){
       user.uid = prefs.uid; 
-      usuarioProvider.crearUsuarioDb(user); 
+      usuarioProvider.userDb(user); 
       Navigator.pushReplacementNamed(context, 'home');
     }else{
       mostrarAlerta(context, 'Error al registrar usuario', info['mensaje']); 

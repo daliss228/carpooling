@@ -16,7 +16,7 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   
-  final usuarioProvider = new UsuarioService();
+  final usuarioService = new UsuarioService();
   bool isloading = false; 
 
   @override
@@ -164,7 +164,7 @@ class _LoginPageState extends State<LoginPage> {
                     if(isloading) return; 
                     _login(context, bloc);
                   }: (){
-                    mostrarAlerta(context, 'Error al iniciar sesion','Ingrese correctamente los datos'); 
+                    mostrarAlerta(context, 'Ups!','Ingrese correctamente los datos'); 
                   },
                 );
               },
@@ -206,16 +206,16 @@ class _LoginPageState extends State<LoginPage> {
      isloading= true;
    });
    
-   Map info = await usuarioProvider.login(bloc.email, bloc.password1);
-
+   dynamic user =  await usuarioService.signIn(bloc.email, bloc.password1);
+   
    setState(() {
      isloading = false;
    });
 
-   if(info['ok']){
+   if(user != null){
      Navigator.pushReplacementNamed(context, 'home');
    }else{
-     mostrarAlerta(context, 'Error al iniciar sesion', info['mensaje']); 
+     mostrarAlerta(context, 'Error al iniciar sesión', 'Contraseña o correo electronico no validos'); 
    }
  }
 
@@ -226,5 +226,5 @@ class _LoginPageState extends State<LoginPage> {
       color: Colors.grey,
     );
   }
-  
+
 }

@@ -1,73 +1,87 @@
-import 'dart:convert';
 
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_carpooling/src/models/user_model.dart';
 import 'package:flutter_carpooling/src/preferencias_usuario/user_prefs.dart';
-import 'package:http/http.dart' as http;
+import 'package:firebase_database/firebase_database.dart';
 
 class UsuarioService {
-  final String _firebaseToken = 'AIzaSyCPhQNoAfJsuioyoB12GwKIqRH49cPCfAI'; 
-  final String _url = 'https://dev-carpooling.firebaseio.com'; 
+
   final _prefs = PreferenciasUsuario();
+  final FirebaseAuth _auth = FirebaseAuth.instance; 
+  final DBRef = FirebaseDatabase.instance.reference(); 
 
-
-  Future<bool> crearUsuarioDb(UserModel user) async {
-    final url = '$_url/users/${user.uid}.json'; 
-    final resp = await http.put(
-      url,
-      body: userModelToJson(user)
-    ); 
-    final decodeData = json.decode(resp.body); 
-    //print(decodeData);
-    return true; 
+  Future<bool> userDb(UserModel user) async {
+    try{
+      await DBRef.child('users/${user.uid}').set(
+        user.toJson()
+      );
+      return true; 
+    } on PlatformException catch(e){
+      print(e.message.toString());
+      return false; 
+    }   
   }
 
-  Future<Map<String, dynamic>> login(String email, String password) async{
-    final authData = {
-      'email': email,
-      'password': password,
-      'returnSecureToken': true
-    }; 
+// Funcion en desarrollo..... 
 
-    final resp = await http.post(
-      'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=$_firebaseToken',
-      body: json.encode(authData)
-    ); 
-
-    Map<String, dynamic> decodeResp = json.decode(resp.body);
-    print(decodeResp['localId']); 
-
-    if(decodeResp.containsKey('idToken')){
-      _prefs.uid = decodeResp['localId'];
-      _prefs.token = decodeResp['idToken']; 
-      return{'ok': true, 'token': decodeResp['idToken']};
-    } else{
-      return{'ok': false, 'mensaje': decodeResp['error']['message']}; 
+  Future<bool> searchCi(String ci) async {
+    try{
+      Query findCi = await DBRef.child('pending_users').orderByKey().equalTo(ci).limitToFirst(1);
+      print('==============================================================================');
+      print(findCi.onValue);
+      print('==============================================================================');
+      if(findCi != null){
+        return true;
+      }else{
+        return false;
+      }
+    } on PlatformException catch(e){
+      print(e.message.toString());
+      return false;
     }
-
   }
 
-
-  Future<dynamic> nuevousuario(String email, String password) async{
-    final authData = {
-      'email' : email, 
-      'password': password, 
-      'returnSecureToken': true
-    }; 
-    final resp = await http.post(
-      'https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=$_firebaseToken',
-      body: json.encode(authData)
-    ); 
-
-    Map<String, dynamic> decodeResp = json.decode(resp.body);
-    print(decodeResp['localId']); 
-
-    if(decodeResp.containsKey('idToken')){
-      _prefs.uid = decodeResp['localId'];
-      _prefs.token = decodeResp['idToken']; 
-      return{'ok': true, 'token': decodeResp['idToken']};
-    } else{
-      return{'ok': false, 'mensaje': decodeResp['error']['message']}; 
+  Future<dynamic> singUp(String email, String password) async {
+    FirebaseUser user;
+    try{
+      AuthResult result = await _auth.createUserWithEmailAndPassword(email: email, password: password); 
+      user = result.user;
+      return {'ok': true, 'user': user};
+    } on PlatformException catch(e){
+      print(e.message); 
+      return {'ok': false,'mensaje': e.message.toString()}; 
+    }finally{
+      if(user != null){
+        user.getIdToken().then((token){
+          _prefs.token = token.token;
+        });
+        _prefs.uid = user.uid;
+      }
     }
-
   }
+
+  Future<FirebaseUser> signIn(String email, String password) async {
+    FirebaseUser user;
+    try {
+      AuthResult result = await _auth.signInWithEmailAndPassword(email: email, password: password); 
+      user = result.user;
+      return user; 
+    }catch(e){
+      print(e.toString()); 
+      return null;
+    }finally{
+      if(user != null){
+        user.getIdToken().then((token){
+          _prefs.token = token.token;
+        });
+        _prefs.uid = user.uid.toString();
+      }
+    }
+  }
+
+  Future<void> signOut() async {
+    _auth.signOut(); 
+  }
+
 }
