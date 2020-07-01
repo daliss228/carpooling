@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_carpooling/src/pages/driver_home_.dart';
 import 'package:flutter_carpooling/src/pages/profile_page.dart';
-import 'package:flutter_carpooling/src/pages/routes_list.dart';
+// import 'package:flutter_carpooling/src/pages/pax_home_page.dart';
 import 'package:flutter_carpooling/src/preferencias_usuario/user_prefs.dart';
 import 'package:flutter_carpooling/src/services/user_service.dart';
 import 'package:flutter_carpooling/src/widgets/navigationbar_widget.dart';
@@ -20,7 +21,8 @@ class _HomePageState extends State<HomePage> {
   // lista de widgets para mostrar en el apppbar
   final List<Widget> _children = [
     // mostrar pagina de las rutas
-    RouteListPage(),
+    // PaxHomePage(),
+    DriverHomePage(),
     // mostrar la pagina del perfil de usuario
     ProfilePage()
  ];
