@@ -7,9 +7,11 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_carpooling/src/models/car_model.dart';
 import 'package:flutter_carpooling/src/models/routes_model.dart';
+import 'package:flutter_carpooling/src/widgets/alert_widget.dart';
 import 'package:flutter_carpooling/src/style/theme.dart' as Thema;
 import 'package:flutter_carpooling/src/utils/search_delegate.dart';
 import 'package:flutter_carpooling/src/widgets/circle_widget.dart';
+import 'package:flutter_carpooling/src/widgets/loading_widget.dart';
 import 'package:flutter_carpooling/src/preferencias_usuario/user_prefs.dart';
 
 class RouteRegisterPage extends StatefulWidget {
@@ -20,13 +22,7 @@ class RouteRegisterPage extends StatefulWidget {
 
 class _RouteRegisterPageState extends State<RouteRegisterPage> {  
 
-  bool _checkBoxMon;
-  bool _checkBoxTue;
-  bool _checkBoxWed;
-  bool _checkBoxThu;
-  bool _checkBoxFri;
-  bool _checkBoxSat;
-  bool _checkBoxSun;
+  List<bool> days;
   String _description;
   String _departTime;
   String _idCar;
@@ -47,13 +43,7 @@ class _RouteRegisterPageState extends State<RouteRegisterPage> {
     useruid = _prefs.uid.toString();
     getCar();
     _markers = {};
-    _checkBoxMon = false;
-    _checkBoxTue = false;
-    _checkBoxWed = false;
-    _checkBoxThu = false;
-    _checkBoxFri = false;
-    _checkBoxSat = false;
-    _checkBoxSun = false;
+    days = List<bool>.generate(7, (index) => false);
     _selectedDate = DateTime.now();
     _dateFormat = DateFormat('HH:mm');
     _departTime = "--:--";
@@ -63,8 +53,8 @@ class _RouteRegisterPageState extends State<RouteRegisterPage> {
   void getCar() async {
     final result = (await dbRef.child("users").child(useruid).child("car").once()).value;
     if(result != null){
-      final car = new Car.fromJson(result);
-      _idCar = car.id;
+      final idcar1 = result.keys.toList();
+      _idCar = idcar1[0];
     } else {
       return;
     }
@@ -100,12 +90,13 @@ class _RouteRegisterPageState extends State<RouteRegisterPage> {
     );
   }
 
-  void _adjustMap() {
-    Locality location = ModalRoute.of(context).settings.arguments;
-    if (location != null) {
-      _markers.add(
-        Marker(markerId: MarkerId("miMarker"), position: LatLng(location.lat, location.lng))
-      );
+  void _adjustWhenSearch() {
+    Map values = ModalRoute.of(context).settings.arguments;
+    if (values != null) {
+      days = values['days'];
+      _departTime = values['hour'];
+      Locality location = values['locality'];
+      _markers.add(Marker(markerId: MarkerId("miMarker"), position: LatLng(location.lat, location.lng)));
       _kGooglePlex = CameraPosition(
         target: LatLng(location.lat, location.lng),
         zoom: 16,
@@ -117,7 +108,7 @@ class _RouteRegisterPageState extends State<RouteRegisterPage> {
   }
   
   Widget _map(_screenSize){
-    _adjustMap();
+    _adjustWhenSearch();
     return Container(
       width: double.infinity,
       height: _screenSize.height * 0.6,
@@ -181,7 +172,7 @@ class _RouteRegisterPageState extends State<RouteRegisterPage> {
     ); 
   }
 
-  Widget _address (BuildContext context) {
+  Widget _address(BuildContext context) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 5.0),
       child: (_geolocation != null) ? FutureBuilder(
@@ -193,14 +184,14 @@ class _RouteRegisterPageState extends State<RouteRegisterPage> {
             return Text(_description, style: TextStyle(fontFamily: "WorkSansMedium", fontSize: 16.0));
           } else {
             _description = "";
-            return Center(child: CupertinoActivityIndicator());
+            return Center(child: Loading2Widget());
           }
         },
       ) : Text('Elija un destino en el mapa!', style: TextStyle(fontFamily: "WorkSansMedium", fontSize: 16.0))
     );
   }
 
-  Widget _schedule () {
+  Widget _schedule() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
@@ -210,65 +201,65 @@ class _RouteRegisterPageState extends State<RouteRegisterPage> {
             TableRow(
               children: [
                 Checkbox(
-                  activeColor: Color(0XFF3B3E69),
-                  value: _checkBoxMon, 
+                  activeColor: Thema.Colors.darkPurple,
+                  value: days[0], 
                   onChanged: (bool valor){
                     setState(() {
-                      _checkBoxMon = valor;
+                      days[0] = valor;
                     });
                   }
                 ),
                 Checkbox(
-                  activeColor: Color(0XFF3B3E69),
-                  value: _checkBoxTue, 
+                  activeColor: Thema.Colors.darkPurple,
+                  value: days[1], 
                   onChanged: (bool value){
                     setState(() {
-                      _checkBoxTue = value;
+                      days[1] = value;
                     });
                   }
                 ),
                 Checkbox(
-                  activeColor: Color(0XFF3B3E69),
-                  value: _checkBoxWed, 
+                  activeColor: Thema.Colors.darkPurple,
+                  value: days[2], 
                   onChanged: (bool value){
                     setState(() {
-                      _checkBoxWed = value;
+                      days[2] = value;
                     });
                   }
                 ),
                 Checkbox(
-                  activeColor: Color(0XFF3B3E69),
-                  value: _checkBoxThu, 
+                  activeColor: Thema.Colors.darkPurple,
+                  value: days[3], 
                   onChanged: (bool value){
                     setState(() {
-                      _checkBoxThu = value;
+                      days[3] = value;
                     });
                   }
                 ),
                 Checkbox(
-                  activeColor: Color(0XFF3B3E69),
-                  value: _checkBoxFri, 
+                  activeColor: Thema.Colors.darkPurple,
+                  value: days[4], 
                   onChanged: (bool value){
                     setState(() {
-                      _checkBoxFri = value;
+                      days[4] = value;
                     });
                   }
                 ),
                 Checkbox(
-                  activeColor: Color(0XFF3B3E69),
-                  value: _checkBoxSat, 
+                  activeColor: Thema.Colors.darkPurple,
+                  value: days[5], 
                   onChanged: (bool value){
                     setState(() {
-                      _checkBoxSat = value;
+                      days[5] = value;
                     });
                   }
                 ),
                 Checkbox(
-                  activeColor: Color(0XFF3B3E69),
-                  value: _checkBoxSun, 
+                  activeColor: Thema.Colors.darkPurple,
+                  value: days[6], 
                   onChanged: (bool value){
                     setState(() {
-                      _checkBoxSun = value;
+                      days[6] = value;
                     });
                   }
                 ),
@@ -291,7 +282,7 @@ class _RouteRegisterPageState extends State<RouteRegisterPage> {
     ); 
   }
 
-  Widget _hour () {
+  Widget _hour() {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 10.0),
       child: Row(
@@ -302,13 +293,13 @@ class _RouteRegisterPageState extends State<RouteRegisterPage> {
             child: 
               Row(
                 children: <Widget>[
-                  Icon(Icons.access_time, size: 30.0, color: Color(0XFF3B3E69)),
+                  Icon(Icons.access_time, size: 30.0, color: Thema.Colors.darkPurple),
                   SizedBox(width: 5),
                   Text(_departTime, style: TextStyle(fontFamily: 'WorkSansLight', fontSize: 15.0)),
               ],
             ),
             onTap: () async {
-              await selecTime(context);
+              await _selecTime(context);
               if (_time == null) return;
               _selectedDate = DateTime(
                 _selectedDate.year, 
@@ -326,7 +317,7 @@ class _RouteRegisterPageState extends State<RouteRegisterPage> {
     );
   }
 
-  Future<void> selecTime(BuildContext context) async {
+  Future<void> _selecTime(BuildContext context) async {
     _time = await showTimePicker(
       context: context, 
       initialTime: TimeOfDay.now(), 
@@ -339,7 +330,7 @@ class _RouteRegisterPageState extends State<RouteRegisterPage> {
     );
   }
 
-  Widget _circularButtons () {
+  Widget _circularButtons() {
     return SafeArea(
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -359,7 +350,7 @@ class _RouteRegisterPageState extends State<RouteRegisterPage> {
             padding: EdgeInsets.all(13.0),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(100.0),
-              color: Color(0XFF3B3E69),
+              color: Thema.Colors.darkPurple,
               boxShadow: <BoxShadow>[
                 BoxShadow(
                   color: Colors.black45,
@@ -369,7 +360,7 @@ class _RouteRegisterPageState extends State<RouteRegisterPage> {
               ],
             ),
             child: InkWell(
-              onTap: () => showSearch(context: context, delegate: DataSearch()),
+              onTap: () => showSearch(context: context, delegate: DataSearch(days: days, hour: _departTime)),
               child: Icon(Icons.search, color: Colors.white, size: 28.0),
             )
           ),
@@ -378,7 +369,7 @@ class _RouteRegisterPageState extends State<RouteRegisterPage> {
     );
   }
 
-  Widget _saveButton () {
+  Widget _saveButton() {
     return Center(
       child: Container(
         margin: EdgeInsets.only(top: 10.0),
@@ -407,13 +398,13 @@ class _RouteRegisterPageState extends State<RouteRegisterPage> {
             ),
           ),
           onPressed: () {
-            if (_geolocation != null && _description != null && _departTime != "--:--" && atLeast1True() == true && _idCar != null){
+            if (_geolocation != null && _description != null && _departTime != "--:--" && _atLeast1True() == true && _idCar != null){
               dbRef.child("routes").push().set({
                 "address": _description,
                 "driver": useruid,
                 "coordinates": Locality(lat: _geolocation.lat, lng: _geolocation.lng).toJson(),
                 "id_car": _idCar,
-                "schedule": Schedule(monday: _checkBoxMon, tuesday: _checkBoxTue, wednesday: _checkBoxWed, thursday: _checkBoxThu, friday: _checkBoxFri, saturday: _checkBoxSat, sunday: _checkBoxSun).toJson(),
+                "schedule": Schedule(monday: days[0], tuesday: days[1], wednesday: days[2], thursday: days[3], friday: days[4], saturday: days[5], sunday: days[6]).toJson(),
                 "hour": _departTime,
                 "status": "active"
               }).then((_) {
@@ -422,7 +413,7 @@ class _RouteRegisterPageState extends State<RouteRegisterPage> {
                 print(onError);
               });
             } else {
-              print('llene todas los campos');
+              mostrarAlerta(context, 'Ups!', 'Llene todos los campos.');
             }
           },
         ),
@@ -430,11 +421,10 @@ class _RouteRegisterPageState extends State<RouteRegisterPage> {
     );
   }
 
-  bool atLeast1True() {
-    final List listchecks = [_checkBoxMon, _checkBoxTue, _checkBoxWed, _checkBoxThu, _checkBoxFri, _checkBoxSat, _checkBoxSun];
+  bool _atLeast1True() {
     bool value = false;
-    for (var item in listchecks) {
-      if (item == true) {
+    for (var day in days) {
+      if (day == true) {
         value = true;
       }
     }

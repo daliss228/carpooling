@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter_carpooling/src/models/routes_model.dart';
 import 'package:google_maps_webservice/places.dart';
+import 'package:flutter_carpooling/src/models/routes_model.dart';
+import 'package:flutter_carpooling/src/widgets/loading_widget.dart';
 
 GoogleMapsPlaces places = GoogleMapsPlaces(apiKey: "AIzaSyDGTNY3kaJaonzA8idDWA4lbxLvWJQDlNg");
 
 class DataSearch extends SearchDelegate{
+
+  final List<bool> days;
+  final String hour;
+
+  DataSearch({@required this.days, @required this.hour});
 
   // acciones del appbar
   @override
@@ -48,21 +53,23 @@ class DataSearch extends SearchDelegate{
               return ListTile(
                 title: Text(results[i].name),
                 onTap: (){
+                  print(this.days);
                   Location location = results[i].geometry.location;
-                  // showResults(context);
-                  // Navigator.pushNamed(context, 'viaje', arguments: '${results[i].geometry.location.lat}/${results[i].geometry.location.lng}/${results[i].name}');
-                  Navigator.pushNamed(context, 'viaje', arguments: Locality(lat: location.lat, lng: location.lng));
+                  Navigator.pushNamed(context, 'viaje', arguments: {
+                    'days': this.days,
+                    'hour': this.hour,
+                    'locality' : Locality(lat: location.lat, lng: location.lng)
+                  });
                 },
               );
             }
           );
         } else {
-          return Center(child: CupertinoActivityIndicator(radius: 30.0));
+          return Center(child: LoadingWidget());
         }
       },
     );
   }
-  
 }
 
 Future<List<PlacesSearchResult>> searchPlaceByText(String destino) async {
