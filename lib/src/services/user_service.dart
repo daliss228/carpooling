@@ -9,11 +9,11 @@ class UsuarioService {
 
   final _prefs = PreferenciasUsuario();
   final FirebaseAuth _auth = FirebaseAuth.instance; 
-  final DBRef = FirebaseDatabase.instance.reference(); 
+  final _dbRef = FirebaseDatabase.instance.reference(); 
 
   Future<bool> userDb(UserModel user) async {
     try{
-      await DBRef.child('users/${user.uid}').set(
+      await _dbRef.child('users/${user.uid}').set(
         user.toJson()
       );
       return true; 
@@ -27,7 +27,7 @@ class UsuarioService {
 
   Future<bool> searchCi(String ci) async {
     try{
-      Query findCi = await DBRef.child('pending_users').orderByKey().equalTo(ci).limitToFirst(1);
+      Query findCi = await _dbRef.child('pending_users').orderByKey().equalTo(ci).limitToFirst(1);
       print('==============================================================================');
       print(findCi.onValue);
       print('==============================================================================');
@@ -61,21 +61,52 @@ class UsuarioService {
     }
   }
 
-  Future<FirebaseUser> signIn(String email, String password) async {
-    FirebaseUser user;
+  Future<Map<String, dynamic>> signIn(String email, String password) async {
+    AuthResult authResult;
     try {
-      AuthResult result = await _auth.signInWithEmailAndPassword(email: email, password: password); 
-      user = result.user;
-      return user; 
-    }catch(e){
-      print(e.toString()); 
-      return null;
+      authResult = await _auth.signInWithEmailAndPassword(email: email, password: password); 
+      return {"ok": true, "message": "Inicio de sesión exitoso!"}; 
+    } on PlatformException catch(e){
+      if (e.code.toString() == "ERROR_WRONG_PASSWORD") {
+        return {"ok": false, "message": "Contraseña o correo electronico no válidos!"}; 
+      } else if (e.code.toString() == "ERROR_TOO_MANY_REQUESTS") {
+        return {"ok": false, "message": "Demasiados intentos fallidos. \nPor favor, inténtelo de nuevo más tarde."}; 
+      } else {
+        return {"ok": false, "message": e.code.toString()}; 
+      }
     }finally{
-      if(user != null){
-        user.getIdToken().then((token){
+      if(authResult.user.uid.length != 0){
+        authResult.user.getIdToken().then((token){
           _prefs.token = token.token;
         });
-        _prefs.uid = user.uid.toString();
+        _prefs.uid = authResult.user.uid.toString();
+      }
+    }
+  }
+
+  Future<dynamic> reAuth(String email, String pass, String newPass) async {
+    try {
+      FirebaseUser user = await _auth.currentUser();
+      AuthResult authResult = await user.reauthenticateWithCredential(
+        EmailAuthProvider.getCredential(
+          email: email,
+          password: pass,
+        ),
+      );
+      if (authResult.user.uid.length != 0) {
+        user.updatePassword(newPass);
+        authResult.user.getIdToken().then((token){
+          _prefs.token = token.token;
+        });
+        return {"ok": true, "message": "Contraseña cambiada con éxito!"}; 
+      }
+    } on PlatformException catch(e){ 
+      if (e.code.toString() == "ERROR_WRONG_PASSWORD") {
+        return {"ok": false, "message": "Contraseña no válida!"}; 
+      } else if (e.code.toString() == "ERROR_TOO_MANY_REQUESTS") {
+        return {"ok": false, "message": "Demasiados intentos fallidos. \nPor favor, inténtelo de nuevo más tarde."}; 
+      } else {
+        return {"ok": false, "message": e.code.toString()}; 
       }
     }
   }
