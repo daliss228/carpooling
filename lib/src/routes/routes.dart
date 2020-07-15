@@ -23,7 +23,7 @@ Map<String, WidgetBuilder> getAplicationRoutes (){
         'profile' : (BuildContext context) => ProfilePage(),
         'viaje' : (BuildContext context) => ViajesPage(),
         'regAuto' : (BuildContext context) => RegistroAutoPage(),
-        'route': (BuildContext context) => RouteDetallePage()
+        'route': (BuildContext context) => RouteDetailPage()
         // 'image': (BuildContext context) => ImageCapturePage()
       };
 }

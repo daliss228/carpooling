@@ -25,7 +25,8 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           primarySwatch: Colors.blue,
         ),
-        initialRoute: prefs.token.toString().isNotEmpty ? 'home': 'login',
+        initialRoute: 'route',
+        // initialRoute: prefs.token.toString().isNotEmpty ? 'home': 'login',
         routes: getAplicationRoutes(),//llama al map de Rutas definido para el proyecto.
       ),
     );
