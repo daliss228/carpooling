@@ -5,7 +5,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:geocoder/geocoder.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:flutter_carpooling/src/models/car_model.dart';
 import 'package:flutter_carpooling/src/models/routes_model.dart';
 import 'package:flutter_carpooling/src/widgets/alert_widget.dart';
 import 'package:flutter_carpooling/src/style/theme.dart' as Thema;
@@ -25,7 +24,6 @@ class _RouteRegisterPageState extends State<RouteRegisterPage> {
   List<bool> days;
   String _description;
   String _departTime;
-  String _idCar;
   String useruid;
   Locality _geolocation;
   TimeOfDay _time;
@@ -41,23 +39,12 @@ class _RouteRegisterPageState extends State<RouteRegisterPage> {
     super.initState();
     final _prefs = PreferenciasUsuario();
     useruid = _prefs.uid.toString();
-    getCar();
     _markers = {};
     days = List<bool>.generate(7, (index) => false);
     _selectedDate = DateTime.now();
     _dateFormat = DateFormat('HH:mm');
     _departTime = "--:--";
     _kGooglePlex = CameraPosition(target: LatLng(-0.208946, -78.467834), zoom: 12);
-  }
-
-  void getCar() async {
-    final result = (await dbRef.child("users").child(useruid).child("car").once()).value;
-    if(result != null){
-      final idcar1 = result.keys.toList();
-      _idCar = idcar1[0];
-    } else {
-      return;
-    }
   }
 
   @override
@@ -398,12 +385,11 @@ class _RouteRegisterPageState extends State<RouteRegisterPage> {
             ),
           ),
           onPressed: () {
-            if (_geolocation != null && _description != null && _departTime != "--:--" && _atLeast1True() == true && _idCar != null){
+            if (_geolocation != null && _description != null && _departTime != "--:--" && _atLeast1True() == true){
               dbRef.child("routes").push().set({
                 "address": _description,
                 "driver": useruid,
                 "coordinates": Locality(lat: _geolocation.lat, lng: _geolocation.lng).toJson(),
-                "id_car": _idCar,
                 "schedule": Schedule(monday: days[0], tuesday: days[1], wednesday: days[2], thursday: days[3], friday: days[4], saturday: days[5], sunday: days[6]).toJson(),
                 "hour": _departTime,
                 "status": "active"

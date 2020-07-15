@@ -10,7 +10,6 @@ class Routes {
         this.coordinates,
         this.driver,
         this.hour,
-        this.idCar,
         this.schedule,
         this.status,
     });
@@ -19,7 +18,6 @@ class Routes {
     Locality coordinates;
     String driver;
     String hour;
-    String idCar;
     Schedule schedule;
     String status;
 
@@ -28,7 +26,6 @@ class Routes {
         coordinates: Locality.fromJson(json["coordinates"]),
         driver: json["driver"],
         hour: json["hour"],
-        idCar: json["id_car"],
         schedule: Schedule.fromJson(json["schedule"]),
         status: json["status"],
     );
@@ -38,7 +35,6 @@ class Routes {
         "coordinates": coordinates.toJson(),
         "driver": driver,
         "hour": hour,
-        "id_car": idCar,
         "schedule": schedule.toJson(),
         "status": status,
     };
