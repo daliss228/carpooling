@@ -201,21 +201,13 @@ class _LoginPageState extends State<LoginPage> {
   }
 
  _login(BuildContext context, AuthBloc bloc) async {
-
-   setState(() {
-     isloading= true;
-   });
-   
-   dynamic user =  await usuarioService.signIn(bloc.email, bloc.password1);
-   
-   setState(() {
-     isloading = false;
-   });
-
-   if(user != null){
+   setState(() { isloading = true; });
+   dynamic response =  await usuarioService.signIn(bloc.email, bloc.password1);
+   setState(() { isloading = false; });
+   if(response['ok'] == true){
      Navigator.pushReplacementNamed(context, 'home');
    }else{
-     mostrarAlerta(context, 'Error al iniciar sesión', 'Contraseña o correo electronico no validos'); 
+     mostrarAlerta(context, 'Ups!', response['message']); 
    }
  }
 
