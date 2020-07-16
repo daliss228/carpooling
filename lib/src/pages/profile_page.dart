@@ -1,6 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_carpooling/src/style/theme.dart' as Tema;
+import 'package:flutter/services.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:keyboard_visibility/keyboard_visibility.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:flutter_carpooling/src/models/user_model.dart';
+import 'package:flutter_carpooling/src/style/theme.dart' as Tema;
+import 'package:flutter_carpooling/src/widgets/alert_widget.dart';
+import 'package:flutter_carpooling/src/services/user_service.dart';
+import 'package:flutter_carpooling/src/preferencias_usuario/user_prefs.dart';
 
 class ProfilePage extends StatefulWidget {
 
@@ -9,261 +17,536 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  final estiloTexto = TextStyle(fontSize: 20.0, fontFamily: "WorkSansMedium", color: Colors.black);
-  final estiloTextoSub = TextStyle(fontSize: 17.0, fontFamily: "WorkSansMedium", color: Colors.black);
-  final estiloTextoLabels = TextStyle(fontFamily: "WorkSansSemiBold", fontSize: 17.0, color: Colors.black);
+  
+  final TextEditingController _ciController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _lastnameController = TextEditingController();
+  final TextEditingController _oldPassController = TextEditingController();
+  final TextEditingController _newPassController = TextEditingController();
+  
+  final TextStyle _styleTextHint = TextStyle(fontFamily: "WorkSansLight", fontSize: 17.0);
+  final TextStyle _styleErrorText = TextStyle(fontFamily: "WorkSansMedium", color: Color(0xffe81935));
+  final TextStyle _styleFAB = TextStyle(fontFamily: "WorkSansLight", fontSize: 14.0, color: Colors.black);
+  final TextStyle _styleText = TextStyle(fontFamily: "WorkSansLight", fontSize: 17.0, color: Colors.black);
+  final TextStyle _styleEditText = TextStyle(fontFamily: "WorkSansMedium", color: Colors.black, fontSize: 10.0);
+  
+  String _useruid;
+  UserModel _user;
+  bool _keyboardOpen = false;
+  bool _obscureTextPass = true;
+  bool _activeEditPass = false;
+  bool _activeEditName = false;
+  bool _activeEditLastname = false;
+  
+  final _prefs = new PreferenciasUsuario();
+  final _authService = new UsuarioService();
+  final _dbRef = FirebaseDatabase.instance.reference();
+
+  final _formKey1 = GlobalKey<FormState>();
+  final _formKey2 = GlobalKey<FormState>();
+  final _formKey3 = GlobalKey<FormState>();
+
+  @override
+  void initState() {
+    _useruid = _prefs.uid.toString();
+    getDataUser();
+    // visibilidad del teclado, lo que hace es detectar la visibilidad 
+    // del teclado si es true oculta el FAB y si es false muestra el FAB
+    KeyboardVisibilityNotification().addNewListener(
+      onChange: (bool visible) {
+        setState(() => _keyboardOpen = visible);
+      },
+    );
+    super.initState();
+  }
+
+  @override
+  void dispose() { 
+    _ciController.clear();
+    _nameController.clear();
+    _emailController.clear();
+    _lastnameController.clear();
+    super.dispose();
+  }
+
+  Future<void> getDataUser() async {
+    final _result = (await _dbRef.child("users").child(_useruid).once()).value;
+    setState(() {
+      _user = UserModel.fromJson(_result);
+    });
+    _ciController.text = _user.ci;   
+    _emailController.text = _user.email;
+    _nameController.text = _user.name;
+    _lastnameController.text = _user.lastName;
+  }
 
   @override
   Widget build(BuildContext context) {
-    final _screenSize = MediaQuery.of(context).size; 
-
     return Scaffold(
-      body: CustomScrollView(
-        slivers: <Widget>[
-          _crearAppBar(),
-          SliverList(
-            delegate: SliverChildListDelegate([
-              Container(
-                width: double.infinity,
-                height: 100,
-                child: Stack(
-                  overflow: Overflow.visible,
-                  children: <Widget>[
-                    _portada(context),
-                    Positioned(
-                      left: (_screenSize.width * 0.5) - 60.0,
-                      child: _fusionha()
-                    )
-                  ],
-                ),
-              ),
-              SizedBox(height: 30.0,),
-              _camposUsuario(),
-
-            ]),
-          )
+      floatingActionButton: _keyboardOpen ? Container() : SpeedDial(
+        marginRight: 8,
+        marginBottom: 5,
+        animatedIcon: AnimatedIcons.menu_close,
+        animatedIconTheme: IconThemeData(size: 25.0, color: Tema.Colors.loginGradientEnd),
+        closeManually: false,
+        curve: Curves.bounceIn,
+        overlayColor: Colors.black,
+        overlayOpacity: 0.5,
+        tooltip: 'Opciones',
+        heroTag: 'speed-dial-hero-tag',
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0.0,
+        shape: CircleBorder(),
+        children: [
+          SpeedDialChild(
+            child: Icon(Icons.power_settings_new, color: Colors.red),
+            backgroundColor: Colors.white,
+            label: 'Cerrar Sesión',
+            labelStyle: _styleFAB,
+            onTap: () async {
+              await _authService.signOut();
+              setState(() {
+                _prefs.token = '';
+                _prefs.uid = '';
+              });
+              Navigator.pushReplacementNamed(context, 'login');
+            },
+          ),
+          SpeedDialChild(
+            child: Icon(Icons.account_circle, color: Colors.cyan),
+            backgroundColor: Colors.white,
+            label: 'Ser pasajero',
+            labelStyle: _styleFAB,
+            onTap: () {}
+          ),
+          SpeedDialChild(
+            child: Icon(Icons.drive_eta, color: Colors.deepPurple),
+            backgroundColor: Colors.white,
+            label: 'Mi carro',
+            labelStyle: _styleFAB,
+            onTap: () => {},
+          ),
+        ],
+      ),
+      body: Stack(
+        children: <Widget>[
+          _header(context),
+          _body(context),
         ],
       )
     ); 
   }
 
-
-  Widget _camposUsuario(){
-    return Center(
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 70.0),
-        child: Column(
-          children: <Widget>[
-            _nombreUsuario(), 
-            SizedBox(height: 20.0,),
-            _emailUsuario(),
-            SizedBox(height: 20.0,),
-            _cedulaUsuario(), 
-            SizedBox(height: 20.0,), 
-            _passwordUsuario(),
-            SizedBox(height: 100.0,),
-            Text('Conectate con:', style: estiloTextoSub,),
-            SizedBox(height: 20.0,),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: <Widget>[
-                IconButton(
-                  iconSize: 50.0,
-                  icon: Icon(FontAwesomeIcons.facebook), 
-                  onPressed: (){
-                    print('Boton de Facebook pulsado'); 
-                  }
-                ),
-                IconButton(
-                  iconSize: 50.0,
-                  icon: Icon(FontAwesomeIcons.googlePlus), 
-                  onPressed: (){
-                    print('Botón de Google pulsado');
-                  }
-                )
-              ],
-            )
-          ],
-        )
-      ),
-    );
-  }
-
-  //Widgets para los campos a recibir
-
-  Widget _nombreUsuario(){
-    return TextField(
-      enabled: false,
-      textAlign: TextAlign.center,
-      style: TextStyle(
-        fontFamily: "WorkSansSemiBold", fontSize: 16.0, color: Colors.black
-      ),
-      decoration: InputDecoration(
-        icon: Icon(
-          FontAwesomeIcons.user,
-          color: Colors.black,
-        ),
-        hintText: 'Héctor Analuisa',
-        hintStyle: estiloTextoLabels
-      ),
-    );
-  }
-
-  Widget _emailUsuario(){
-    return TextField(
-      enabled: false,
-      textAlign: TextAlign.center,
-      style: TextStyle(
-        fontFamily: "WorkSansSemiBold", fontSize: 16.0, color: Colors.black
-      ),
-      decoration: InputDecoration(
-        icon: Icon(
-          FontAwesomeIcons.envelope,
-          color: Colors.black,
-        ),
-        hintText: 'hectorpm956@gmail.com',
-        hintStyle: estiloTextoLabels
-      ),
-    );
-  }
-
-  Widget _cedulaUsuario(){
-    return TextField(
-      enabled: false,
-      textAlign: TextAlign.center,
-      style: TextStyle(
-        fontFamily: "WorkSansSemiBold", fontSize: 16.0, color: Colors.black
-      ),
-      decoration: InputDecoration(
-        icon: Icon(
-          FontAwesomeIcons.indent,
-          color: Colors.black,
-        ),
-        hintText: '1234567890',
-        hintStyle: estiloTextoLabels
-      ),
-    );
-  }
-
-  Widget _passwordUsuario(){
-    return TextField(
-      enabled: false,
-      obscureText: true,
-      textAlign: TextAlign.center,
-      style: TextStyle(
-        fontFamily: "WorkSansSemiBold", fontSize: 16.0, color: Colors.black
-      ),
-      decoration: InputDecoration(
-        icon: Icon(
-          FontAwesomeIcons.lock,
-          color: Colors.black,
-        ),
-        //labelText: 'Password',
-        hintText: '******************',
-        hintStyle: estiloTextoLabels
-      ),
-    );
-  }
-
-
-  //-----------------------------------------------------------FIN
-
-
-
-  Widget _fusionha(){
-    return Container(
-      width: 120,
-      height: 120,
-      child: Stack(
-        alignment: Alignment.center,
-        overflow: Overflow.visible,
-        children: <Widget>[
-          _infoAvatarUser(),
-          Positioned(
-            bottom: 0.0,
-            left: 90,
-            child: CircleAvatar(
-              radius: 24.0,
-              backgroundColor: Colors.white,
-              child: CircleAvatar(
-                radius: 21.0,
-                backgroundColor: Colors.black12,
-                child: IconButton(
-                  icon: Icon(
-                    FontAwesomeIcons.camera,
-                    color: Colors.black,
-                    size: 20.0,
-                  ), 
-                  onPressed: (){
-                    print('Pulsa camarita'); 
-                  }
-                ),
-              ),
-            )
-          )
-
-        ],
-      ),
-    ); 
-  }
-
-  Widget _infoAvatarUser(){
+  // Widgets para los campos a recibir
+  Widget _photoUser(){
     return Container(
       child: CircleAvatar(
         backgroundColor: Colors.white,
-        radius: 60.0,
+        radius: 66.0,
         child: ClipOval(
-          child: Image(
-            image: NetworkImage(
-            'https://media.telemundo51.com/2019/09/riesgos-enfermedades-gatos7.jpg?fit=1200%2C800'),
-            width: 115.0,
-            height: 115.0,
-            fit: BoxFit.cover,
+          child: (_user?.photo != null) ? FadeInImage(
+            image: NetworkImage(_user?.photo),
+            placeholder: AssetImage('assets/img/ripple-loading.gif'),
+            height: 125.0,
+            width: 125.0,
+            fit: BoxFit.contain,
+          )
+          : Container()
+        ),
+      ),
+    );
+  }
+
+  Widget _camera(){
+    return CircleAvatar(
+      radius: 24.0,
+      backgroundColor: Colors.white,
+      child: CircleAvatar(
+        radius: 21.0,
+        backgroundColor: Colors.black12,
+        child: IconButton(
+          icon: Icon(
+            FontAwesomeIcons.camera,
+            color: Colors.black,
+            size: 20.0,
+          ), 
+          onPressed: (){},
+          // onPressed: () => Navigator.pushNamed(context, 'image'),
+        ),
+      ),
+    );
+  }
+
+  Widget _header(BuildContext context){
+    final _screenSize = MediaQuery.of(context).size; 
+    return Stack(
+      children: <Widget>[
+        Container(
+          width: _screenSize.width,
+          height: _screenSize.height * 0.55,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(100.0), 
+            ),
+            gradient: LinearGradient(
+              colors: [
+                Tema.Colors.loginGradientStart,
+                Tema.Colors.loginGradientEnd
+              ]
             )
           ),
-      ),
-    );
-  }
-
-  Widget _portada( BuildContext context){ // Separado por que es un contenedor en una funcion
-    return Container(
-      padding: EdgeInsets.all(17.0),// COn este estoy separando de los bordes OJOOO OJOOO
-      height: 75,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Tema.Colors.loginGradientStart, Tema.Colors.loginGradientEnd]
         ),
-        borderRadius: BorderRadius.only(
-          bottomRight: Radius.circular(50.0),
-          bottomLeft: Radius.circular(50.0)
-        )
-      ),
-    );
-  }
-
-  //Widget para el uso de Nombre y cedula del usuario
-
-  
-
-  Widget _crearAppBar(){
-    return SliverAppBar(
-      pinned: true,
-      actions: <Widget>[
-        IconButton(
-          icon: Icon(Icons.edit), 
-          onPressed: (){
-            print('Boton de edición'); 
-          }
+        Positioned(
+          width: _screenSize.width,
+          height: (_screenSize.height * 0.30),
+          child: Center(
+            child: _photoUser(),
+          ),
+        ),
+        Positioned(
+          width: 265.0,
+          height: _screenSize.height * 0.40,
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: GestureDetector(onTap: () => print('adasdasd'), child: _camera())
+          ),
         ),
       ],
-      // Para darle un gradiente a la SliverAPPBAR es necesario hacer uso de un flexible space 
-      flexibleSpace: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Tema.Colors.loginGradientStart, Tema.Colors.loginGradientEnd])
+    );
+  }
+  
+  Widget _ciUser(){
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
+      child: TextField(
+        controller: _ciController,
+        enabled: false,
+        style: _styleText,
+        decoration: InputDecoration(
+          icon: Icon(
+            FontAwesomeIcons.indent,
+            color: Colors.black,
+            size: 20.0,
+          ),
         ),
       ),
-    ); 
+    );
+  }
+
+  Widget _nameUser(){
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            child: Form(
+              key: _formKey1,
+              child: TextFormField(
+                controller: _nameController,
+                enabled: _activeEditName,
+                style: _styleText,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: InputDecoration(
+                  icon: Icon(
+                    FontAwesomeIcons.smile,
+                    color: Colors.black,
+                    size: 20.0,
+                  ),
+                  errorStyle: _styleErrorText
+                ),
+                validator: (value) {
+                  if (RegExp(r'^[A-Za-záéíóúÁÉÍÓÚ]+$').hasMatch(value) && value.length >= 3) {
+                    return null;
+                  }
+                  return 'Nombre incorrecto!';
+                },
+              ),
+            ),
+          ),
+          SizedBox(width: 10.0),
+          GestureDetector(
+            onTap: () => _saveInputName(),
+            child: Column(
+              children: !_activeEditName ? <Widget>[
+                Icon(Icons.edit, size: 18.0, color: Color(0XFF3B3E69)),
+                Text('Editar', style: _styleEditText),
+              ]
+              : <Widget>[ 
+                Icon(FontAwesomeIcons.check, size: 18.0, color: Colors.green),
+                Text('Ok', style: _styleEditText),
+              ]
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _lastnameUser(){
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            child: Form(
+              key: _formKey2,
+              child: TextFormField(
+                controller: _lastnameController,
+                enabled: _activeEditLastname,
+                style: _styleText,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: InputDecoration(
+                  icon: Icon(
+                    FontAwesomeIcons.smile,
+                    color: Colors.black,
+                    size: 20.0,
+                  ),
+                  errorStyle: _styleErrorText
+                ),
+                validator: (value) {
+                  if (RegExp(r'^[A-Za-záéíóúÁÉÍÓÚ]+$').hasMatch(value) && value.length >= 3) {
+                    return null;
+                  }
+                  return 'Apellido incorrecto!';
+                },
+              ),
+            ),
+          ),
+          SizedBox(width: 10.0),
+          GestureDetector(
+            onTap: () => _saveInputLastname(),
+            child: Column(
+              children: !_activeEditLastname ? <Widget>[
+                Icon(Icons.edit, size: 18.0, color: Color(0XFF3B3E69)),
+                Text('Editar', style: _styleEditText),
+              ]
+              : <Widget>[ 
+                Icon(FontAwesomeIcons.check, size: 18.0, color: Colors.green),
+                Text('Ok', style: _styleEditText),
+              ]
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _emailUser(){
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
+      child: TextField(
+        controller: _emailController,
+        enabled: false,
+        style: _styleText,
+        decoration: InputDecoration(
+          icon: Icon(
+            FontAwesomeIcons.envelope,
+            color: Colors.black,
+            size: 20.0,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _passUser(){
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
+      child: Form(
+        key: _formKey3,
+        child: Column(
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: TextFormField(
+                    controller: _oldPassController,
+                    enabled: _activeEditPass,
+                    obscureText: true,
+                    style: _styleText,
+                    decoration: InputDecoration(
+                      icon: Icon(
+                        FontAwesomeIcons.lock, 
+                        color: Colors.black,
+                        size: 20.0,
+                      ),
+                      hintText: _activeEditPass ? 'Anterior Contraseña' : 'Mi Contraseña',
+                      hintStyle: _activeEditPass ? _styleTextHint : _styleText,
+                      errorStyle: _styleErrorText,
+                    ),
+                    validator: (value) {
+                      if (value.length <= 6 && value != ""){
+                        return 'Contraseña muy corta!';
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+                SizedBox(width: 10.0),
+                GestureDetector(
+                  onTap: () => _saveInputPass(),
+                  child: Column(
+                    children: !_activeEditPass ? <Widget>[
+                      Icon(Icons.edit, size: 18.0, color: Color(0XFF3B3E69)),
+                      Text('Editar', style: _styleEditText),
+                    ]
+                    : <Widget>[ 
+                      Icon(FontAwesomeIcons.check, size: 18.0, color: Colors.green),
+                      Text('Ok', style: _styleEditText),
+                    ]
+                  ),
+                ),
+              ],
+            ),
+            Visibility(
+              visible: _activeEditPass,
+              child: Padding(
+                padding: EdgeInsets.symmetric(vertical: 3.0),
+                child: TextFormField(
+                  controller: _newPassController,
+                  obscureText: _obscureTextPass,
+                  style: _styleText,
+                  decoration: InputDecoration(
+                    icon: Icon(
+                      FontAwesomeIcons.lock, 
+                      color: Colors.black,
+                      size: 20.0,
+                    ),
+                    hintText: 'Nueva Contraseña',
+                    hintStyle: _styleTextHint,
+                    errorStyle: _styleErrorText,
+                    suffixIcon: GestureDetector(
+                      onTap: _showTextPass,
+                      child: Icon(
+                        _obscureTextPass
+                            ? FontAwesomeIcons.eye
+                            : FontAwesomeIcons.eyeSlash,
+                        size: 15.0,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                  validator: (value) {
+                    if (value != "" && value.length <= 6){
+                      if (_oldPassController.text == value) {
+                        return 'Contraseña muy corta!\nContraseñas no pueden ser iguales!';  
+                      } else {
+                        return 'Contraseña muy corta!';  
+                      } 
+                    } else if (value != "" && _oldPassController.text == value){
+                      return 'Contraseñas no pueden ser iguales!';  
+                    }
+                    return null;
+                  },
+                ),
+              ),
+            ),
+            SizedBox(height: 10.0)
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _body(BuildContext context){
+    final _screenSize = MediaQuery.of(context).size;
+    return SingleChildScrollView(
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 20.0),
+        child: Column(
+          children: <Widget>[
+            SafeArea(
+              child: Container(
+                height: _screenSize.height * 0.25,
+              ),
+            ),
+            Container(
+              width: _screenSize.width * 0.85,
+              padding: EdgeInsets.symmetric(vertical: 30.0),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(50.0),
+                boxShadow: <BoxShadow>[
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 3.0,
+                    offset: Offset(0.0, 4.0),
+                    spreadRadius: 3.0
+                  )
+                ]
+              ),
+              child: Column(
+                children: <Widget>[
+                  _nameUser(), 
+                  _lastnameUser(), 
+                  _emailUser(),
+                  _ciUser(),
+                  _passUser(),
+                ]
+              )
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _saveInputName(){
+    if (_formKey1.currentState.validate()) {
+      setState(() {
+        _activeEditName = !_activeEditName;
+      });
+      if (!_activeEditName) {
+        _dbRef.child("users").child(_useruid).update({
+          "name": _nameController.text,
+        });
+      } 
+    }
+  }
+
+  void _saveInputLastname(){
+    if (_formKey2.currentState.validate()) {
+      setState(() {
+        _activeEditLastname = !_activeEditLastname;
+      });
+      if (!_activeEditLastname) {
+        _dbRef.child("users").child(_useruid).update({
+          "lastName": _lastnameController.text,
+        });
+      }
+    }
+  }
+
+  void _saveInputPass() async {
+    if (_formKey3.currentState.validate()) { 
+      setState(() {
+        _activeEditPass = !_activeEditPass;
+      });
+      if (!_activeEditPass && _oldPassController.text != "" && _newPassController.text != "") {
+        final response =  await _authService.reAuth(_emailController.text, _oldPassController.text, _newPassController.text);
+        _oldPassController.clear();
+        _newPassController.clear();
+        if(response['ok'] == false){
+          mostrarAlerta(context, 'Ups!', response['message']); 
+        }
+      } else if (_oldPassController.text != "" || _newPassController.text != "") {
+        setState(() {
+          _activeEditPass = true;
+        });
+      } else if (_oldPassController.text != "" && _newPassController.text != ""){
+        setState(() {
+          _activeEditPass = false;
+        });
+      }
+    }
+  }
+
+  void _showTextPass() {
+    setState(() {
+      _obscureTextPass = !_obscureTextPass;
+    });
   }
 
 }
