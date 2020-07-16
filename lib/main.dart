@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_carpooling/src/routes/routes.dart';
-import 'package:flutter_carpooling/src/blocs/provider_bloc.dart';
-import 'package:flutter_carpooling/src/style/theme.dart' as Thema;
 import 'package:flutter_carpooling/src/preferencias_usuario/user_prefs.dart';
+import 'package:flutter_carpooling/src/routes/routes.dart';
+
+import 'package:flutter_carpooling/src/blocs/provider_bloc.dart';
 
 
 void main() async {
@@ -10,6 +10,7 @@ void main() async {
   final prefs = new PreferenciasUsuario();
   await prefs.initPrefs();
   runApp(new MyApp());
+
 }
 
 
@@ -22,7 +23,6 @@ class MyApp extends StatelessWidget {
         title: 'Carpooling',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
-          primaryColor: Thema.Colors.loginGradientEnd,
           primarySwatch: Colors.blue,
         ),
         initialRoute: prefs.token.toString().isNotEmpty ? 'home': 'login',

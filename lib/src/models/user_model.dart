@@ -27,7 +27,7 @@ class UserModel {
     String photo;
     String uidGroup;
 
-    factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
+    factory UserModel.fromJson(Map<dynamic, dynamic> json) => UserModel(
         uid: json["uid"],
         name: json["name"],
         lastName: json["lastName"],
