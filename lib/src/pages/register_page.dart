@@ -298,7 +298,7 @@ class _RegisterPageState extends State<RegisterPage> {
     if(info['ok']){
       user.uid = prefs.uid; 
       usuarioProvider.userDb(user); 
-      Navigator.pushReplacementNamed(context, 'home');
+      Navigator.pushReplacementNamed(context, 'photo');
     }else{
       mostrarAlerta(context, 'Error al registrar usuario', info['mensaje']); 
     }
