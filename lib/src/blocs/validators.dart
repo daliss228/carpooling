@@ -9,7 +9,7 @@ class Validators{
       if(regExp.hasMatch(email)){
         sink.add(email);
       }else{
-        sink.addError('Email no valido!');
+        sink.addError('Email no valido, ingrese correctamente el email');
       }
     },
   );
@@ -19,7 +19,7 @@ class Validators{
       if(password.length > 6 ){
         sink.add(password); 
       }else{
-        sink.addError('Contraseña demasiado corta!');
+        sink.addError('Contraseña demasiado corta');
       }
     }
   ); 
