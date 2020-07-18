@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart'; 
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:flutter_carpooling/src/utils/colors.dart' as Thema;
 
 class LoadingWidget extends StatelessWidget {
   @override
@@ -14,6 +15,18 @@ class LoadingWidget extends StatelessWidget {
           size: 70.0,
         ),
       ),  
+    );
+  }
+}
+
+class LoadingTwoWidget extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: SpinKitDoubleBounce(
+        color: Thema.OurColors.darkPurple,
+        size: 25.0,
+      ),
     );
   }
 }

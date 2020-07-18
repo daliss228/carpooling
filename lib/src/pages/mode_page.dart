@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_carpooling/src/style/theme.dart'  as Theme;
+import 'package:flutter_carpooling/src/utils/colors.dart'  as Theme;
 
 // pagina para seleccionar el modo de usuario de la aplicacion
 class ModePage extends StatelessWidget {
@@ -46,7 +46,6 @@ class ModePage extends StatelessWidget {
           ),
           Positioned(
             top: 126,
-            // left: 10,
             child: Container( 
               height: 80.0,
               width: 170.0,
@@ -62,7 +61,7 @@ class ModePage extends StatelessWidget {
                     offset: Offset(0.0, 10.0)
                   )
                 ],
-                color: Theme.Colors.loginGradientEnd,
+                color: Theme.OurColors.lightGreenishBlue,
                 borderRadius: BorderRadius.circular(30.0)
               ),
               child: Center(child: Text(usuario, style: TextStyle(fontSize: 18.0, fontFamily: "WorkSansBold", color: Colors.white))),

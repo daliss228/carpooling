@@ -27,7 +27,7 @@ class UsuarioService {
 
   Future<bool> searchCi(String ci) async {
     try{
-      Query findCi = await _dbRef.child('pending_users').orderByKey().equalTo(ci).limitToFirst(1);
+      Query findCi = _dbRef.child('pending_users').orderByKey().equalTo(ci).limitToFirst(1);
       print('==============================================================================');
       print(findCi.onValue);
       print('==============================================================================');

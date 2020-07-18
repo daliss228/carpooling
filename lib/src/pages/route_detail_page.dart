@@ -6,7 +6,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_carpooling/src/models/user_model.dart';
 import 'package:flutter_carpooling/src/models/route_model.dart';
-import 'package:flutter_carpooling/src/style/theme.dart' as Theme;
+import 'package:flutter_carpooling/src/utils/colors.dart' as Theme;
 import 'package:flutter_carpooling/src/widgets/loading_widget.dart';
 import 'package:flutter_carpooling/src/preferencias_usuario/user_prefs.dart';
 
@@ -66,7 +66,7 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
             Container(
               width: _sizeScren.width,
               height: _sizeScren.height * 0.45,
-              color: Theme.Colors.loginGradientEnd,
+              color: Theme.OurColors.lightGreenishBlue,
             ),
             _descriptionDriver(_sizeScren),
             _photoDriver(_sizeScren),
@@ -355,7 +355,7 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
           margin: EdgeInsets.only(top: 20.0),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.all(Radius.circular(10.0)),
-            color: Theme.Colors.loginGradientEnd,
+            color: Theme.OurColors.lightGreenishBlue,
             boxShadow: <BoxShadow>[
               BoxShadow(
                 color: Colors.black45,
@@ -366,7 +366,7 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
           ),
           child: MaterialButton(
             highlightColor: Colors.transparent,
-            splashColor: Theme.Colors.loginGradientEnd,
+            splashColor: Theme.OurColors.lightGreenishBlue,
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 42.0),
               child: Text(

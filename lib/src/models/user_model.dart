@@ -1,9 +1,4 @@
-// To parse this JSON data, do
-//
-//     final userModel = userModelFromJson(jsonString);
-
 import 'dart:convert';
-
 import 'package:flutter_carpooling/src/models/car_model.dart';
 
 UserModel userModelFromJson(String str) => UserModel.fromJson(json.decode(str));
@@ -34,7 +29,7 @@ class UserModel {
     String uidGroup;
 
     factory UserModel.fromJson(Map<dynamic, dynamic> json) => UserModel(
-        // uid: json["uid"],
+        // uid: json["uid"] == null ? null : json["uid"],
         car: json["car"] == null ? null : CarModel.fromJson(json["car"]),
         name: json["name"] == null ? null : json["name"],
         lastName: json["lastName"] == null ? null : json["lastName"],
@@ -46,7 +41,7 @@ class UserModel {
     );
 
     Map<String, dynamic> toJson() => {
-        //"uid": uid,
+        // "uid": uid == null ? null : uid,
         "car": car == null ? null : car.toJson(),
         "name": name == null ? null : name,
         "lastName": lastName == null ? null : lastName,

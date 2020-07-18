@@ -5,7 +5,7 @@ import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:keyboard_visibility/keyboard_visibility.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_carpooling/src/models/user_model.dart';
-import 'package:flutter_carpooling/src/style/theme.dart' as Tema;
+import 'package:flutter_carpooling/src/utils/colors.dart' as Theme;
 import 'package:flutter_carpooling/src/widgets/alert_widget.dart';
 import 'package:flutter_carpooling/src/services/user_service.dart';
 import 'package:flutter_carpooling/src/preferencias_usuario/user_prefs.dart';
@@ -21,9 +21,10 @@ class _ProfilePageState extends State<ProfilePage> {
   final TextEditingController _ciController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _lastnameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _oldPassController = TextEditingController();
   final TextEditingController _newPassController = TextEditingController();
+  final TextEditingController _lastnameController = TextEditingController();
   
   final TextStyle _styleTextHint = TextStyle(fontFamily: "WorkSansLight", fontSize: 17.0);
   final TextStyle _styleErrorText = TextStyle(fontFamily: "WorkSansMedium", color: Color(0xffe81935));
@@ -37,6 +38,7 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _obscureTextPass = true;
   bool _activeEditPass = false;
   bool _activeEditName = false;
+  bool _activeEditPhone = false;
   bool _activeEditLastname = false;
   
   final _prefs = new PreferenciasUsuario();
@@ -46,6 +48,7 @@ class _ProfilePageState extends State<ProfilePage> {
   final _formKey1 = GlobalKey<FormState>();
   final _formKey2 = GlobalKey<FormState>();
   final _formKey3 = GlobalKey<FormState>();
+  final _formKey4 = GlobalKey<FormState>();
 
   @override
   void initState() {
@@ -66,6 +69,7 @@ class _ProfilePageState extends State<ProfilePage> {
     _ciController.clear();
     _nameController.clear();
     _emailController.clear();
+    _phoneController.clear();
     _lastnameController.clear();
     super.dispose();
   }
@@ -76,19 +80,21 @@ class _ProfilePageState extends State<ProfilePage> {
       _user = UserModel.fromJson(_result);
     });
     _ciController.text = _user.ci;   
-    _emailController.text = _user.email;
     _nameController.text = _user.name;
+    _emailController.text = _user.email;
+    _phoneController.text = _user.phone;
     _lastnameController.text = _user.lastName;
   }
 
   @override
   Widget build(BuildContext context) {
+    final _screenSize = MediaQuery.of(context).size; 
     return Scaffold(
       floatingActionButton: _keyboardOpen ? Container() : SpeedDial(
         marginRight: 8,
         marginBottom: 5,
         animatedIcon: AnimatedIcons.menu_close,
-        animatedIconTheme: IconThemeData(size: 25.0, color: Tema.Colors.loginGradientEnd),
+        animatedIconTheme: IconThemeData(size: 25.0, color: Theme.OurColors.lightGreenishBlue),
         closeManually: false,
         curve: Curves.bounceIn,
         overlayColor: Colors.black,
@@ -132,8 +138,9 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
       body: Stack(
         children: <Widget>[
-          _header(context),
-          _body(context),
+          _header(_screenSize),
+          _body(_screenSize),
+          _camera(_screenSize)
         ],
       )
     ); 
@@ -159,28 +166,33 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _camera(){
-    return CircleAvatar(
-      radius: 24.0,
-      backgroundColor: Colors.white,
-      child: CircleAvatar(
-        radius: 21.0,
-        backgroundColor: Colors.black12,
-        child: IconButton(
-          icon: Icon(
-            FontAwesomeIcons.camera,
-            color: Colors.black,
-            size: 20.0,
-          ), 
-          onPressed: (){},
-          // onPressed: () => Navigator.pushNamed(context, 'image'),
+  Widget _camera(Size _screenSize){
+    return Positioned(
+      width: 265.0,
+      height: _screenSize.height * 0.40,
+      child: Align(
+        alignment: Alignment.centerRight,
+        child: CircleAvatar(
+          radius: 24.0,
+          backgroundColor: Colors.white,
+          child: CircleAvatar(
+            radius: 21.0,
+            backgroundColor: Colors.black12,
+            child: IconButton(
+              icon: Icon(
+                FontAwesomeIcons.camera,
+                color: Theme.OurColors.darkPurple,
+                size: 20.0,
+              ), 
+              onPressed: () => Navigator.pushNamed(context, 'photo', arguments: _user.photo),
+            ),
+          ),
         ),
       ),
     );
   }
 
-  Widget _header(BuildContext context){
-    final _screenSize = MediaQuery.of(context).size; 
+  Widget _header(Size _screenSize){
     return Stack(
       children: <Widget>[
         Container(
@@ -192,8 +204,8 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             gradient: LinearGradient(
               colors: [
-                Tema.Colors.loginGradientStart,
-                Tema.Colors.loginGradientEnd
+                Theme.OurColors.lightBlue,
+                Theme.OurColors.lightGreenishBlue
               ]
             )
           ),
@@ -205,33 +217,7 @@ class _ProfilePageState extends State<ProfilePage> {
             child: _photoUser(),
           ),
         ),
-        Positioned(
-          width: 265.0,
-          height: _screenSize.height * 0.40,
-          child: Align(
-            alignment: Alignment.centerRight,
-            child: GestureDetector(onTap: () => print('adasdasd'), child: _camera())
-          ),
-        ),
       ],
-    );
-  }
-  
-  Widget _ciUser(){
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
-      child: TextField(
-        controller: _ciController,
-        enabled: false,
-        style: _styleText,
-        decoration: InputDecoration(
-          icon: Icon(
-            FontAwesomeIcons.indent,
-            color: Colors.black,
-            size: 20.0,
-          ),
-        ),
-      ),
     );
   }
 
@@ -270,7 +256,7 @@ class _ProfilePageState extends State<ProfilePage> {
             onTap: () => _saveInputName(),
             child: Column(
               children: !_activeEditName ? <Widget>[
-                Icon(Icons.edit, size: 18.0, color: Color(0XFF3B3E69)),
+                Icon(Icons.edit, size: 18.0, color: Theme.OurColors.darkPurple),
                 Text('Editar', style: _styleEditText),
               ]
               : <Widget>[ 
@@ -319,7 +305,7 @@ class _ProfilePageState extends State<ProfilePage> {
             onTap: () => _saveInputLastname(),
             child: Column(
               children: !_activeEditLastname ? <Widget>[
-                Icon(Icons.edit, size: 18.0, color: Color(0XFF3B3E69)),
+                Icon(Icons.edit, size: 18.0, color: Theme.OurColors.darkPurple),
                 Text('Editar', style: _styleEditText),
               ]
               : <Widget>[ 
@@ -329,6 +315,73 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _phoneUser(){
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            child: Form(
+              key: _formKey3,
+              child: TextFormField(
+                controller: _phoneController,
+                enabled: _activeEditPhone,
+                style: _styleText,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: InputDecoration(
+                  icon: Icon(
+                    FontAwesomeIcons.mobileAlt,
+                    color: Colors.black,
+                    size: 20.0,
+                  ),
+                  errorStyle: _styleErrorText
+                ),
+                validator: (value) {
+                  if (RegExp(r'^[0-9]+$').hasMatch(value) && value.length == 10) {
+                    return null;
+                  }
+                  return 'Teléfono incorrecto!';
+                },
+              ),
+            ),
+          ),
+          SizedBox(width: 10.0),
+          GestureDetector(
+            onTap: () => _saveInputPhone(),
+            child: Column(
+              children: !_activeEditPhone ? <Widget>[
+                Icon(Icons.edit, size: 18.0, color: Theme.OurColors.darkPurple),
+                Text('Editar', style: _styleEditText),
+              ]
+              : <Widget>[ 
+                Icon(FontAwesomeIcons.check, size: 18.0, color: Colors.green),
+                Text('Ok', style: _styleEditText),
+              ]
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _ciUser(){
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
+      child: TextField(
+        controller: _ciController,
+        enabled: false,
+        style: _styleText,
+        decoration: InputDecoration(
+          icon: Icon(
+            FontAwesomeIcons.indent,
+            color: Colors.black,
+            size: 20.0,
+          ),
+        ),
       ),
     );
   }
@@ -355,7 +408,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
       child: Form(
-        key: _formKey3,
+        key: _formKey4,
         child: Column(
           children: <Widget>[
             Row(
@@ -389,7 +442,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   onTap: () => _saveInputPass(),
                   child: Column(
                     children: !_activeEditPass ? <Widget>[
-                      Icon(Icons.edit, size: 18.0, color: Color(0XFF3B3E69)),
+                      Icon(Icons.edit, size: 18.0, color: Theme.OurColors.darkPurple),
                       Text('Editar', style: _styleEditText),
                     ]
                     : <Widget>[ 
@@ -450,11 +503,10 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _body(BuildContext context){
-    final _screenSize = MediaQuery.of(context).size;
+  Widget _body(Size _screenSize){
     return SingleChildScrollView(
       child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 20.0),
+        padding: EdgeInsets.symmetric(vertical: 15.0),
         child: Column(
           children: <Widget>[
             SafeArea(
@@ -464,7 +516,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             Container(
               width: _screenSize.width * 0.85,
-              padding: EdgeInsets.symmetric(vertical: 30.0),
+              padding: EdgeInsets.symmetric(vertical: 20.0),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(50.0),
@@ -481,9 +533,11 @@ class _ProfilePageState extends State<ProfilePage> {
                 children: <Widget>[
                   _nameUser(), 
                   _lastnameUser(), 
-                  _emailUser(),
                   _ciUser(),
+                  _emailUser(),
+                  _phoneUser(),
                   _passUser(),
+                  SizedBox(height: 5.0)
                 ]
               )
             )
@@ -519,8 +573,21 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
+  void _saveInputPhone(){
+    if (_formKey3.currentState.validate()) {
+      setState(() {
+        _activeEditPhone = !_activeEditPhone;
+      });
+      if (!_activeEditPhone) {
+        _dbRef.child("users").child(_useruid).update({
+          "phone": _phoneController.text,
+        });
+      }
+    }
+  }
+
   void _saveInputPass() async {
-    if (_formKey3.currentState.validate()) { 
+    if (_formKey4.currentState.validate()) { 
       setState(() {
         _activeEditPass = !_activeEditPass;
       });

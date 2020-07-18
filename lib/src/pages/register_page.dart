@@ -12,7 +12,7 @@ import 'package:flutter_carpooling/src/widgets/circle_widget.dart';
 import 'package:flutter_carpooling/src/widgets/input_widget.dart';
 import 'package:flutter_carpooling/src/widgets/loading_widget.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:flutter_carpooling/src/style/theme.dart' as Tema;
+import 'package:flutter_carpooling/src/utils/colors.dart' as Tema;
 
 class RegisterPage extends StatefulWidget {
   @override
@@ -28,12 +28,8 @@ class _RegisterPageState extends State<RegisterPage> {
   String _password= ''; 
   bool isloading = false;
 
-
-
   @override
   Widget build(BuildContext context) {
-    
-
     final screenSize = MediaQuery.of(context).size;
     return Scaffold(
       body: GestureDetector(
@@ -98,7 +94,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                         icono: FontAwesomeIcons.user,
                                         onSaved: (value){ user.name = value;  },
                                         validator: (value){
-                                          if(RegExp(r'^[a-zA-Z0-9]+$').hasMatch(value)){
+                                          if(RegExp(r'^[A-Za-záéíóúÁÉÍÓÚ]+$').hasMatch(value)){
                                             return null;
                                           }
                                           return 'Nombre de usuario Invalido';
@@ -112,7 +108,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                         icono: FontAwesomeIcons.user,
                                         onSaved: (value) => user.lastName = value,
                                         validator: (value){
-                                          if(RegExp(r'^[a-zA-Z0-9]+$').hasMatch(value)){
+                                          if(RegExp(r'^[A-Za-záéíóúÁÉÍÓÚ]+$').hasMatch(value)){
                                             return null;
                                           }
                                           return 'Apellido de usuario Invalido';
@@ -134,7 +130,6 @@ class _RegisterPageState extends State<RegisterPage> {
                                       ),
                                       SizedBox(height: 10.0,),
                                       _separador(screenSize),
-
                                       InputWidget(
                                         label: 'Email', 
                                         icono: FontAwesomeIcons.envelope, 
@@ -149,11 +144,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                           return 'Ingrese un email valido';
                                         },
                                       ),
-
-                          
                                       SizedBox(height: 10.0,),
                                       _separador(screenSize), 
-
                                       InputWidget(
                                         label: 'Contraseña', 
                                         icono: FontAwesomeIcons.lock,
@@ -168,8 +160,6 @@ class _RegisterPageState extends State<RegisterPage> {
                                           return 'Ingrese una contraseña mayor a 6 caracteres'; 
                                         },
                                       ),
-                                      
-                                      
                                       SizedBox(height: 10.0,),
                                       _separador(screenSize), 
                                       InputWidget(
@@ -185,7 +175,6 @@ class _RegisterPageState extends State<RegisterPage> {
                                         },
                                       ), 
                                       SizedBox(height: 10.0,),
-
                                     ],
                                   ),
                                 ),
@@ -210,7 +199,6 @@ class _RegisterPageState extends State<RegisterPage> {
                   color: Colors.black26,
                   child: Icon(Icons.arrow_back, color: Colors.white,), 
                   onPressed: () => Navigator.pushReplacementNamed(context, 'login'),
-
                 ),
               )
             ), 
@@ -230,7 +218,7 @@ class _RegisterPageState extends State<RegisterPage> {
             MaterialButton(
               color: Color(0xFF0393A5),
               highlightColor: Colors.transparent,
-              splashColor: Tema.Colors.loginGradientEnd,
+              splashColor: Tema.OurColors.lightGreenishBlue,
               child: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 42.0),
                 child: Text(
@@ -246,7 +234,6 @@ class _RegisterPageState extends State<RegisterPage> {
                 _registrar();
               }
             ),
-          
             SizedBox(height: 15.0,),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -279,35 +266,25 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   _registrar() async{
-
     if(!formRegisterKey.currentState.validate()) return;
     if(isloading)return;
     formRegisterKey.currentState.save(); 
 
-    setState(() {
-      isloading = true; 
-    });
+    setState(() {isloading = true;});
 
-     Map info = await usuarioProvider.singUp(user.email, _password);
-
-
-    setState(() {
-      isloading = false; 
-    });
+    Map info = await usuarioProvider.singUp(user.email, _password);
+    
+    setState(() {isloading = false;});
 
     if(info['ok']){
       user.uid = prefs.uid; 
       usuarioProvider.userDb(user); 
-      Navigator.pushReplacementNamed(context, 'photo');
+      Navigator.pushNamed(context, 'photo', arguments: '');
     }else{
       mostrarAlerta(context, 'Error al registrar usuario', info['mensaje']); 
     }
   }
-
-
-
-
-
+  
   Widget _separador(Size screenSize){
     return Container(
       width: screenSize.width * 0.75,

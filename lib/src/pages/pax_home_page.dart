@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_carpooling/src/widgets/card_widget.dart';
 import 'package:flutter_carpooling/src/utils/colors.dart'  as Tema;
 
-class RouteListPage extends StatefulWidget {
+class PaxHomePage extends StatefulWidget {
 
   @override
-  _RouteListPageState createState() => _RouteListPageState();
+  _PaxHomePageState createState() => _PaxHomePageState();
 }
 
-class _RouteListPageState extends State<RouteListPage> {
+class _PaxHomePageState extends State<PaxHomePage> {
 
   TextEditingController searchController = new TextEditingController();
 
