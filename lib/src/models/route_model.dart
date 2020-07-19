@@ -22,7 +22,7 @@ class RouteModel {
     });
 
     String address;
-    Coordinates coordinates;
+    Locality coordinates;
     String idDriver;
     String hour;
     String idCar;
@@ -30,28 +30,28 @@ class RouteModel {
     String status;
 
     factory RouteModel.fromJson(Map<dynamic, dynamic> json) => RouteModel(
-        address: json["address"],
-        coordinates: Coordinates.fromJson(json["coordinates"]),
-        idDriver: json["id_driver"],
-        hour: json["hour"],
-        idCar: json["id_car"],
-        schedule: Schedule.fromJson(json["schedule"]),
-        status: json["status"],
+        address: json["address"] == null ? null : json["address"],
+        coordinates: json["coordinates"] == null ? null : Locality.fromJson(json["coordinates"]),
+        idDriver: json["id_driver"] == null ? null : json["id_driver"],
+        hour: json["hour"] == null ? null : json["hour"],
+        idCar: json["id_car"] == null ? null : json["id_car"],
+        schedule: json["schedule"] == null ? null : Schedule.fromJson(json["schedule"]),
+        status: json["status"] == null ? null : json["status"],
     );
 
     Map<String, dynamic> toJson() => {
-        "address": address,
-        "coordinates": coordinates.toJson(),
-        "id_driver": idDriver,
-        "hour": hour,
-        "id_car": idCar,
-        "schedule": schedule.toJson(),
-        "status": status,
+        "address": address == null ? null : address,
+        "coordinates": coordinates == null ? null : coordinates.toJson(),
+        "id_driver": idDriver == null ? null : idDriver,
+        "hour": hour == null ? null : hour,
+        "id_car": idCar == null ? null : idCar,
+        "schedule": schedule == null ? null : schedule.toJson(),
+        "status": status == null ? null : status,
     };
 }
 
-class Coordinates {
-    Coordinates({
+class Locality {
+    Locality({
         this.lat,
         this.lng,
     });
@@ -59,14 +59,14 @@ class Coordinates {
     double lat;
     double lng;
 
-    factory Coordinates.fromJson(Map<dynamic, dynamic> json) => Coordinates(
-        lat: json["lat"].toDouble(),
-        lng: json["lng"].toDouble(),
+    factory Locality.fromJson(Map<dynamic, dynamic> json) => Locality(
+        lat: json["lat"] == null ? null : json["lat"].toDouble(),
+        lng: json["lng"] == null ? null : json["lng"].toDouble(),
     );
 
     Map<String, dynamic> toJson() => {
-        "lat": lat,
-        "lng": lng,
+        "lat": lat == null ? null : lat,
+        "lng": lng == null ? null : lng,
     };
 }
 
@@ -90,22 +90,22 @@ class Schedule {
     bool wednesday;
 
     factory Schedule.fromJson(Map<dynamic, dynamic> json) => Schedule(
-        friday: json["friday"],
-        monday: json["monday"],
-        saturday: json["saturday"],
-        sunday: json["sunday"],
-        thursday: json["thursday"],
-        tuesday: json["tuesday"],
-        wednesday: json["wednesday"],
+        friday: json["friday"] == null ? null : json["friday"],
+        monday: json["monday"] == null ? null : json["monday"],
+        saturday: json["saturday"] == null ? null : json["saturday"],
+        sunday: json["sunday"] == null ? null : json["sunday"],
+        thursday: json["thursday"] == null ? null : json["thursday"],
+        tuesday: json["tuesday"] == null ? null : json["tuesday"],
+        wednesday: json["wednesday"] == null ? null : json["wednesday"],
     );
 
     Map<String, dynamic> toJson() => {
-        "friday": friday,
-        "monday": monday,
-        "saturday": saturday,
-        "sunday": sunday,
-        "thursday": thursday,
-        "tuesday": tuesday,
-        "wednesday": wednesday,
+        "friday": friday == null ? null : friday,
+        "monday": monday == null ? null : monday,
+        "saturday": saturday == null ? null : saturday,
+        "sunday": sunday == null ? null : sunday,
+        "thursday": thursday == null ? null : thursday,
+        "tuesday": tuesday == null ? null : tuesday,
+        "wednesday": wednesday == null ? null : wednesday,
     };
 }

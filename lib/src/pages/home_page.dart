@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_carpooling/src/pages/driver_home_.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:flutter_carpooling/src/pages/routes_list.dart';
 import 'package:flutter_carpooling/src/pages/profile_page.dart';
-import 'package:flutter_carpooling/src/style/theme.dart' as Tema;
+import 'package:flutter_carpooling/src/utils/colors.dart' as Colors;
 
 // homepage con el navigatorbar
 class HomePage extends StatefulWidget {
@@ -17,7 +17,8 @@ class _HomePageState extends State<HomePage> {
   // lista de widgets para mostrar en el apppbar
   final List<Widget> _children = [
     // mostrar pagina de las rutas
-    RouteListPage(),
+    // PaxHomePage(), home usuario
+    DriverHomePage(), // home pasajero
     // mostrar la pagina del perfil de usuario
     ProfilePage()
  ];
@@ -39,8 +40,8 @@ class _HomePageState extends State<HomePage> {
   Widget _bottomNavigator() {
     return Theme(
       data: Theme.of(context).copyWith(
-        canvasColor: Color(0xfff6f6f6),
-        primaryColor: Tema.Colors.loginGradientEnd
+        canvasColor: Colors.OurColors.grayishWhite,
+        primaryColor: Colors.OurColors.lightGreenishBlue
       ),
       child: BottomNavigationBar(
         onTap: (index) {

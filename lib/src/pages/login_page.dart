@@ -7,7 +7,7 @@ import 'package:flutter_carpooling/src/widgets/circle_widget.dart';
 import 'package:flutter_carpooling/src/widgets/input_widget.dart';
 import 'package:flutter_carpooling/src/widgets/loading_widget.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:flutter_carpooling/src/style/theme.dart' as Tema;
+import 'package:flutter_carpooling/src/utils/colors.dart' as Tema;
 
 class LoginPage extends StatefulWidget {
   @override
@@ -21,7 +21,6 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
   }
 
@@ -96,7 +95,6 @@ class _LoginPageState extends State<LoginPage> {
                   padding: EdgeInsets.all(10.0),
                   child: Column(
                     children: <Widget>[
-                      
                       StreamBuilder(
                         stream: loginBloc.emailStream ,
                         builder: (BuildContext context, AsyncSnapshot snapshot){
@@ -123,7 +121,6 @@ class _LoginPageState extends State<LoginPage> {
                           );
                         },
                       ),
-                      
                     ],
                   ),
                 ),
@@ -148,7 +145,7 @@ class _LoginPageState extends State<LoginPage> {
                 return MaterialButton(
                   color: Color(0xFF0393A5),
                   highlightColor: Colors.transparent,
-                  splashColor: Tema.Colors.loginGradientEnd,
+                  splashColor: Tema.OurColors.lightGreenishBlue,
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
                         vertical: 10.0, horizontal: 42.0),
