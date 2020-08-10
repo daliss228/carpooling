@@ -35,5 +35,15 @@ class PreferenciasUsuario {
     _prefs.setString('uid', value);
   }
 
+  // GET y SET del uid
+
+  get uidGroup{
+    return _prefs.getString('uid') ?? ''; 
+  }
+
+  set uidGroup( String value ){
+    _prefs.setString('uid', value);
+  }
+
 }
 

@@ -1,7 +1,3 @@
-// To parse this JSON data, do
-//
-//     final routeModel = routeModelFromJson(jsonString);
-
 import 'dart:convert';
 
 List<RouteModel> routeModelFromJsonToList(dynamic data) => List<RouteModel>.from(data.toList().map((x) => RouteModel.fromJson(x)));

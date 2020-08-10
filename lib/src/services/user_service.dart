@@ -9,11 +9,11 @@ class UsuarioService {
 
   final _prefs = PreferenciasUsuario();
   final FirebaseAuth _auth = FirebaseAuth.instance; 
-  final _dbRef = FirebaseDatabase.instance.reference(); 
+  final DBRef = FirebaseDatabase.instance.reference(); 
 
   Future<bool> userDb(UserModel user) async {
     try{
-      await _dbRef.child('users/${user.uid}').set(
+      await DBRef.child('users/${user.uid}').set(
         user.toJson()
       );
       return true; 
@@ -23,22 +23,18 @@ class UsuarioService {
     }   
   }
 
-// Funcion en desarrollo..... 
-
-  Future<bool> searchCi(String ci) async {
+  Future<dynamic> searchCi(String ci) async {
     try{
-      Query findCi = _dbRef.child('pending_users').orderByKey().equalTo(ci).limitToFirst(1);
-      print('==============================================================================');
-      print(findCi.onValue);
-      print('==============================================================================');
-      if(findCi != null){
-        return true;
+      DataSnapshot findCi = await DBRef.child('pending_users').orderByKey().equalTo(ci).once();
+      if(findCi.value != null){
+        _prefs.uidGroup = findCi.value[ci].toString(); 
+        return {'ok': true, 'uidGroup': findCi.value[ci]};
       }else{
-        return false;
+        return {'ok': false, 'mensaje': 'Al parecer tu CI no esta asociada con ningun grupo de vecinos, comunicate con el administrador de tu localidad.'};
       }
     } on PlatformException catch(e){
       print(e.message.toString());
-      return false;
+      return {'ok': false, 'mensaje': e.message.toString()};
     }
   }
 
@@ -50,7 +46,7 @@ class UsuarioService {
       return {'ok': true, 'user': user};
     } on PlatformException catch(e){
       print(e.message); 
-      return {'ok': false,'mensaje': e.message.toString()}; 
+      return {'ok': false, 'mensaje': e.message.toString()}; 
     }finally{
       if(user != null){
         user.getIdToken().then((token){
@@ -115,4 +111,7 @@ class UsuarioService {
     _auth.signOut(); 
   }
 
+  Future<void> deleteCi(String ci) async {
+    await DBRef.child('pending_users').remove();
+  }
 }
