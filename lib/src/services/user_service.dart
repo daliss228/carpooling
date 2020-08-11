@@ -30,7 +30,7 @@ class UsuarioService {
         _prefs.uidGroup = findCi.value[ci].toString(); 
         return {'ok': true, 'uidGroup': findCi.value[ci]};
       }else{
-        return {'ok': false, 'mensaje': 'Al parecer tu CI no esta asociada con ningun grupo de vecinos, comunicate con el administrador de tu localidad.'};
+        return {'ok': false, 'mensaje': 'Al parecer tu CI no esta asociada con ningún grupo de vecinos, comunícate con el administrador de tu localidad.'};
       }
     } on PlatformException catch(e){
       print(e.message.toString());

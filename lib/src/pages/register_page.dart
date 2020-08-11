@@ -101,7 +101,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                           if(RegExp(r'^[A-Za-záéíóúÁÉÍÓÚ]+$').hasMatch(value)){
                                             return null;
                                           }
-                                          return 'Nombre de usuario Invalido';
+                                          return 'Nombre de usuario invalido';
                                         },
                                       ),
                                       SizedBox(height: 10.0,),
@@ -115,7 +115,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                           if(RegExp(r'^[A-Za-záéíóúÁÉÍÓÚ]+$').hasMatch(value)){
                                             return null;
                                           }
-                                          return 'Apellido de usuario Invalido';
+                                          return 'Apellido de usuario invalido';
                                         },
                                       ),
                                       SizedBox(height: 10.0,),
@@ -129,7 +129,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                           if(utils.isNumeric(value) && value.length == 10){
                                             return null; 
                                           }
-                                          return 'La cedula ingresada no es valida';
+                                          return 'La cédula ingresada no es válida';
                                         },
                                       ),
                                       SizedBox(height: 10.0,),
@@ -146,7 +146,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                           if(regExp.hasMatch(value)){
                                             return null; 
                                           }
-                                          return 'Ingrese un email valido';
+                                          return 'Ingrese un email válido';
                                         },
                                       ),
 
@@ -163,7 +163,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                           if(utils.isNumeric(value) && value.length == 10){
                                             return null; 
                                           }
-                                          return 'El número ingresado no es valido';
+                                          return 'El número ingresado no es válido';
                                         },
                                       ),
                                       SizedBox(height: 10.0,),
