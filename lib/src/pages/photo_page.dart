@@ -53,7 +53,6 @@ class _PhotoPageState extends State<PhotoPage> with TickerProviderStateMixin{
   @override
   Widget build(BuildContext context) {
     _oldPhoto = ModalRoute.of(context).settings.arguments;
-    print(_oldPhoto);
     final _screenSize = MediaQuery.of(context).size; 
     return Scaffold(
       bottomNavigationBar: (_isLoading) ? BottomAppBar() : BottomAppBar(

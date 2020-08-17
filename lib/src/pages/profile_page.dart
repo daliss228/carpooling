@@ -130,9 +130,11 @@ class _ProfilePageState extends State<ProfilePage> {
           SpeedDialChild(
             child: Icon(Icons.drive_eta, color: Colors.deepPurple),
             backgroundColor: Colors.white,
-            label: 'Mi carro',
+            label: 'Mi auto',
             labelStyle: _styleFAB,
-            onTap: () => {},
+            onTap: () => {
+              Navigator.pushNamed(context, 'regAuto', arguments: false)
+            },
           ),
         ],
       ),

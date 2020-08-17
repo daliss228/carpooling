@@ -28,8 +28,12 @@ class _RegisterPageState extends State<RegisterPage> {
   String _password= ''; 
   bool isloading = false;
 
+
+
   @override
   Widget build(BuildContext context) {
+    
+
     final screenSize = MediaQuery.of(context).size;
     return Scaffold(
       body: GestureDetector(
@@ -97,7 +101,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                           if(RegExp(r'^[A-Za-záéíóúÁÉÍÓÚ]+$').hasMatch(value)){
                                             return null;
                                           }
-                                          return 'Nombre de usuario Invalido';
+                                          return 'Nombre de usuario invalido';
                                         },
                                       ),
                                       SizedBox(height: 10.0,),
@@ -111,7 +115,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                           if(RegExp(r'^[A-Za-záéíóúÁÉÍÓÚ]+$').hasMatch(value)){
                                             return null;
                                           }
-                                          return 'Apellido de usuario Invalido';
+                                          return 'Apellido de usuario invalido';
                                         },
                                       ),
                                       SizedBox(height: 10.0,),
@@ -125,11 +129,12 @@ class _RegisterPageState extends State<RegisterPage> {
                                           if(utils.isNumeric(value) && value.length == 10){
                                             return null; 
                                           }
-                                          return 'La cedula ingresada no es valida';
+                                          return 'La cédula ingresada no es válida';
                                         },
                                       ),
                                       SizedBox(height: 10.0,),
                                       _separador(screenSize),
+
                                       InputWidget(
                                         label: 'Email', 
                                         icono: FontAwesomeIcons.envelope, 
@@ -141,11 +146,29 @@ class _RegisterPageState extends State<RegisterPage> {
                                           if(regExp.hasMatch(value)){
                                             return null; 
                                           }
-                                          return 'Ingrese un email valido';
+                                          return 'Ingrese un email válido';
+                                        },
+                                      ),
+
+                          
+                                      SizedBox(height: 10.0,),
+                                      _separador(screenSize), 
+
+                                      InputWidget(
+                                        label: 'Teléfono', 
+                                        icono: FontAwesomeIcons.list,
+                                        inputType: TextInputType.number,
+                                        onSaved: (value) => user.phone = value,
+                                        validator: (value){
+                                          if(utils.isNumeric(value) && value.length == 10){
+                                            return null; 
+                                          }
+                                          return 'El número ingresado no es válido';
                                         },
                                       ),
                                       SizedBox(height: 10.0,),
-                                      _separador(screenSize), 
+                                      _separador(screenSize),
+
                                       InputWidget(
                                         label: 'Contraseña', 
                                         icono: FontAwesomeIcons.lock,
@@ -160,6 +183,8 @@ class _RegisterPageState extends State<RegisterPage> {
                                           return 'Ingrese una contraseña mayor a 6 caracteres'; 
                                         },
                                       ),
+                                      
+                                      
                                       SizedBox(height: 10.0,),
                                       _separador(screenSize), 
                                       InputWidget(
@@ -175,6 +200,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                         },
                                       ), 
                                       SizedBox(height: 10.0,),
+
                                     ],
                                   ),
                                 ),
@@ -199,6 +225,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   color: Colors.black26,
                   child: Icon(Icons.arrow_back, color: Colors.white,), 
                   onPressed: () => Navigator.pushReplacementNamed(context, 'login'),
+
                 ),
               )
             ), 
@@ -230,10 +257,14 @@ class _RegisterPageState extends State<RegisterPage> {
                   ),
                 ),
               ),
-              onPressed: (){
-                _registrar();
+              onPressed: ()async{
+                await _registrar();
+                setState(() {
+                  isloading = false;
+                });
               }
             ),
+          
             SizedBox(height: 15.0,),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -265,26 +296,39 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-  _registrar() async{
+  Future _registrar() async{
+    
     if(!formRegisterKey.currentState.validate()) return;
     if(isloading)return;
     formRegisterKey.currentState.save(); 
+    Map info;
+    setState(() {
+      isloading = true; 
+    });
 
-    setState(() {isloading = true;});
+    Map result = await usuarioProvider.searchCi(user.ci);
 
-    Map info = await usuarioProvider.singUp(user.email, _password);
-    
-    setState(() {isloading = false;});
+    if(result['ok']){
+     info = await usuarioProvider.singUp(user.email, _password);
+     user.uidGroup = result['uidGroup']; 
+    } else{
+      mostrarAlerta(context, 'Ups!', result['mensaje']); 
+      return; 
+    }
+
+    setState(() {
+      isloading = false; 
+    });
 
     if(info['ok']){
       user.uid = prefs.uid; 
       usuarioProvider.userDb(user); 
-      Navigator.pushNamed(context, 'photo', arguments: '');
+      Navigator.pushReplacementNamed(context, 'photo', arguments: '');
     }else{
-      mostrarAlerta(context, 'Error al registrar usuario', info['mensaje']); 
+      mostrarAlerta(context, 'Ups!', info['mensaje']); 
     }
   }
-  
+
   Widget _separador(Size screenSize){
     return Container(
       width: screenSize.width * 0.75,
