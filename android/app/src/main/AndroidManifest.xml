@@ -13,6 +13,9 @@
         android:largeHeap="true">
         <meta-data android:name="com.google.android.geo.API_KEY"
                android:value="AIzaSyDGTNY3kaJaonzA8idDWA4lbxLvWJQDlNg"/>
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"

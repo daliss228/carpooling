@@ -1,6 +1,5 @@
-
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_carpooling/src/models/user_model.dart';
 import 'package:flutter_carpooling/src/preferencias_usuario/user_prefs.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -9,11 +8,12 @@ class UsuarioService {
 
   final _prefs = PreferenciasUsuario();
   final FirebaseAuth _auth = FirebaseAuth.instance; 
-  final DBRef = FirebaseDatabase.instance.reference(); 
+  final dbRef = FirebaseDatabase.instance.reference(); 
 
   Future<bool> userDb(UserModel user) async {
+    user.status = true;
     try{
-      await DBRef.child('users/${user.uid}').set(
+      await dbRef.child('users/${user.uid}').set(
         user.toJson()
       );
       return true; 
@@ -25,7 +25,7 @@ class UsuarioService {
 
   Future<dynamic> searchCi(String ci) async {
     try{
-      DataSnapshot findCi = await DBRef.child('pending_users').orderByKey().equalTo(ci).once();
+      DataSnapshot findCi = await dbRef.child('pending_users').orderByKey().equalTo(ci).once();
       if(findCi.value != null){
         _prefs.uidGroup = findCi.value[ci].toString(); 
         return {'ok': true, 'uidGroup': findCi.value[ci]};
@@ -45,8 +45,10 @@ class UsuarioService {
       user = result.user;
       return {'ok': true, 'user': user};
     } on PlatformException catch(e){
-      print(e.message); 
-      return {'ok': false, 'mensaje': e.message.toString()}; 
+      if (e.code == "ERROR_EMAIL_ALREADY_IN_USE") {
+        return {'ok': false, 'mensaje': "Su email ya está en uso!"};
+      }
+      return {'ok': false, 'mensaje': e.message.toString()};
     }finally{
       if(user != null){
         user.getIdToken().then((token){
@@ -112,6 +114,6 @@ class UsuarioService {
   }
 
   Future<void> deleteCi(String ci) async {
-    await DBRef.child('pending_users').remove();
+    await dbRef.child('pending_users').remove();
   }
 }

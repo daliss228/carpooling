@@ -9,38 +9,42 @@ String routeModelToJson(RouteModel data) => json.encode(data.toJson());
 class RouteModel {
     RouteModel({
         this.address,
+        this.date,
+        this.group,
         this.coordinates,
-        this.idDriver,
+        this.driver,
         this.hour,
-        this.idCar,
         this.schedule,
         this.status,
     });
 
     String address;
+    String date;
+    String group;
     Locality coordinates;
-    String idDriver;
+    String driver;
     String hour;
-    String idCar;
     Schedule schedule;
-    String status;
+    bool status;
 
     factory RouteModel.fromJson(Map<dynamic, dynamic> json) => RouteModel(
         address: json["address"] == null ? null : json["address"],
+        date: json["date"] == null ? null : json["date"],
+        group: json["group"] == null ? null : json["group"],
         coordinates: json["coordinates"] == null ? null : Locality.fromJson(json["coordinates"]),
-        idDriver: json["id_driver"] == null ? null : json["id_driver"],
+        driver: json["id_driver"] == null ? null : json["id_driver"],
         hour: json["hour"] == null ? null : json["hour"],
-        idCar: json["id_car"] == null ? null : json["id_car"],
         schedule: json["schedule"] == null ? null : Schedule.fromJson(json["schedule"]),
         status: json["status"] == null ? null : json["status"],
     );
 
     Map<String, dynamic> toJson() => {
         "address": address == null ? null : address,
+        "date": date == null ? null : date,
+        "group" : group == null ? null : group,
         "coordinates": coordinates == null ? null : coordinates.toJson(),
-        "id_driver": idDriver == null ? null : idDriver,
+        "id_driver": driver == null ? null : driver,
         "hour": hour == null ? null : hour,
-        "id_car": idCar == null ? null : idCar,
         "schedule": schedule == null ? null : schedule.toJson(),
         "status": status == null ? null : status,
     };
@@ -58,12 +62,12 @@ class Locality {
     factory Locality.fromJson(Map<dynamic, dynamic> json) => Locality(
         lat: json["lat"] == null ? null : json["lat"].toDouble(),
         lng: json["lng"] == null ? null : json["lng"].toDouble(),
-    );
+      );
 
     Map<String, dynamic> toJson() => {
         "lat": lat == null ? null : lat,
         "lng": lng == null ? null : lng,
-    };
+      };
 }
 
 class Schedule {
