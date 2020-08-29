@@ -1,19 +1,21 @@
-
-import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:io';
 import 'package:flutter/services.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter_carpooling/src/utils/utils.dart';
 import 'package:flutter_carpooling/src/models/user_model.dart';
 import 'package:flutter_carpooling/src/preferencias_usuario/user_prefs.dart';
-import 'package:firebase_database/firebase_database.dart';
 
 class UsuarioService {
 
-  final _prefs = PreferenciasUsuario();
   final FirebaseAuth _auth = FirebaseAuth.instance; 
-  final DBRef = FirebaseDatabase.instance.reference(); 
+  final PreferenciasUsuario _prefs = PreferenciasUsuario();
+  final DatabaseReference _dbRef = FirebaseDatabase.instance.reference();
 
-  Future<bool> userDb(UserModel user) async {
+  Future<bool> userDbsaa(UserModel user) async {
     try{
-      await DBRef.child('users/${user.uid}').set(
+      await _dbRef.child('users/${user.uid}').set(
         user.toJson()
       );
       return true; 
@@ -25,7 +27,7 @@ class UsuarioService {
 
   Future<dynamic> searchCi(String ci) async {
     try{
-      DataSnapshot findCi = await DBRef.child('pending_users').orderByKey().equalTo(ci).once();
+      DataSnapshot findCi = await _dbRef.child('pending_users').orderByKey().equalTo(ci).once();
       if(findCi.value != null){
         _prefs.uidGroup = findCi.value[ci].toString(); 
         return {'ok': true, 'uidGroup': findCi.value[ci]};
@@ -33,7 +35,6 @@ class UsuarioService {
         return {'ok': false, 'mensaje': 'Al parecer tu CI no esta asociada con ningún grupo de vecinos, comunícate con el administrador de tu localidad.'};
       }
     } on PlatformException catch(e){
-      print(e.message.toString());
       return {'ok': false, 'mensaje': e.message.toString()};
     }
   }
@@ -45,7 +46,6 @@ class UsuarioService {
       user = result.user;
       return {'ok': true, 'user': user};
     } on PlatformException catch(e){
-      print(e.message); 
       return {'ok': false, 'mensaje': e.message.toString()}; 
     }finally{
       if(user != null){
@@ -109,9 +109,58 @@ class UsuarioService {
 
   Future<void> signOut() async {
     _auth.signOut(); 
+    _prefs.token = '';
+    _prefs.uid = '';
   }
 
   Future<void> deleteCi(String ci) async {
-    await DBRef.child('pending_users').remove();
+    await _dbRef.child('pending_users').remove();
   }
+
+}
+
+class UserService {
+
+  final PreferenciasUsuario _prefs = PreferenciasUsuario();
+  final DatabaseReference _dbRef = FirebaseDatabase.instance.reference(); 
+  final StorageReference _storeRef = FirebaseStorage(storageBucket: 'gs://dev-carpooling.appspot.com').ref();
+  
+  // Todo: cambiar a un archivo UserService independiente
+  Future<Map<String, dynamic>> readUser({driverUid}) async {
+
+    try {
+      final result = (await _dbRef.child("users").child((driverUid == null) ? _prefs.uid : driverUid).once()).value;
+      final user = UserModel.fromJson(result);
+      return {"ok": true, "value": user}; 
+    } catch(e) { 
+      return {"ok": false, "message": e.toString()}; 
+    }
+  }
+
+  Future<Map<String, dynamic>> uploadUser(String property, String value) async {
+    try {
+      _dbRef.child("users").child(_prefs.uid).update({property: value});
+      return {"ok": true}; 
+    } catch (e) {
+      return {"ok": false, "message": e.toString()}; 
+    }
+  }
+
+  Future<Map<String, dynamic>> uploadPhotoUser(String oldPhoto, File imageFile) async {
+    try {
+      if (oldPhoto.isNotEmpty) {
+        String nameImage = nameFromUrlPhoto(oldPhoto);
+        await _storeRef.child(nameImage).delete();
+      }
+      String filePath = "${DateTime.now()}.png";
+      StorageUploadTask uploadTask = _storeRef.child(filePath).putFile(imageFile);
+      StorageTaskSnapshot storageTaskSnapshot = await uploadTask.onComplete;
+      String downloadUrl = await storageTaskSnapshot.ref.getDownloadURL();
+      _dbRef.child("users").child(_prefs.uid).update({"photo": downloadUrl});
+      return {"ok": false, "message": "Uploaded image"}; 
+    } catch (e) {
+      return {"ok": false, "message": e.toString()}; 
+    }
+  }
+
 }

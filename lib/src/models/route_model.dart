@@ -1,48 +1,53 @@
 import 'dart:convert';
 
-List<RouteModel> routeModelFromJsonToList(dynamic data) => List<RouteModel>.from(data.toList().map((x) => RouteModel.fromJson(x)));
+import 'package:flutter_carpooling/src/models/user_model.dart';
+
+List<RouteModel> routeModelList(Map data) => List<RouteModel>.from(data.entries.map((x) => RouteModel.fromJson(x.value)));
 
 RouteModel routeModelFromJson(String str) => RouteModel.fromJson(json.decode(str));
 
 String routeModelToJson(RouteModel data) => json.encode(data.toJson());
 
 class RouteModel {
+
     RouteModel({
         this.address,
         this.coordinates,
-        this.idDriver,
+        this.driverUid,
         this.hour,
-        this.idCar,
         this.schedule,
         this.status,
+        this.driver,
+        this.users
     });
 
     String address;
     Locality coordinates;
-    String idDriver;
+    String driverUid;
     String hour;
-    String idCar;
     Schedule schedule;
-    String status;
+    bool status;
+    UserModel driver;
+    List<UserModel> users;
 
     factory RouteModel.fromJson(Map<dynamic, dynamic> json) => RouteModel(
         address: json["address"] == null ? null : json["address"],
         coordinates: json["coordinates"] == null ? null : Locality.fromJson(json["coordinates"]),
-        idDriver: json["id_driver"] == null ? null : json["id_driver"],
+        driverUid: json["id_driver"] == null ? null : json["id_driver"],
         hour: json["hour"] == null ? null : json["hour"],
-        idCar: json["id_car"] == null ? null : json["id_car"],
         schedule: json["schedule"] == null ? null : Schedule.fromJson(json["schedule"]),
         status: json["status"] == null ? null : json["status"],
+        users: json["users"] == null ? null : userModelList(json["users"])
     );
 
     Map<String, dynamic> toJson() => {
         "address": address == null ? null : address,
         "coordinates": coordinates == null ? null : coordinates.toJson(),
-        "id_driver": idDriver == null ? null : idDriver,
+        "id_driver": driverUid == null ? null : driverUid,
         "hour": hour == null ? null : hour,
-        "id_car": idCar == null ? null : idCar,
         "schedule": schedule == null ? null : schedule.toJson(),
         "status": status == null ? null : status,
+        "users": users == null ? null : List<dynamic>.from(users.map((x) => x.toJson())),
     };
 }
 

@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter_carpooling/src/models/car_model.dart';
 
+List<UserModel> userModelList(Map data) => List<UserModel>.from(data.entries.map((x) => UserModel.fromJson(x.value)));
+
 UserModel userModelFromJson(String str) => UserModel.fromJson(json.decode(str));
 
 String userModelToJson(UserModel data) => json.encode(data.toJson());
@@ -29,7 +31,7 @@ class UserModel {
     String uidGroup;
 
     factory UserModel.fromJson(Map<dynamic, dynamic> json) => UserModel(
-        // uid: json["uid"] == null ? null : json["uid"],
+        uid: json["uid"] == null ? null : json["uid"],
         car: json["car"] == null ? null : CarModel.fromJson(json["car"]),
         name: json["name"] == null ? null : json["name"],
         lastName: json["lastName"] == null ? null : json["lastName"],
@@ -41,7 +43,7 @@ class UserModel {
     );
 
     Map<String, dynamic> toJson() => {
-        // "uid": uid == null ? null : uid,
+        "uid": uid == null ? null : uid,
         "car": car == null ? null : car.toJson(),
         "name": name == null ? null : name,
         "lastName": lastName == null ? null : lastName,

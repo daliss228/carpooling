@@ -324,7 +324,7 @@ class _RouteRegisterPageState extends State<RouteRegisterPage> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
           Container(
-            padding: EdgeInsets.only(left: 15.0, right: 10.0),
+            padding: EdgeInsets.only(left: 15.0),
             child: CupertinoButton(
               padding: EdgeInsets.all(10.0),
               borderRadius: BorderRadius.circular(30.0),
