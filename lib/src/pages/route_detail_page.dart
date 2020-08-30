@@ -21,34 +21,38 @@ class RouteDetailPage extends StatefulWidget {
 class _RouteDetailPageState extends State<RouteDetailPage> {
 
   String useruid;
-  // bool _userResgister = false;
   RouteService _routeService = RouteService();
 
   @override
   Widget build(BuildContext context) {
     final _sizeScren = MediaQuery.of(context).size;
+    final _userRegister = verifyUserRegister(widget.route.users);
     return Scaffold(
       body: Stack(
         children: <Widget>[
-          Container(
-            width: _sizeScren.width,
-            height: _sizeScren.height * 0.45,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: FractionalOffset(0.0, 0.3),
-                end: FractionalOffset(0.0, 0.0),
-                colors:[OurColors.initialPurple, OurColors.finalPurple]
-              )
-            ),
-          ),
+          _background(_sizeScren),
           _descriptionDriver(_sizeScren),
           _photoDriver(_sizeScren),
           _map(_sizeScren),
           _tabBar(_sizeScren),
           _comebackButton(_sizeScren),
-          _suscribeButton(_sizeScren)
+          _suscribeButton(_sizeScren, _userRegister)
         ],
       )
+    );
+  }
+
+  Widget _background(_sizeScren) {
+    return Container(
+      width: _sizeScren.width,
+      height: _sizeScren.height * 0.45,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: FractionalOffset(0.0, 0.3),
+          end: FractionalOffset(0.0, 0.0),
+          colors:[OurColors.initialPurple, OurColors.finalPurple]
+        )
+      ),
     );
   }
 
@@ -210,10 +214,8 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
       ),
     );
   }
-
   
-
-  Widget _suscribeButton(_sizeScren){
+  Widget _suscribeButton(_sizeScren, _userRegister){
     return Positioned(
       bottom: 20.0,
       right: 10.0,
@@ -222,10 +224,15 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
           CupertinoButton(
             padding: EdgeInsets.all(10.0),
             borderRadius: BorderRadius.circular(30.0),
-            color: OurColors.lightGreenishBlue,
-            child: Icon(FontAwesomeIcons.clipboardCheck, color: Colors.white),
+            color: _userRegister ? Color(0XFFE90000) : OurColors.lightGreenishBlue,
+            child: Icon(_userRegister ? FontAwesomeIcons.solidWindowClose  : FontAwesomeIcons.clipboardCheck, color: Colors.white),
             onPressed: () async {
-              await _routeService.createRegisterUserRoute('uidroute');
+              if (_userRegister) {
+                await _routeService.canceleRegisterUserRoute(widget.route.uid);
+              } else {
+                await _routeService.createRegisterUserRoute(widget.route.uid);
+              }
+              Navigator.pushReplacementNamed(context, 'home');
             }
           ),
           Container(
@@ -241,7 +248,7 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
                 )
               ]
             ),
-            child: Text(verifyUserRegister(widget.route.users) ? 'Cancelar' : 'Registrarse', style: TextStyle(fontFamily: "WorkSansMedium", fontSize: 14.0, color: OurColors.darkGray))
+            child: Text(_userRegister ? 'Cancelar' : 'Registrarse', style: TextStyle(fontFamily: "WorkSansMedium", fontSize: 14.0, color: OurColors.darkGray))
           )
         ],
       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_carpooling/src/utils/colors.dart';
+import 'package:flutter_carpooling/src/widgets/loading_widget.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:keyboard_visibility/keyboard_visibility.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -49,7 +50,6 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
 
   @override
   void initState() {
-    getDataUser();
     // visibilidad del teclado, lo que hace es detectar la visibilidad 
     // del teclado si es true oculta el FAB y si es false muestra el FAB
     KeyboardVisibilityNotification().addNewListener(
@@ -70,7 +70,6 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
     super.dispose();
   }
 
-  
   @override
   bool get wantKeepAlive => true;
 
@@ -80,12 +79,31 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
     final _screenSize = MediaQuery.of(context).size; 
     return Scaffold(
       floatingActionButton: _keyboardOpen ? Container() : speedDial(_screenSize),
-      body: Stack(
-        children: <Widget>[
-          _header(_screenSize),
-          _body(_screenSize),
-          _camera(_screenSize)
-        ],
+      body: FutureBuilder(
+        future: _userService.readUser(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return LoadingWidget();
+          } else {
+            if (!snapshot.data["ok"]) {
+              return AlertWidget(title: "Error", message: snapshot.data["message"]);
+            } else {
+              _user = snapshot.data["value"];
+              _ciController.text = _user.ci;
+              _nameController.text = _user.name;
+              _emailController.text = _user.email;
+              _phoneController.text = _user.phone;
+              _lastnameController.text = _user.lastName;
+              return Stack(
+                children: <Widget>[
+                  _header(_screenSize),
+                  _body(_screenSize),
+                  _camera(_screenSize)
+                ],
+              );
+            }
+          }
+        }
       )
     ); 
   }
@@ -170,11 +188,7 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
             radius: 21.0,
             backgroundColor: Colors.black12,
             child: IconButton(
-              icon: Icon(
-                FontAwesomeIcons.camera,
-                color: OurColors.darkPurple,
-                size: 20.0,
-              ), 
+              icon: Icon(FontAwesomeIcons.camera, color: OurColors.darkPurple, size: 20.0), 
               onPressed: () => Navigator.pushNamed(context, 'photo', arguments: _user.photo),
             ),
           ),
@@ -186,21 +200,6 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
   Widget _header(Size _screenSize){
     return Stack(
       children: <Widget>[
-        // Container(
-        //   width: _screenSize.width,
-        //   height: _screenSize.height * 0.55,
-        //   decoration: BoxDecoration(
-        //     borderRadius: BorderRadius.only(
-        //       bottomLeft: Radius.circular(100.0), 
-        //     ),
-        //     gradient: LinearGradient(
-        //       colors: [
-        //         OurColors.lightBlue,
-        //         OurColors.lightGreenishBlue
-        //       ]
-        //     )
-        //   ),
-        // ),
         Positioned(
           width: _screenSize.width,
           height: (_screenSize.height * 0.30),
@@ -226,11 +225,7 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                 style: _styleText,
                 textCapitalization: TextCapitalization.sentences,
                 decoration: InputDecoration(
-                  icon: Icon(
-                    FontAwesomeIcons.user,
-                    color: OurColors.darkGray,
-                    size: 20.0,
-                  ),
+                  icon: Icon(FontAwesomeIcons.user, color: OurColors.darkGray, size: 20.0),
                   errorStyle: _styleErrorText
                 ),
                 validator: (value) {
@@ -275,11 +270,7 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                 style: _styleText,
                 textCapitalization: TextCapitalization.sentences,
                 decoration: InputDecoration(
-                  icon: Icon(
-                    FontAwesomeIcons.user,
-                    color: OurColors.darkGray,
-                    size: 20.0,
-                  ),
+                  icon: Icon(FontAwesomeIcons.user, color: OurColors.darkGray, size: 20.0),
                   errorStyle: _styleErrorText
                 ),
                 validator: (value) {
@@ -324,11 +315,7 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                 style: _styleText,
                 textCapitalization: TextCapitalization.sentences,
                 decoration: InputDecoration(
-                  icon: Icon(
-                    FontAwesomeIcons.mobileAlt,
-                    color: OurColors.darkGray,
-                    size: 20.0,
-                  ),
+                  icon: Icon(FontAwesomeIcons.mobileAlt, color: OurColors.darkGray, size: 20.0),
                   errorStyle: _styleErrorText,
                   counterText: null
                 ),
@@ -368,11 +355,7 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
         enabled: false,
         style: _styleText,
         decoration: InputDecoration(
-          icon: Icon(
-            FontAwesomeIcons.idCard,
-            color: OurColors.darkGray,
-            size: 20.0,
-          ),
+          icon: Icon(FontAwesomeIcons.idCard, color: OurColors.darkGray, size: 20.0),
         ),
       ),
     );
@@ -386,11 +369,7 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
         enabled: false,
         style: _styleText,
         decoration: InputDecoration(
-          icon: Icon(
-            FontAwesomeIcons.envelope,
-            color: OurColors.darkGray,
-            size: 20.0,
-          ),
+          icon: Icon(FontAwesomeIcons.envelope, color: OurColors.darkGray, size: 20.0),
         ),
       ),
     );
@@ -454,23 +433,13 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                   obscureText: _obscureTextPass,
                   style: _styleText,
                   decoration: InputDecoration(
-                    icon: Icon(
-                      FontAwesomeIcons.lock, 
-                      color: OurColors.darkGray,
-                      size: 20.0,
-                    ),
+                    icon: Icon(FontAwesomeIcons.lock, color: OurColors.darkGray,size: 20.0),
                     hintText: 'Nueva Contraseña',
                     hintStyle: _styleTextHint,
                     errorStyle: _styleErrorText,
                     suffixIcon: GestureDetector(
                       onTap: _showTextPass,
-                      child: Icon(
-                        _obscureTextPass
-                            ? FontAwesomeIcons.eye
-                            : FontAwesomeIcons.eyeSlash,
-                        size: 15.0,
-                        color: Colors.black,
-                      ),
+                      child: Icon(_obscureTextPass? FontAwesomeIcons.eye : FontAwesomeIcons.eyeSlash, size: 15.0, color: Colors.black),
                     ),
                   ),
                   validator: (value) {
@@ -536,23 +505,7 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
       ),
     );
   }
-
-  Future<void> getDataUser() async {
-    final result = await _userService.readUser();
-    if (result["ok"]) {
-      setState(() {
-        _user = result["value"];
-        _ciController.text = _user.ci;
-        _nameController.text = _user.name;
-        _emailController.text = _user.email;
-        _phoneController.text = _user.phone;
-        _lastnameController.text = _user.lastName;
-      });
-    } else {
-      mostrarAlerta(context, 'Ups', result["message"]);
-    }
-  }
-
+  
   Future<void> _saveInputName() async {
     if (_formKey1.currentState.validate()) {
       setState(() {

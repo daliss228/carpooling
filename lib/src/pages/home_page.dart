@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_carpooling/src/pages/pax_group_route_page.dart';
 import 'package:flutter_carpooling/src/utils/colors.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_carpooling/src/pages/profile_page.dart';
 import 'package:flutter_carpooling/src/pages/pax_home_page.dart';
 // import 'package:flutter_carpooling/src/pages/driver_home_page.dart';
+import 'package:flutter_carpooling/src/pages/pax_group_route_page.dart';
 
 // homepage con el navigatorbar
 class HomePage extends StatefulWidget {
@@ -21,7 +21,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   final PageStorageBucket _bucket = PageStorageBucket();
   final PageController _pageController = PageController(initialPage: 0, keepPage: true);
-  // lista de widgets para mostrar en el apppbar
   final List<Widget> _children = [
     // mostrar pagina de las rutas
     PaxHomePage(key: PageStorageKey('paxhome')), // home pasajero
@@ -37,11 +36,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     _animationController = AnimationController(vsync: this, duration: Duration(milliseconds: 500), );
     _animation = Tween(begin: 1.0, end: 1.08).animate(CurvedAnimation(curve: Curves.ease, parent: _animationController));
     _animationController.addListener(() {
-      print(_animationController.status);
     if (_animationController.status == AnimationStatus.completed){
       _animationController.reverse();
-    }
-    if (_animationController.status == AnimationStatus.dismissed){
+    } else if (_animationController.status == AnimationStatus.dismissed){
       _animationController.stop();
     }
     });
@@ -68,18 +65,14 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       body: SafeArea(
         child: PageStorage(
           bucket: _bucket,
-          child: buildPageView()
+          child: PageView(
+            physics: BouncingScrollPhysics(),
+            controller: _pageController,
+            onPageChanged: (index) => pageChanged(index),
+            children: _children
+          )
         )
       )
-    );
-  }
-
-  Widget buildPageView() {
-    return PageView(
-      physics: BouncingScrollPhysics(),
-      controller: _pageController,
-      onPageChanged: (index) => pageChanged(index),
-      children: _children
     );
   }
 
@@ -124,10 +117,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   void bottomTapped(int index) {
     setState(() {
       _currentIndex = index;
-      _pageController.animateToPage(
-        index, 
-        duration: Duration(milliseconds: 1000), curve: Curves.ease
-      );
+      _pageController.animateToPage(index, duration: Duration(milliseconds: 1000), curve: Curves.ease);
       _animationController.forward();
     });
   }

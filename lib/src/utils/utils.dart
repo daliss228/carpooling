@@ -8,6 +8,13 @@ bool isNumeric(String s){
   return (n == null) ? false: true;
 }
 
+bool atLeast1True(List<bool> days) {
+  for (var day in days) {
+    if (day == true) return true;
+  }
+  return false;
+}
+
 List<String> numAvalibleSeats(List<RouteModel> routes) {
   List<String> avalibleSeats = [];
   for (RouteModel route in routes) {
@@ -41,7 +48,6 @@ String stringSchedule(Schedule schedule) {
       stringDays += "Dom";
     } 
     if (stringDays.endsWith(" - ")) {
-      print('asd');
       stringDays = stringDays.replaceRange(stringDays.length - 3, stringDays.length, "");
     }
   return stringDays;
@@ -51,16 +57,16 @@ String nameFromUrlPhoto(String url) => url.replaceAll(RegExp(r'https://firebases
 
 bool verifyUserRegister(List<UserModel> users) {
   final PreferenciasUsuario _prefs = PreferenciasUsuario();
+  final String myUser = _prefs.uid;
   bool flag = false;
   if (users != null) {
-    for (var user in users) {
-      if (_prefs.uid == user.uid) {
+    for (UserModel user in users) {
+      if (myUser == user.uid) {
         flag = true;
         break;
       }
     }
   }
-  print(flag);
   return flag;
 }
   

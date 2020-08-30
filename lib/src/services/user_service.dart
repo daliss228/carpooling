@@ -13,7 +13,7 @@ class UsuarioService {
   final PreferenciasUsuario _prefs = PreferenciasUsuario();
   final DatabaseReference _dbRef = FirebaseDatabase.instance.reference();
 
-  Future<bool> userDbsaa(UserModel user) async {
+  Future<bool> userDb(UserModel user) async {
     try{
       await _dbRef.child('users/${user.uid}').set(
         user.toJson()
@@ -119,15 +119,14 @@ class UsuarioService {
 
 }
 
+// Todo: cambiar a un archivo UserService independiente
 class UserService {
 
   final PreferenciasUsuario _prefs = PreferenciasUsuario();
   final DatabaseReference _dbRef = FirebaseDatabase.instance.reference(); 
   final StorageReference _storeRef = FirebaseStorage(storageBucket: 'gs://dev-carpooling.appspot.com').ref();
   
-  // Todo: cambiar a un archivo UserService independiente
   Future<Map<String, dynamic>> readUser({driverUid}) async {
-
     try {
       final result = (await _dbRef.child("users").child((driverUid == null) ? _prefs.uid : driverUid).once()).value;
       final user = UserModel.fromJson(result);

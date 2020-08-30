@@ -1,9 +1,10 @@
 import 'dart:math' as math;
-
 import 'package:flutter/cupertino.dart';
 
 class Responsive{
+
   double width, height, inch; 
+
   Responsive(BuildContext context){
     final size = MediaQuery.of(context).size;
     width = size.width;
@@ -22,4 +23,5 @@ class Responsive{
   double ip(double percent){
     return inch * percent/100;
   }
+
 }
