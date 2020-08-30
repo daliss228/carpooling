@@ -1,3 +1,4 @@
+import 'package:google_maps_webservice/places.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter_carpooling/src/models/user_model.dart';
 import 'package:flutter_carpooling/src/models/route_model.dart';
@@ -5,9 +6,24 @@ import 'package:flutter_carpooling/src/services/user_service.dart';
 import 'package:flutter_carpooling/src/preferencias_usuario/user_prefs.dart';
 
 class RouteService {
+
   final UserService _userService = UserService();
   final PreferenciasUsuario _prefs = PreferenciasUsuario();
   final DatabaseReference _dbRef = FirebaseDatabase.instance.reference();
+  final GoogleMapsPlaces places = GoogleMapsPlaces(apiKey: "AIzaSyDGTNY3kaJaonzA8idDWA4lbxLvWJQDlNg");
+
+  Future<Map<String, dynamic>> searchRouteByText(String destino) async {
+    try {
+      final PlacesSearchResponse result = await places.searchByText(destino, location: Location(-0.198964, -78.505659), radius: 25000, language: 'es');
+      if (result.status == "OK") {
+        return {"ok": true, "value": result.results};
+      } else {
+        throw "Status code is different from OK";
+      }
+    } catch (e) {
+      return {"ok": false, "message": e.toString()};
+    }
+  }
 
   Future<Map> createRoute(RouteModel _route) async {
     try {

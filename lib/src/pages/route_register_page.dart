@@ -9,7 +9,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:flutter_carpooling/src/models/route_model.dart';
 import 'package:flutter_carpooling/src/widgets/alert_widget.dart';
 import 'package:flutter_carpooling/src/widgets/circle_widget.dart';
-import 'package:flutter_carpooling/src/utils/search_delegate.dart';
+import 'package:flutter_carpooling/src/utils/map_search_delegate.dart';
 import 'package:flutter_carpooling/src/widgets/loading_widget.dart';
 import 'package:flutter_carpooling/src/services/route_service.dart';
 import 'package:flutter_carpooling/src/preferencias_usuario/user_prefs.dart';
