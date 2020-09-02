@@ -1,22 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter_carpooling/src/utils/colors.dart';
+import 'package:flutter_carpooling/src/widgets/loading_widget.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:keyboard_visibility/keyboard_visibility.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_carpooling/src/models/user_model.dart';
-import 'package:flutter_carpooling/src/utils/colors.dart' as Theme;
 import 'package:flutter_carpooling/src/widgets/alert_widget.dart';
 import 'package:flutter_carpooling/src/services/user_service.dart';
-import 'package:flutter_carpooling/src/preferencias_usuario/user_prefs.dart';
 
 class ProfilePage extends StatefulWidget {
+
+  const ProfilePage({Key key}) : super(key: key);
 
   @override
   _ProfilePageState createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> {
+class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClientMixin {
   
   final TextEditingController _ciController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
@@ -26,13 +27,19 @@ class _ProfilePageState extends State<ProfilePage> {
   final TextEditingController _newPassController = TextEditingController();
   final TextEditingController _lastnameController = TextEditingController();
   
-  final TextStyle _styleTextHint = TextStyle(fontFamily: "WorkSansLight", fontSize: 17.0);
-  final TextStyle _styleErrorText = TextStyle(fontFamily: "WorkSansMedium", color: Color(0xffe81935));
+  final TextStyle _styleTextHint = TextStyle(fontFamily: "WorkSansLight", fontSize: 16.0);
+  final TextStyle _styleErrorText = TextStyle(fontFamily: "WorkSansMedium", color: Color(0XFFE81935));
   final TextStyle _styleFAB = TextStyle(fontFamily: "WorkSansLight", fontSize: 14.0, color: Colors.black);
-  final TextStyle _styleText = TextStyle(fontFamily: "WorkSansLight", fontSize: 17.0, color: Colors.black);
+  final TextStyle _styleText = TextStyle(fontFamily: "WorkSansLight", fontSize: 16.0, color: Colors.black);
   final TextStyle _styleEditText = TextStyle(fontFamily: "WorkSansMedium", color: Colors.black, fontSize: 10.0);
   
-  String _useruid;
+  final UserService _userService = UserService();
+  final UsuarioService _authService = UsuarioService();
+  final GlobalKey<FormState> _formKey1 = GlobalKey<FormState>();
+  final GlobalKey<FormState> _formKey2 = GlobalKey<FormState>();
+  final GlobalKey<FormState> _formKey3 = GlobalKey<FormState>();
+  final GlobalKey<FormState> _formKey4 = GlobalKey<FormState>();
+
   UserModel _user;
   bool _keyboardOpen = false;
   bool _obscureTextPass = true;
@@ -40,20 +47,9 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _activeEditName = false;
   bool _activeEditPhone = false;
   bool _activeEditLastname = false;
-  
-  final _prefs = new PreferenciasUsuario();
-  final _authService = new UsuarioService();
-  final _dbRef = FirebaseDatabase.instance.reference();
-
-  final _formKey1 = GlobalKey<FormState>();
-  final _formKey2 = GlobalKey<FormState>();
-  final _formKey3 = GlobalKey<FormState>();
-  final _formKey4 = GlobalKey<FormState>();
 
   @override
   void initState() {
-    _useruid = _prefs.uid.toString();
-    getDataUser();
     // visibilidad del teclado, lo que hace es detectar la visibilidad 
     // del teclado si es true oculta el FAB y si es false muestra el FAB
     KeyboardVisibilityNotification().addNewListener(
@@ -74,78 +70,89 @@ class _ProfilePageState extends State<ProfilePage> {
     super.dispose();
   }
 
-  Future<void> getDataUser() async {
-    final _result = (await _dbRef.child("users").child(_useruid).once()).value;
-    setState(() {
-      _user = UserModel.fromJson(_result);
-    });
-    _ciController.text = _user.ci;   
-    _nameController.text = _user.name;
-    _emailController.text = _user.email;
-    _phoneController.text = _user.phone;
-    _lastnameController.text = _user.lastName;
-  }
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final _screenSize = MediaQuery.of(context).size; 
     return Scaffold(
-      floatingActionButton: _keyboardOpen ? Container() : SpeedDial(
-        marginRight: 8,
-        marginBottom: 5,
-        animatedIcon: AnimatedIcons.menu_close,
-        animatedIconTheme: IconThemeData(size: 25.0, color: Theme.OurColors.lightGreenishBlue),
-        closeManually: false,
-        curve: Curves.bounceIn,
-        overlayColor: Colors.black,
-        overlayOpacity: 0.5,
-        tooltip: 'Opciones',
-        heroTag: 'speed-dial-hero-tag',
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0.0,
-        shape: CircleBorder(),
-        children: [
-          SpeedDialChild(
-            child: Icon(Icons.power_settings_new, color: Colors.red),
-            backgroundColor: Colors.white,
-            label: 'Cerrar Sesión',
-            labelStyle: _styleFAB,
-            onTap: () async {
-              await _authService.signOut();
-              setState(() {
-                _prefs.token = '';
-                _prefs.uid = '';
-              });
-              Navigator.pushReplacementNamed(context, 'login');
-            },
-          ),
-          SpeedDialChild(
-            child: Icon(Icons.account_circle, color: Colors.cyan),
-            backgroundColor: Colors.white,
-            label: 'Ser pasajero',
-            labelStyle: _styleFAB,
-            onTap: () {}
-          ),
-          SpeedDialChild(
-            child: Icon(Icons.drive_eta, color: Colors.deepPurple),
-            backgroundColor: Colors.white,
-            label: 'Mi auto',
-            labelStyle: _styleFAB,
-            onTap: () => {
-              Navigator.pushNamed(context, 'regAuto', arguments: false)
-            },
-          ),
-        ],
-      ),
-      body: Stack(
-        children: <Widget>[
-          _header(_screenSize),
-          _body(_screenSize),
-          _camera(_screenSize)
-        ],
+      floatingActionButton: _keyboardOpen ? Container() : speedDial(_screenSize),
+      body: FutureBuilder(
+        future: _userService.readUser(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return LoadingWidget();
+          } else {
+            if (!snapshot.data["ok"]) {
+              return AlertWidget(title: "Error", message: snapshot.data["message"]);
+            } else {
+              _user = snapshot.data["value"];
+              _ciController.text = _user.ci;
+              _nameController.text = _user.name;
+              _emailController.text = _user.email;
+              _phoneController.text = _user.phone;
+              _lastnameController.text = _user.lastName;
+              return Stack(
+                children: <Widget>[
+                  _header(_screenSize),
+                  _body(_screenSize),
+                  _camera(_screenSize)
+                ],
+              );
+            }
+          }
+        }
       )
     ); 
+  }
+
+  Widget speedDial(_screenSize) {
+    return SpeedDial(
+      marginRight: 8,
+      marginBottom: 2,
+      animatedIcon: AnimatedIcons.menu_close,
+      animatedIconTheme: IconThemeData(size: 25.0, color: OurColors.lightGreenishBlue),
+      closeManually: false,
+      curve: Curves.bounceIn,
+      overlayColor: Colors.black,
+      overlayOpacity: 0.5,
+      tooltip: 'Opciones',
+      heroTag: 'speed-dial-hero-tag',
+      backgroundColor: Colors.white,
+      foregroundColor: Colors.black,
+      elevation: 0.0,
+      shape: CircleBorder(),
+      children: [
+        SpeedDialChild(
+          child: Icon(Icons.power_settings_new, color: Color(0XFFE90000)),
+          backgroundColor: Colors.white,
+          label: 'Cerrar Sesión',
+          labelStyle: _styleFAB,
+          onTap: () async {
+            await _authService.signOut();
+            Navigator.pushReplacementNamed(context, 'login');
+          },
+        ),
+        SpeedDialChild(
+          child: Icon(Icons.account_circle, color: Color(0XFF00B900)),
+          backgroundColor: Colors.white,
+          label: 'Ser pasajero',
+          labelStyle: _styleFAB,
+          onTap: () {}
+        ),
+        SpeedDialChild(
+          child: Icon(Icons.drive_eta, color: Color(0XFF0000B9)),
+          backgroundColor: Colors.white,
+          label: 'Mi auto',
+          labelStyle: _styleFAB,
+          onTap: () => {
+            Navigator.pushNamed(context, 'regAuto', arguments: false)
+          },
+        ),
+      ],
+    );
   }
 
   // Widgets para los campos a recibir
@@ -160,7 +167,7 @@ class _ProfilePageState extends State<ProfilePage> {
             placeholder: AssetImage('assets/img/ripple-loading.gif'),
             height: 125.0,
             width: 125.0,
-            fit: BoxFit.contain,
+            fit: BoxFit.fill,
           )
           : Container()
         ),
@@ -181,11 +188,7 @@ class _ProfilePageState extends State<ProfilePage> {
             radius: 21.0,
             backgroundColor: Colors.black12,
             child: IconButton(
-              icon: Icon(
-                FontAwesomeIcons.camera,
-                color: Theme.OurColors.darkPurple,
-                size: 20.0,
-              ), 
+              icon: Icon(FontAwesomeIcons.camera, color: OurColors.darkPurple, size: 20.0), 
               onPressed: () => Navigator.pushNamed(context, 'photo', arguments: _user.photo),
             ),
           ),
@@ -197,21 +200,6 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget _header(Size _screenSize){
     return Stack(
       children: <Widget>[
-        Container(
-          width: _screenSize.width,
-          height: _screenSize.height * 0.55,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(100.0), 
-            ),
-            gradient: LinearGradient(
-              colors: [
-                Theme.OurColors.lightBlue,
-                Theme.OurColors.lightGreenishBlue
-              ]
-            )
-          ),
-        ),
         Positioned(
           width: _screenSize.width,
           height: (_screenSize.height * 0.30),
@@ -237,11 +225,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 style: _styleText,
                 textCapitalization: TextCapitalization.sentences,
                 decoration: InputDecoration(
-                  icon: Icon(
-                    FontAwesomeIcons.smile,
-                    color: Colors.black,
-                    size: 20.0,
-                  ),
+                  icon: Icon(FontAwesomeIcons.user, color: OurColors.darkGray, size: 20.0),
                   errorStyle: _styleErrorText
                 ),
                 validator: (value) {
@@ -258,7 +242,7 @@ class _ProfilePageState extends State<ProfilePage> {
             onTap: () => _saveInputName(),
             child: Column(
               children: !_activeEditName ? <Widget>[
-                Icon(Icons.edit, size: 18.0, color: Theme.OurColors.darkPurple),
+                Icon(Icons.edit, size: 18.0, color: OurColors.darkPurple),
                 Text('Editar', style: _styleEditText),
               ]
               : <Widget>[ 
@@ -286,11 +270,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 style: _styleText,
                 textCapitalization: TextCapitalization.sentences,
                 decoration: InputDecoration(
-                  icon: Icon(
-                    FontAwesomeIcons.smile,
-                    color: Colors.black,
-                    size: 20.0,
-                  ),
+                  icon: Icon(FontAwesomeIcons.user, color: OurColors.darkGray, size: 20.0),
                   errorStyle: _styleErrorText
                 ),
                 validator: (value) {
@@ -307,7 +287,7 @@ class _ProfilePageState extends State<ProfilePage> {
             onTap: () => _saveInputLastname(),
             child: Column(
               children: !_activeEditLastname ? <Widget>[
-                Icon(Icons.edit, size: 18.0, color: Theme.OurColors.darkPurple),
+                Icon(Icons.edit, size: 18.0, color: OurColors.darkPurple),
                 Text('Editar', style: _styleEditText),
               ]
               : <Widget>[ 
@@ -335,12 +315,9 @@ class _ProfilePageState extends State<ProfilePage> {
                 style: _styleText,
                 textCapitalization: TextCapitalization.sentences,
                 decoration: InputDecoration(
-                  icon: Icon(
-                    FontAwesomeIcons.mobileAlt,
-                    color: Colors.black,
-                    size: 20.0,
-                  ),
-                  errorStyle: _styleErrorText
+                  icon: Icon(FontAwesomeIcons.mobileAlt, color: OurColors.darkGray, size: 20.0),
+                  errorStyle: _styleErrorText,
+                  counterText: null
                 ),
                 validator: (value) {
                   if (RegExp(r'^[0-9]+$').hasMatch(value) && value.length == 10) {
@@ -356,7 +333,7 @@ class _ProfilePageState extends State<ProfilePage> {
             onTap: () => _saveInputPhone(),
             child: Column(
               children: !_activeEditPhone ? <Widget>[
-                Icon(Icons.edit, size: 18.0, color: Theme.OurColors.darkPurple),
+                Icon(Icons.edit, size: 18.0, color: OurColors.darkPurple),
                 Text('Editar', style: _styleEditText),
               ]
               : <Widget>[ 
@@ -378,11 +355,7 @@ class _ProfilePageState extends State<ProfilePage> {
         enabled: false,
         style: _styleText,
         decoration: InputDecoration(
-          icon: Icon(
-            FontAwesomeIcons.indent,
-            color: Colors.black,
-            size: 20.0,
-          ),
+          icon: Icon(FontAwesomeIcons.idCard, color: OurColors.darkGray, size: 20.0),
         ),
       ),
     );
@@ -396,11 +369,7 @@ class _ProfilePageState extends State<ProfilePage> {
         enabled: false,
         style: _styleText,
         decoration: InputDecoration(
-          icon: Icon(
-            FontAwesomeIcons.envelope,
-            color: Colors.black,
-            size: 20.0,
-          ),
+          icon: Icon(FontAwesomeIcons.envelope, color: OurColors.darkGray, size: 20.0),
         ),
       ),
     );
@@ -424,7 +393,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     decoration: InputDecoration(
                       icon: Icon(
                         FontAwesomeIcons.lock, 
-                        color: Colors.black,
+                        color: OurColors.darkGray,
                         size: 20.0,
                       ),
                       hintText: _activeEditPass ? 'Anterior Contraseña' : 'Mi Contraseña',
@@ -444,7 +413,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   onTap: () => _saveInputPass(),
                   child: Column(
                     children: !_activeEditPass ? <Widget>[
-                      Icon(Icons.edit, size: 18.0, color: Theme.OurColors.darkPurple),
+                      Icon(Icons.edit, size: 18.0, color: OurColors.darkPurple),
                       Text('Editar', style: _styleEditText),
                     ]
                     : <Widget>[ 
@@ -464,23 +433,13 @@ class _ProfilePageState extends State<ProfilePage> {
                   obscureText: _obscureTextPass,
                   style: _styleText,
                   decoration: InputDecoration(
-                    icon: Icon(
-                      FontAwesomeIcons.lock, 
-                      color: Colors.black,
-                      size: 20.0,
-                    ),
+                    icon: Icon(FontAwesomeIcons.lock, color: OurColors.darkGray,size: 20.0),
                     hintText: 'Nueva Contraseña',
                     hintStyle: _styleTextHint,
                     errorStyle: _styleErrorText,
                     suffixIcon: GestureDetector(
                       onTap: _showTextPass,
-                      child: Icon(
-                        _obscureTextPass
-                            ? FontAwesomeIcons.eye
-                            : FontAwesomeIcons.eyeSlash,
-                        size: 15.0,
-                        color: Colors.black,
-                      ),
+                      child: Icon(_obscureTextPass? FontAwesomeIcons.eye : FontAwesomeIcons.eyeSlash, size: 15.0, color: Colors.black),
                     ),
                   ),
                   validator: (value) {
@@ -511,17 +470,15 @@ class _ProfilePageState extends State<ProfilePage> {
         padding: EdgeInsets.symmetric(vertical: 15.0),
         child: Column(
           children: <Widget>[
-            SafeArea(
-              child: Container(
-                height: _screenSize.height * 0.25,
-              ),
+            Container(
+              height: _screenSize.height * 0.25,
             ),
             Container(
               width: _screenSize.width * 0.85,
               padding: EdgeInsets.symmetric(vertical: 20.0),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(50.0),
+                borderRadius: BorderRadius.circular(25.0),
                 boxShadow: <BoxShadow>[
                   BoxShadow(
                     color: Colors.black12,
@@ -548,47 +505,41 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
     );
   }
-
-  void _saveInputName(){
+  
+  Future<void> _saveInputName() async {
     if (_formKey1.currentState.validate()) {
       setState(() {
         _activeEditName = !_activeEditName;
       });
       if (!_activeEditName) {
-        _dbRef.child("users").child(_useruid).update({
-          "name": _nameController.text,
-        });
+        await _uploadUser("name", _nameController.text);
       } 
     }
   }
 
-  void _saveInputLastname(){
+  Future<void> _saveInputLastname() async {
     if (_formKey2.currentState.validate()) {
       setState(() {
         _activeEditLastname = !_activeEditLastname;
       });
       if (!_activeEditLastname) {
-        _dbRef.child("users").child(_useruid).update({
-          "lastName": _lastnameController.text,
-        });
+        await _uploadUser("lastName", _lastnameController.text);
       }
     }
   }
 
-  void _saveInputPhone(){
+  Future<void> _saveInputPhone() async {
     if (_formKey3.currentState.validate()) {
       setState(() {
         _activeEditPhone = !_activeEditPhone;
       });
       if (!_activeEditPhone) {
-        _dbRef.child("users").child(_useruid).update({
-          "phone": _phoneController.text,
-        });
+        await _uploadUser("phone", _phoneController.text);
       }
     }
   }
 
-  void _saveInputPass() async {
+  Future<void> _saveInputPass() async {
     if (_formKey4.currentState.validate()) { 
       setState(() {
         _activeEditPass = !_activeEditPass;
@@ -610,6 +561,11 @@ class _ProfilePageState extends State<ProfilePage> {
         });
       }
     }
+  }
+
+  Future<void> _uploadUser(String property, String value) async {
+    final result = await _userService.uploadUser(property, value);
+    if (!result["ok"]) mostrarAlerta(context, "Error", result["message"]);
   }
 
   void _showTextPass() {

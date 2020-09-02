@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-
-class InputWidget extends StatefulWidget {
+class InputWidget extends StatelessWidget {
+  
   final String label;
   final String errorLabel;
   final IconData icono;
@@ -14,36 +14,26 @@ class InputWidget extends StatefulWidget {
 
   const InputWidget({Key key, @required this.label, @required this.icono, this.obscureText = false, this.inputType = TextInputType.text, this.validator, this.onChanged, this.errorLabel, this.textCapitalization = TextCapitalization.none, this.onSaved}) : super(key: key); 
 
-
-  @override
-  _InputWidgetState createState() => _InputWidgetState();
-}
-
-class _InputWidgetState extends State<InputWidget> {
   @override
   Widget build(BuildContext context) {
     return TextFormField(
-      textCapitalization: widget.textCapitalization,
-      obscureText: widget.obscureText,
-      keyboardType: widget.inputType,
-      validator: widget.validator,
-      onChanged: widget.onChanged,
-      onSaved: widget.onSaved,
-      style: TextStyle(
-          fontFamily: "WorkSansSemiBold",
-          fontSize: 16.0,
-          color: Colors.black),
+      textCapitalization: textCapitalization,
+      obscureText: obscureText,
+      keyboardType: inputType,
+      validator: validator,
+      onChanged: onChanged,
+      onSaved: onSaved,
+      style: TextStyle(fontFamily: "WorkSansSemiBold", fontSize: 16.0, color: Colors.black),
       decoration: InputDecoration(
         border: InputBorder.none,
         icon: Icon(
-          widget.icono,
+          icono,
           color: Colors.black,
           size: 22.0,
         ),
-        hintText: widget.label,
-        hintStyle: TextStyle(
-            fontFamily: "WorkSansSemiBold", fontSize: 17.0),
-        errorText:widget.errorLabel,
+        hintText: label,
+        hintStyle: TextStyle(fontFamily: "WorkSansSemiBold", fontSize: 17.0),
+        errorText:errorLabel,
       ),
     );
   }

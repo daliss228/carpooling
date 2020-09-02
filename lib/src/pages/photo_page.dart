@@ -1,11 +1,12 @@
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_carpooling/src/widgets/alert_widget.dart';
+
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:flutter_carpooling/src/utils/colors.dart' as Theme;
+import 'package:flutter_carpooling/src/utils/colors.dart';
+import 'package:flutter_carpooling/src/services/user_service.dart';
 import 'package:flutter_carpooling/src/widgets/loading_widget.dart';
 import 'package:flutter_carpooling/src/preferencias_usuario/user_prefs.dart';
 
@@ -18,20 +19,18 @@ class PhotoPage extends StatefulWidget {
 class _PhotoPageState extends State<PhotoPage> with TickerProviderStateMixin{
   
   File _imageFile;
-  String _useruid;
+  String useruid;
   String _oldPhoto;
   bool _isLoading = false;
   bool _showAnimation = true;
   Animation _arrowAnimation;
-  AnimationController  _arrowAnimationController;
-  PreferenciasUsuario _prefs = PreferenciasUsuario();
-  DatabaseReference _dbRef = FirebaseDatabase.instance.reference();
-  FirebaseStorage _storage = FirebaseStorage(storageBucket: 'gs://dev-carpooling.appspot.com');
+  AnimationController _arrowAnimationController;
+  UserService _usuarioService = UserService();
 
   @override
   void initState() { 
-    super.initState();
-    _useruid = _prefs.uid.toString();
+    final _prefs = PreferenciasUsuario();
+    useruid = _prefs.uid;
     _arrowAnimationController = AnimationController(
         vsync: this, duration: Duration(milliseconds: 1200));
     _arrowAnimation = Tween(begin: 50.0, end: 70.0).animate(CurvedAnimation(
@@ -42,6 +41,7 @@ class _PhotoPageState extends State<PhotoPage> with TickerProviderStateMixin{
       }
     });
     _arrowAnimationController.forward();
+    super.initState();
   }
 
   @override
@@ -71,7 +71,7 @@ class _PhotoPageState extends State<PhotoPage> with TickerProviderStateMixin{
                 });
                 _pickImage(ImageSource.camera);
               },
-              color: Theme.OurColors.lightGreenishBlue,
+              color: OurColors.lightGreenishBlue,
             ),
             IconButton(
               icon: Icon(
@@ -84,7 +84,7 @@ class _PhotoPageState extends State<PhotoPage> with TickerProviderStateMixin{
                 });
                 _pickImage(ImageSource.gallery);
               },
-              color: Theme.OurColors.lightGreenishBlue,
+              color: OurColors.lightGreenishBlue,
             ),
           ],
         ),
@@ -107,7 +107,7 @@ class _PhotoPageState extends State<PhotoPage> with TickerProviderStateMixin{
         SizedBox(height: _screenSize.height * 0.68),
         Padding(
           padding: EdgeInsets.all(20.0),
-          child: Text("Agrega tu foto: \nCámara o galería?", textAlign: TextAlign.center, style: TextStyle(color: Theme.OurColors.lightGreenishBlue, fontSize: 17.0, fontFamily: "WorkSansBold")),
+          child: Text("Agrega tu foto: \nCámara o galería?", textAlign: TextAlign.center, style: TextStyle(color: OurColors.lightGreenishBlue, fontSize: 17.0, fontFamily: "WorkSansBold")),
         ),
         _arrowDownAnimation()
       ] 
@@ -148,7 +148,7 @@ class _PhotoPageState extends State<PhotoPage> with TickerProviderStateMixin{
         return Container(
           child: Icon(
             FontAwesomeIcons.arrowDown,
-            color: Theme.OurColors.darkPurple,
+            color: OurColors.darkPurple,
             size: _arrowAnimation.value,
           ),
         );
@@ -162,7 +162,7 @@ class _PhotoPageState extends State<PhotoPage> with TickerProviderStateMixin{
         margin: EdgeInsets.only(top: 10.0),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.all(Radius.circular(5.0)),
-          color: Theme.OurColors.lightGreenishBlue,
+          color: OurColors.lightGreenishBlue,
           boxShadow: <BoxShadow>[
             BoxShadow(
               color: Colors.black45,
@@ -173,12 +173,12 @@ class _PhotoPageState extends State<PhotoPage> with TickerProviderStateMixin{
         ),
         child: MaterialButton(
           highlightColor: Colors.transparent,
-          splashColor: Theme.OurColors.lightGreenishBlue,
+          splashColor: OurColors.lightGreenishBlue,
           child: Padding(
             padding: EdgeInsets.symmetric(horizontal: 42.0),
             child: Text("Continuar", style: TextStyle(color: Colors.white, fontSize: 16.0, fontFamily: "WorkSansBold")),
           ),
-          onPressed: _startUpload,
+          onPressed: _uploadPhotoUser,
         ),
       ),
     );
@@ -193,32 +193,18 @@ class _PhotoPageState extends State<PhotoPage> with TickerProviderStateMixin{
   }
 
   // subir la url de la imagen al realtime
-  Future<void> _startUpload() async {
-    StorageReference storageReference = _storage.ref();
-    try {
-      setState(() {
+  Future<void> _uploadPhotoUser() async {
+    setState(() {
         _isLoading = true;
-      });
-      if (_oldPhoto.isNotEmpty) {
-        String nameImage = _oldPhoto
-        .replaceAll(RegExp(r'https://firebasestorage.googleapis.com/v0/b/dev-carpooling.appspot.com/o/'), '').replaceAll('%20', ' ').replaceAll('%3A', ':').split('?')[0];
-        print(nameImage);
-        await storageReference.child(nameImage).delete().then((_) => print('Successfully deleted $nameImage storage item' ));
-      }
-      String filePath = "${DateTime.now()}.png";
-      StorageUploadTask uploadTask = storageReference.child(filePath).putFile(_imageFile);
-      StorageTaskSnapshot storageTaskSnapshot = await uploadTask.onComplete;
-      String downloadUrl = await storageTaskSnapshot.ref.getDownloadURL();
-      _dbRef.child("users").child(_useruid).update({
-        "photo": downloadUrl,
-      });
-      if (_oldPhoto.isNotEmpty) {
-        Navigator.pushReplacementNamed(context, 'home');
-      } else {
-        Navigator.pushReplacementNamed(context, 'mode');
-      }
-    } catch (error) {
-      print(error);
+    });
+    Map result = await _usuarioService.uploadPhotoUser(_oldPhoto, _imageFile);
+    if (!result["ok"]) {
+      mostrarAlerta(context, 'Error', result["message"]);
+    }
+    if (_oldPhoto.isNotEmpty) {
+      Navigator.pushReplacementNamed(context, 'home');
+    } else {
+      Navigator.pushReplacementNamed(context, 'mode');
     }
   }
 

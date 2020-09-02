@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 class CircleWidget extends StatelessWidget {
+  
   final double radius; 
   final List<Color> colors;
 

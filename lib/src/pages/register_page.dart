@@ -122,7 +122,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                       _separador(screenSize),
                                       InputWidget(
                                         label: 'Cédula', 
-                                        icono: FontAwesomeIcons.list,
+                                        icono: FontAwesomeIcons.idCard,
                                         inputType: TextInputType.number,
                                         onSaved: (value) => user.ci = value,
                                         validator: (value){
