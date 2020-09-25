@@ -1,11 +1,15 @@
+import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter_carpooling/src/utils/responsive.dart';
 import 'package:flutter_carpooling/src/utils/utils.dart';
 import 'package:flutter_carpooling/src/models/route_model.dart';
+import 'package:flutter_carpooling/src/widgets/background_widget.dart';
 import 'package:flutter_carpooling/src/widgets/card_widget.dart';
 import 'package:flutter_carpooling/src/widgets/alert_widget.dart';
 import 'package:flutter_carpooling/src/services/route_service.dart';
 import 'package:flutter_carpooling/src/widgets/loading_widget.dart';
+import 'package:flutter_carpooling/src/utils/colors.dart' as Tema;
 
 class PaxHomePage extends StatefulWidget {
 
@@ -25,12 +29,67 @@ class _PaxHomePageState extends State<PaxHomePage> with AutomaticKeepAliveClient
 
   @override
   Widget build(BuildContext context) {
-    // final _screenSize = MediaQuery.of(context).size;
+    final _responsiveScreen = new Responsive(context); 
     super.build(context);
     return Scaffold(
       body: Stack(
         children: <Widget>[
-          _listRoutes()
+          _backGround(_responsiveScreen),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 20),
+            child: CustomScrollView(
+              slivers: [
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Column(
+                    children: [
+                      SizedBox(height: _responsiveScreen.hp(3),),
+                      Row(
+                        children: [
+                          Expanded(child: Container()),
+                          FadeInRight(
+                            child: Text(
+                              'Mis Rutas', 
+                              style: TextStyle(fontSize: _responsiveScreen.ip(4), fontFamily: 'WorkSansLight'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      
+                    ],
+                  ),
+                )
+              ],
+            ), 
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _backGround(Responsive _responsiveScreen){
+    return Container(
+      height: _responsiveScreen.hp(100),
+      width: _responsiveScreen.wp(100),
+      child: Stack(
+        children: [
+          Positioned(
+              right: _responsiveScreen.wp(75),
+              child: FadeInLeft(child: BackgoundWidget(colors: [Tema.OurColors.lightBlue, Tema.OurColors.lightGreenishBlue], sizeWidget: _responsiveScreen.hp(34),))
+            ),
+            Positioned(
+              top: _responsiveScreen.hp(1),
+              right: _responsiveScreen.wp(75),
+              child: FadeInLeft(
+                 delay: Duration(milliseconds: 500),
+                child: BackgoundWidget(sizeWidget: _responsiveScreen.hp(30), colors: [Tema.OurColors.initialPurple, Tema.OurColors.finalPurple],)
+              )
+            ),
+            Positioned(
+              top: _responsiveScreen.hp(70),
+              left: _responsiveScreen.wp(75),
+              child: FadeInRight(child: BackgoundWidget(colors: [Tema.OurColors.lightBlue, Tema.OurColors.lightGreenishBlue], sizeWidget: _responsiveScreen.hp(30),))
+            ),
         ],
       ),
     );

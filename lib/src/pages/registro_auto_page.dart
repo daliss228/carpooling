@@ -1,9 +1,10 @@
+import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 
 import 'package:flutter_carpooling/src/models/car_model.dart';
-import 'package:flutter_carpooling/src/preferencias_usuario/user_prefs.dart';
 import 'package:flutter_carpooling/src/services/car_service.dart';
+import 'package:flutter_carpooling/src/user_preferences/user_prefs.dart';
 import 'package:flutter_carpooling/src/utils/responsive.dart';
 import 'package:flutter_carpooling/src/widgets/loading_widget.dart';
 import 'package:flutter_carpooling/src/utils/colors.dart' as Tema;
@@ -26,7 +27,7 @@ final TextEditingController _registryEdtCtr = TextEditingController();
   final TextStyle _styleHint = TextStyle(fontFamily: "WorkSansLight", fontSize: 17.0, fontWeight: FontWeight.w300, color: Colors.black);
   final formRegisterAutoKey = GlobalKey<FormState>();
   final carProvider = new CarService(); 
-  final prefs = new PreferenciasUsuario();
+  final prefs = new UserPreferences();
   final car = new CarModel();
   String uid; 
   bool _argument;
@@ -105,7 +106,6 @@ final TextEditingController _registryEdtCtr = TextEditingController();
               ),
             )
           ),
-
           !_argument? Positioned(
               left: responsiveScreen.wp(2),
               top: responsiveScreen.wp(2),
@@ -154,12 +154,14 @@ final TextEditingController _registryEdtCtr = TextEditingController();
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           SizedBox(height: responsiveScreen.hp(4),),
-          Text('Tu automóvil', style: TextStyle(fontSize: responsiveScreen.ip(4), fontFamily: 'WorkSansSemiBold', fontWeight: FontWeight.w300, color: Colors.white), ),
+          FadeInLeft(child: Text('Tu automóvil', style: TextStyle(fontSize: responsiveScreen.ip(4), fontFamily: 'WorkSansLight', color: Colors.white), )),
           SizedBox(height: responsiveScreen.hp(1),),
-          Text(
-            'No olvides registrar correctamente la información de tu automóvil.',
-            style: TextStyle(fontSize: responsiveScreen.ip(1.6) , fontWeight: FontWeight.w300, color: Colors.white),
-            textAlign: TextAlign.justify,
+          FadeInLeft(
+            child: Text(
+              'No olvides registrar correctamente la información de tu automóvil.',
+              style: TextStyle(fontSize: responsiveScreen.ip(1.6) , fontWeight: FontWeight.w300, color: Colors.white),
+              textAlign: TextAlign.justify,
+            ),
           )
         ],
       ),
@@ -188,7 +190,7 @@ final TextEditingController _registryEdtCtr = TextEditingController();
   Widget _formulario(Size screenSize, Responsive responsiveScreen, int groupRadioButtons){
     double heightSize = screenSize.height - (screenSize.height * 0.25) - MediaQuery.of(context).padding.top;
     return Container(
-      height: heightSize,
+      height:  heightSize,
       width: double.infinity,
       padding: EdgeInsets.only(top: responsiveScreen.hp(3), left: 40.0, right: 40.0),
       decoration: BoxDecoration(
@@ -198,25 +200,28 @@ final TextEditingController _registryEdtCtr = TextEditingController();
       child: SafeArea(
         child: Form(
           key: formRegisterAutoKey,
-          child: Column(
-            children: <Widget>[
-              _placa(), 
-              SizedBox(height: responsiveScreen.hp(1),),
-              _separador(screenSize),
-              _marca(), 
-              SizedBox(height: responsiveScreen.hp(1),),
-              _separador(screenSize),
-              _modelo(), 
-              SizedBox(height: responsiveScreen.hp(1),),
-              _separador(screenSize),
-              _numAsientos(responsiveScreen), 
-              SizedBox(height: responsiveScreen.hp(1),),
-              _separador(screenSize),
-              SizedBox(height: responsiveScreen.hp(2),),
-              _color(groupRadioButtons),
-              SizedBox(height: responsiveScreen.hp(3),),
-              _btnReg(responsiveScreen)
-            ],
+          child: FadeIn(
+            duration: Duration(milliseconds: 2000),
+            child: Column(
+              children: <Widget>[
+                _placa(), 
+                SizedBox(height: responsiveScreen.hp(1),),
+                _separador(screenSize),
+                _marca(), 
+                SizedBox(height: responsiveScreen.hp(1),),
+                _separador(screenSize),
+                _modelo(), 
+                SizedBox(height: responsiveScreen.hp(1),),
+                _separador(screenSize),
+                _numAsientos(responsiveScreen), 
+                SizedBox(height: responsiveScreen.hp(1),),
+                _separador(screenSize),
+                SizedBox(height: responsiveScreen.hp(2),),
+                _color(groupRadioButtons),
+                SizedBox(height: responsiveScreen.hp(3),),
+                _btnReg(responsiveScreen)
+              ],
+            ),
           ),
         ),
       ),
@@ -487,7 +492,7 @@ final TextEditingController _registryEdtCtr = TextEditingController();
     setState(() {
       isloading = false;
     });
-    Navigator.pushNamed(context, 'home'); 
+    Navigator.pushReplacementNamed(context, 'selectMode'); 
 
   }
 

@@ -1,16 +1,23 @@
+import 'dart:async';
+
+import 'package:flutter/services.dart';
+import 'package:flutter_carpooling/src/services/transformers/route_in_my_group_data_transform.dart';
 import 'package:google_maps_webservice/places.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter_carpooling/src/models/user_model.dart';
 import 'package:flutter_carpooling/src/models/route_model.dart';
 import 'package:flutter_carpooling/src/services/user_service.dart';
-import 'package:flutter_carpooling/src/preferencias_usuario/user_prefs.dart';
+import 'package:flutter_carpooling/src/user_preferences/user_prefs.dart';
 
-class RouteService {
+class RouteService with RouteInMyGroupTransformer {
 
   final UserService _userService = UserService();
-  final PreferenciasUsuario _prefs = PreferenciasUsuario();
+  final UserPreferences _prefs = UserPreferences();
   final DatabaseReference _dbRef = FirebaseDatabase.instance.reference();
   final GoogleMapsPlaces places = GoogleMapsPlaces(apiKey: "AIzaSyDGTNY3kaJaonzA8idDWA4lbxLvWJQDlNg");
+
+  int limitData = 0;
+  int limitDataCompare = -20;
 
   Future<Map<String, dynamic>> searchRouteByText(String destino) async {
     try {
@@ -102,4 +109,77 @@ class RouteService {
     }
   }
 
+  // Start STREAM ---- readMyRegisteredRoutes
+
+  List<RouteModel> _myCreatedRoutes = new List();
+
+  final _myCreatedRoutesStream = StreamController<List<RouteModel>>.broadcast();
+
+  Function(List<RouteModel>) get myCreatedRouteSink => _myCreatedRoutesStream.sink.add;
+  Stream <List<RouteModel>> get myCreatedRouteStream => _myCreatedRoutesStream.stream; 
+
+  // End STREAM ---- readMyRegisteredRoutes
+
+  Future<Map<String, dynamic>> myCreatedRoutes() async {
+    try{
+      limitData += 20; 
+      final resp = await _dbRef.child('routes').orderByChild('id_driver').equalTo(_prefs.uid).limitToLast(limitData).once();
+      if(resp.value == null) throw FormatException('No tienes rutas registradas.');
+      
+      final myCreatedRoutes = routeModelList(resp.value);
+      _myCreatedRoutes.addAll(myCreatedRoutes);
+      final uidMap = _myCreatedRoutes.map((e) => e.uid).toSet();
+      _myCreatedRoutes.retainWhere((element) => uidMap.remove(element.uid)); 
+      myCreatedRouteSink(_myCreatedRoutes);
+      return {"ok": true};  
+    }on PlatformException catch (e){
+      return {"ok": false}; 
+    }on FormatException catch (e){
+      limitData -= 20; 
+      _myCreatedRoutes.addAll([]);
+      myCreatedRouteSink(_myCreatedRoutes);
+      return {"ok": false};
+    }
+  }
+
+  // Start STREAM ---- 
+
+  List<RouteModel> _routesInMyGroup = new List();
+
+  final _routesInMyGroupStream = StreamController<List<RouteModel>>.broadcast(); 
+
+  Function(List<RouteModel>) get routesInMyGroupSink => _routesInMyGroupStream.sink.add;
+  Stream <List<RouteModel>> get routesInMyGroupStream => _routesInMyGroupStream.stream.transform(validateRoutesInMyGroup);
+  
+  // End STREAM ----
+
+  Future<Map<String, dynamic>> routesInMyGroup() async {
+    try{
+      
+      limitData += 20; 
+      limitDataCompare += 20; 
+      final resp = await _dbRef.child('routes').orderByChild('group').equalTo(_prefs.uidGroup).limitToLast(limitData).once();
+      if(resp.value == null) throw FormatException('No tienes rutas registradas.');
+      final routesInMyGroup = routeModelList(resp.value);
+      _routesInMyGroup.addAll(routesInMyGroup);
+      final uidMap = _routesInMyGroup.map((e) => e.uid).toSet();
+      _routesInMyGroup.retainWhere((element) => uidMap.remove(element.uid)); 
+      routesInMyGroupSink(_routesInMyGroup);
+      return {"ok": true}; 
+    }on PlatformException catch (e){
+      return {"ok" : false};
+    }on FormatException catch (e){
+      limitDataCompare -= 20;
+      limitData -= 20; 
+      _routesInMyGroup.addAll([]);
+      routesInMyGroupSink(_routesInMyGroup);
+      return {"ok": false};
+    }
+  }
+
+  // STREAMS Dispose
+  void disposeStreams(){
+    _myCreatedRoutesStream?.close(); 
+    _routesInMyGroupStream?.close();
+  }
 }

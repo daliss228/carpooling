@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_carpooling/src/models/user_model.dart';
+import 'package:flutter_carpooling/src/models/locality_model.dart';
 
 List<RouteModel> routeModelList(Map data) => List<RouteModel>.from(data.entries.map((x) => RouteModel.fromJson(x.value)));
 
@@ -32,6 +33,7 @@ class RouteModel {
   String driverUid;
   String hour;
   Schedule schedule;
+  double distance;
   bool status;
   UserModel driver;
   List<UserModel> users;
@@ -60,26 +62,6 @@ class RouteModel {
     "schedule": schedule == null ? null : schedule.toJson(),
     "status": status == null ? null : status,
     "users": users == null ? null : List<dynamic>.from(users.map((x) => x.toJson())),
-  };
-}
-
-class Locality {
-  Locality({
-    this.lat,
-    this.lng,
-  });
-
-  double lat;
-  double lng;
-
-  factory Locality.fromJson(Map<dynamic, dynamic> json) => Locality(
-    lat: json["lat"] == null ? null : json["lat"].toDouble(),
-    lng: json["lng"] == null ? null : json["lng"].toDouble(),
-  );
-
-  Map<String, dynamic> toJson() => {
-    "lat": lat == null ? null : lat,
-    "lng": lng == null ? null : lng,
   };
 }
 

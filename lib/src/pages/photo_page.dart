@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_carpooling/src/providers/user_provider/user_provider.dart';
+import 'package:flutter_carpooling/src/user_preferences/user_prefs.dart';
 import 'package:flutter_carpooling/src/widgets/alert_widget.dart';
 
 import 'package:image_picker/image_picker.dart';
@@ -8,11 +10,10 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_carpooling/src/utils/colors.dart';
 import 'package:flutter_carpooling/src/services/user_service.dart';
 import 'package:flutter_carpooling/src/widgets/loading_widget.dart';
-import 'package:flutter_carpooling/src/preferencias_usuario/user_prefs.dart';
+import 'package:provider/provider.dart';
 
 // pagina para capturar o elegir la imagen
 class PhotoPage extends StatefulWidget {
-  
   createState() => _PhotoPageState();
 }
 
@@ -29,7 +30,7 @@ class _PhotoPageState extends State<PhotoPage> with TickerProviderStateMixin{
 
   @override
   void initState() { 
-    final _prefs = PreferenciasUsuario();
+    final _prefs = UserPreferences();
     useruid = _prefs.uid;
     _arrowAnimationController = AnimationController(
         vsync: this, duration: Duration(milliseconds: 1200));
@@ -93,14 +94,14 @@ class _PhotoPageState extends State<PhotoPage> with TickerProviderStateMixin{
       ? LoadingWidget()
       : Stack(
         children: <Widget>[
-          _body(_screenSize),
+          _body(_screenSize, context),
           (_oldPhoto.isNotEmpty) ? _buttonComeback() : Container(),
         ],
       )
     );
   }
 
-  Widget _body(Size _screenSize) {
+  Widget _body(Size _screenSize, BuildContext context) {
     return ListView(
       children: (_showAnimation) 
       ? <Widget>[
@@ -119,7 +120,7 @@ class _PhotoPageState extends State<PhotoPage> with TickerProviderStateMixin{
         ),
         Container(
           padding: EdgeInsets.only(right: 32, bottom: 32, left: 32),
-          child: _butonUploader()
+          child: _butonUploader(context)
         )
       ] : <Widget>[ Container() ]
     );
@@ -156,7 +157,7 @@ class _PhotoPageState extends State<PhotoPage> with TickerProviderStateMixin{
     );
   }
 
-  Widget _butonUploader(){
+  Widget _butonUploader(BuildContext context){
     return Center(
       child: Container(
         margin: EdgeInsets.only(top: 10.0),
@@ -194,18 +195,24 @@ class _PhotoPageState extends State<PhotoPage> with TickerProviderStateMixin{
 
   // subir la url de la imagen al realtime
   Future<void> _uploadPhotoUser() async {
+    // final _userInfo = Provider.of<UserInfoP>(context);
     setState(() {
         _isLoading = true;
     });
-    Map result = await _usuarioService.uploadPhotoUser(_oldPhoto, _imageFile);
+    Map result = await _usuarioService.uploadPhotoUser(_oldPhoto, _imageFile, context);
     if (!result["ok"]) {
-      mostrarAlerta(context, 'Error', result["message"]);
+      mostrarAlerta(context, 'Error', result["message"]); 
     }
+    // _userInfo.photoUser(result['link']);
+
+    print(result['link']);
+    print('######################😠 😡 🤬 🤯');
     if (_oldPhoto.isNotEmpty) {
-      Navigator.pushReplacementNamed(context, 'home');
+      Navigator.pushReplacementNamed(context, 'selectMode');
     } else {
-      Navigator.pushReplacementNamed(context, 'mode');
+      Navigator.pushReplacementNamed(context, 'selectMode');
     }
+    
   }
 
 }

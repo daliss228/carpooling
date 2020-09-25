@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_carpooling/src/models/locality_model.dart';
 import 'package:flutter_carpooling/src/widgets/alert_widget.dart';
 import 'package:google_maps_webservice/places.dart';
-import 'package:flutter_carpooling/src/models/route_model.dart';
 import 'package:flutter_carpooling/src/widgets/loading_widget.dart';
 import 'package:flutter_carpooling/src/services/route_service.dart';
 
 class DataSearch extends SearchDelegate{
-
+  final String route;
   final String hour;
   final List<bool> days;
   final RouteService _routeService = RouteService();
 
-  DataSearch({@required this.days, @required this.hour});
+  DataSearch({ this.route, @required this.days, @required this.hour});
 
   // acciones del appbar
   @override
@@ -59,9 +59,10 @@ class DataSearch extends SearchDelegate{
                 return ListTile(
                   title: Text(results[i].name),
                   onTap: (){
+                    FocusScope.of(context).requestFocus(new FocusNode());
                     print(this.days);
                     Location location = results[i].geometry.location;
-                    Navigator.pushNamed(context, 'viaje', arguments: {
+                    Navigator.pushReplacementNamed(context, route , arguments: {
                       'days': this.days,
                       'hour': this.hour,
                       'locality' : Locality(lat: location.lat, lng: location.lng)

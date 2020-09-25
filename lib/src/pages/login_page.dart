@@ -1,7 +1,8 @@
+import 'package:animate_do/animate_do.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_carpooling/src/blocs/provider_bloc.dart';
 import 'package:flutter_carpooling/src/services/user_service.dart';
+import 'package:flutter_carpooling/src/utils/responsive.dart';
 import 'package:flutter_carpooling/src/widgets/alert_widget.dart';
 import 'package:flutter_carpooling/src/widgets/circle_widget.dart';
 import 'package:flutter_carpooling/src/widgets/input_widget.dart';
@@ -16,8 +17,11 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   
-  final usuarioService = new UsuarioService();
+  final usuarioService = new UserService(); // -------------------------
+  final formRegisterKey = GlobalKey<FormState>();
   bool isloading = false; 
+  String _password = '';
+  String _email = '';
 
   @override
   void initState() {
@@ -26,8 +30,7 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    final loginBloc = ProviderAuthBloc.of(context);
-    final screenSize = MediaQuery.of(context).size; 
+    final _responsiveScreen = new Responsive(context);
     return Scaffold(
       body: GestureDetector(
         onTap: (){
@@ -39,13 +42,28 @@ class _LoginPageState extends State<LoginPage> {
           child: Stack(
             children: <Widget>[
               Positioned(
-                right: screenSize.width * 0.3,
-                top: screenSize.width * 1.2,
-                child: CircleWidget(radius: screenSize.width * 0.9, colors: [Color(0xFF02d2ec), Color(0xFF0393A5)])
+                right: _responsiveScreen.wp(50),
+                top: _responsiveScreen.hp(60),
+                child: FadeInLeft(
+                  child: CircleWidget(radius: _responsiveScreen.wp(60), colors: [Tema.OurColors.lightBlue, Tema.OurColors.lightGreenishBlue.withOpacity(0.3)]))
+              ),
+              Positioned(
+                right: _responsiveScreen.wp(30),
+                top: _responsiveScreen.hp(75),
+                child: FadeInLeft(
+                  delay: Duration(milliseconds: 1000),
+                  child: CircleWidget(radius: _responsiveScreen.wp(60), colors: [Tema.OurColors.lightBlue, Tema.OurColors.lightGreenishBlue.withOpacity(0.6)]))
+              ),
+              Positioned(
+                right: _responsiveScreen.wp(50),
+                top: _responsiveScreen.hp(75),
+                child: FadeInLeft(
+                  delay: Duration(milliseconds: 500),
+                  child: CircleWidget(radius: _responsiveScreen.wp(40), colors: [Tema.OurColors.initialPurple, Tema.OurColors.finalPurple.withOpacity(0.8)]))
               ),
               SingleChildScrollView(
                 child: SafeArea(
-                  child: _form(screenSize, loginBloc), 
+                  child: _form(_responsiveScreen), 
                 )
               ),
               isloading? LoadingWidget():Container(), 
@@ -56,31 +74,36 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _form(Size screenSize, AuthBloc loginBloc){
+  Widget _form(Responsive _responsiveScreen){
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Column(
-          children: <Widget>[
-            Container(
-              padding: EdgeInsets.all(30.0),
-              width: screenSize.width * 0.6,
-              child: Column(
-                children: <Widget>[
-                  SizedBox(height: screenSize.height * 0.05,),
-                  Text('Inicio de Sesión', style: TextStyle(fontSize: 40.0, fontFamily: 'WorkSansSemiBold', fontWeight: FontWeight.w300),),
-                  SizedBox(height: screenSize.height * 0.004,),
-                  Text(
-                    '¿Sabías qué Quito tiene un porcentaje de emisión (C02) mayor al de Guayaquil?',
-                    style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.w300,),
-                    textAlign: TextAlign.justify,
-                  )
-                ],
-              ),
+        Row(
+          children: [
+            SizedBox(width: _responsiveScreen.wp(5),),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                SizedBox(height: _responsiveScreen.hp(10),),
+                Container(child: FadeInLeft(child: Text('Inicio de Sesión', style: TextStyle(fontSize: _responsiveScreen.ip(3.5), fontFamily: 'WorkSansMedium'),))),
+                SizedBox(height: _responsiveScreen.hp(3),),
+                Container(
+                  width: _responsiveScreen.wp(70),
+                  child: FadeInLeft(
+                    child: Text(
+                      '¿Sabías qué Quito tiene un porcentaje de emisión (CO2) mayor al de Guayaquil?',
+                      style: TextStyle(fontSize: _responsiveScreen.ip(1.5), fontFamily: 'WorkSansLight'),
+                      textAlign: TextAlign.justify,
+                    ),
+                  ),
+                )
+              ],
             ),
+            Expanded(child: Container())
           ],
         ),
-        SizedBox(height: screenSize.height * 0.04,),
+
+        SizedBox(height: _responsiveScreen.hp(10),),
         Column(
           children: <Widget>[
             Center(
@@ -91,89 +114,89 @@ class _LoginPageState extends State<LoginPage> {
                   borderRadius: BorderRadius.circular(20.0)
                 ),
                 child: Container(
-                  width: screenSize.width * 0.8,
-                  padding: EdgeInsets.all(10.0),
-                  child: Column(
-                    children: <Widget>[
-                      StreamBuilder(
-                        stream: loginBloc.emailStream ,
-                        builder: (BuildContext context, AsyncSnapshot snapshot){
-                          return InputWidget(
+                  width: _responsiveScreen.wp(80),
+                  padding: EdgeInsets.symmetric(vertical: 10),
+                  child: Form(
+                    key: formRegisterKey,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 25),
+                      child: Column(
+                        children: <Widget>[
+                          InputWidget(
                             label: 'Email', 
                             icono: FontAwesomeIcons.envelope, 
                             inputType: TextInputType.emailAddress,
-                            onChanged: (value) => loginBloc.changeEmail(value),
-                            errorLabel: snapshot.error,
-                          );
-                        },
-                      ),
-                      SizedBox(height: 10.0,),
-                      _separador(screenSize), 
-                      StreamBuilder(
-                        stream: loginBloc.password1Stream,
-                        builder: (BuildContext context, AsyncSnapshot snapshot){
-                          return InputWidget(
+                            onSaved: (value) => _email = value,
+                            validator: (value){
+                              Pattern pattern = r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
+                              RegExp regExp = new RegExp(pattern);
+                              if(regExp.hasMatch(value)) return null;
+                              return 'Ingrese un email valido';
+                            },
+                          ),
+                          SizedBox(height: _responsiveScreen.hp(1),),
+                          _separador(_responsiveScreen), 
+                          SizedBox(height: _responsiveScreen.hp(1),),
+                          InputWidget(
                             label: 'Contraseña', 
                             icono: FontAwesomeIcons.lock,
-                            obscureText: true, 
-                            onChanged: (value) => loginBloc.changePassword1(value),
-                            errorLabel: snapshot.error,
-                          );
-                        },
+                            obscureText: true,
+                            onSaved: (value) => _password = value,
+                            validator: (value){
+                              if(value.length > 6){
+                                return null;
+                              }
+                              return 'Ingrese una contraseña mayor a 6 caracteres'; 
+                            },
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
               )
             ), 
           ],
         ),
-        SizedBox(height: 30.0,),
-        _botones(loginBloc), 
+        SizedBox(height: _responsiveScreen.hp(5),),
+        _botones(_responsiveScreen), 
       ],
     );
   }
 
-  Widget _botones(AuthBloc bloc){
+  Widget _botones(Responsive _responsiveScreen){
     return Center(
       child: Container(
         child: Column(
           children: <Widget>[
-            StreamBuilder(
-              stream: bloc.formValidStream ,
-              builder: (BuildContext context, AsyncSnapshot snapshot){
-                return MaterialButton(
-                  color: Color(0xFF0393A5),
-                  highlightColor: Colors.transparent,
-                  splashColor: Tema.OurColors.lightGreenishBlue,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 10.0, horizontal: 42.0),
-                    child: Text(
-                      "INGRESAR",
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16.0,
-                          fontFamily: "WorkSansBold"),
-                    ),
-                  ),
-                  onPressed: snapshot.hasData? (){ 
-                    if(isloading) return; 
-                    _login(context, bloc);
-                  }: (){
-                    mostrarAlerta(context, 'Ups!','Ingrese correctamente los datos'); 
-                  },
-                );
-              },
+            MaterialButton(
+              color: Tema.OurColors.lightGreenishBlue,
+              highlightColor: Colors.transparent,
+              splashColor: Tema.OurColors.lightGreenishBlue,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 42.0),
+                child: Text(
+                  "INGRESAR",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: _responsiveScreen.ip(1.5),
+                    fontFamily: "WorkSansMedium"),
+                ),
+              ),
+              onPressed: () async{
+                await _login(context); 
+                setState(() {isloading = false;});
+              }
             ),
-            SizedBox(height: 15.0,),
+            SizedBox(height: _responsiveScreen.hp(2),),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 Text(
                   '¿Eres un usuario nuevo?',
                   style: TextStyle(
-                    fontSize: 16.0, 
+                    fontSize: _responsiveScreen.ip(1.4), 
+                    fontFamily: "WorkSansLight",
                     color: Colors.black54, 
                   ),
                 ), 
@@ -181,8 +204,9 @@ class _LoginPageState extends State<LoginPage> {
                   child: Text(
                     'Regístrate', 
                     style: TextStyle(
-                      fontSize: 16.0,
-                      color: Colors.deepPurple
+                      fontSize: _responsiveScreen.ip(1.4),
+                      fontFamily: "WorkSansMedium",
+                      color: Tema.OurColors.finalPurple
                     ),
                   ), 
                   onPressed: (){
@@ -197,21 +221,23 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
- _login(BuildContext context, AuthBloc bloc) async {
+ _login(BuildContext context) async {
+   if( !formRegisterKey.currentState.validate()) return;
+   formRegisterKey.currentState.save();
    setState(() { isloading = true; });
-   dynamic response =  await usuarioService.signIn(bloc.email, bloc.password1);
+   dynamic response =  await usuarioService.signIn(_email, _password);
    setState(() { isloading = false; });
    if(response['ok'] == true){
-     Navigator.pushReplacementNamed(context, 'home');
+     Navigator.pushReplacementNamed(context, 'selectMode');
    }else{
      mostrarAlerta(context, 'Ups!', response['message']); 
    }
  }
 
-  Widget _separador(Size screenSize){
+  Widget _separador(Responsive _responsiveScreen){
     return Container(
-      width: screenSize.width * 0.75,
-      height: 1.0,
+      width: _responsiveScreen.wp(70),
+      height: _responsiveScreen.hp(0.1),
       color: Colors.grey,
     );
   }
