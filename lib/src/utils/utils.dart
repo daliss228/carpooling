@@ -1,6 +1,7 @@
+import 'dart:math';
 import 'package:flutter_carpooling/src/models/route_model.dart';
 import 'package:flutter_carpooling/src/models/user_model.dart';
-import 'package:flutter_carpooling/src/preferencias_usuario/user_prefs.dart';
+import 'package:flutter_carpooling/src/user_preferences/user_prefs.dart';
 
 bool isNumeric(String s){
   if (s.isEmpty) return false; 
@@ -56,7 +57,7 @@ String stringSchedule(Schedule schedule) {
 String nameFromUrlPhoto(String url) => url.replaceAll(RegExp(r'https://firebasestorage.googleapis.com/v0/b/dev-carpooling.appspot.com/o/'), '').replaceAll('%20', ' ').replaceAll('%3A', ':').split('?')[0];
 
 bool verifyUserRegister(List<UserModel> users) {
-  final PreferenciasUsuario _prefs = PreferenciasUsuario();
+  final UserPreferences _prefs = UserPreferences();
   final String myUser = _prefs.uid;
   bool flag = false;
   if (users != null) {
@@ -69,4 +70,18 @@ bool verifyUserRegister(List<UserModel> users) {
   }
   return flag;
 }
-  
+
+double getKilometers(double lat1, double lon1, double lat2, double lon2){
+  double r = 6378.137;
+  double dLat = rad( lat2 - lat1 );
+  double dLon = rad( lon2 - lon1 );  
+  double a = sin(dLat/2) * sin(dLat/2) + cos(rad(lat1)) * cos(rad(lat2)) * sin(dLon/2) * sin(dLon/2);
+  double c = 2 * atan2( sqrt(a) , sqrt(1 - a));
+  double d = r * c;
+  int fac = pow(10, 3);
+  return (d * fac).round()/fac; 
+}
+
+double rad( double x ){
+  return x*pi/180;
+}

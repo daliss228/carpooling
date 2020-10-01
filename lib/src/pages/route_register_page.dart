@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:flutter_carpooling/src/models/locality_model.dart';
+import 'package:flutter_carpooling/src/user_preferences/user_prefs.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -12,7 +14,6 @@ import 'package:flutter_carpooling/src/widgets/circle_widget.dart';
 import 'package:flutter_carpooling/src/utils/map_search_delegate.dart';
 import 'package:flutter_carpooling/src/widgets/loading_widget.dart';
 import 'package:flutter_carpooling/src/services/route_service.dart';
-import 'package:flutter_carpooling/src/preferencias_usuario/user_prefs.dart';
 
 class RouteRegisterPage extends StatefulWidget {
 
@@ -37,7 +38,7 @@ class _RouteRegisterPageState extends State<RouteRegisterPage> {
 
   @override
   void initState() {
-    final _prefs = PreferenciasUsuario();
+    final _prefs = UserPreferences();
     _useruid = _prefs.uid;
     _groupuid = _prefs.uidGroup;
     super.initState();
@@ -339,7 +340,7 @@ class _RouteRegisterPageState extends State<RouteRegisterPage> {
               ],
             ),
             child: InkWell(
-              onTap: () => showSearch(context: context, delegate: DataSearch(days: _days, hour: _departTime)),
+              onTap: () => showSearch(context: context, delegate: DataSearch(days: _days, hour: _departTime, route: 'route')),
               child: Icon(Icons.search, color: Colors.white, size: 28.0),
             )
           ),

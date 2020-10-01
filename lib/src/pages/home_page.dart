@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_carpooling/src/pages/driver_home_page.dart';
+import 'package:flutter_carpooling/src/providers/arguments_provider/arguments_provider.dart';
+import 'package:flutter_carpooling/src/providers/type_user_provider/type_user_info_provider.dart';
 import 'package:flutter_carpooling/src/utils/colors.dart';
+import 'package:flutter_carpooling/src/utils/responsive.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_carpooling/src/pages/profile_page.dart';
 import 'package:flutter_carpooling/src/pages/pax_home_page.dart';
-// import 'package:flutter_carpooling/src/pages/driver_home_page.dart';
 import 'package:flutter_carpooling/src/pages/pax_group_route_page.dart';
+import 'package:provider/provider.dart';
 
 // homepage con el navigatorbar
 class HomePage extends StatefulWidget {
@@ -21,13 +25,16 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   final PageStorageBucket _bucket = PageStorageBucket();
   final PageController _pageController = PageController(initialPage: 0, keepPage: true);
-  final List<Widget> _children = [
-    // mostrar pagina de las rutas
-    PaxHomePage(key: PageStorageKey('paxhome')), // home pasajero
+
+  final List<Widget> _childrenPax = [
+    PaxHomePage(key: PageStorageKey('paxhome')), 
     PaxGroupRoutes(key: PageStorageKey('paxgroup')),
-    // DriverHomePage(), // home pasajero
-    // mostrar la pagina del perfil de usuario
     ProfilePage()
+  ];
+
+  final List<Widget> _childrenDriver = [
+    DriverHomePage(),
+    ProfilePage(),
   ];
 
   @override
@@ -46,22 +53,35 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   @override
   void dispose() {
-    _pageController.dispose();
+    _pageController?.dispose();
     _animationController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+
+    final _typeUser = Provider.of<TypeUser>(context);
+    final _argumentsInfo = Provider.of<ArgumentsInfo>(context);
+    final _responsiveScreen = new Responsive(context);
+    bool _mode = _typeUser.getTypeuser == 'CONDUCTOR'; 
+    
     return Scaffold(
       extendBody: true,
       floatingActionButtonLocation: FloatingActionButtonLocation.startDocked,
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: _mode ? FloatingActionButton(
         onPressed: () => {Navigator.pushNamed(context, 'route')},
-        child: Icon(Icons.add, size: 35.0),
-        backgroundColor: OurColors.darkPurple,
+        child: Icon(Icons.add, size: _responsiveScreen.ip(2.5)),
+        backgroundColor: OurColors.initialPurple,
+      ) : FloatingActionButton(
+        onPressed: () {
+          _argumentsInfo.setBackArrowUserRoute = true;
+          Navigator.pushNamed(context, 'usualRoute');
+        }, 
+        child: Icon(Icons.search, size: _responsiveScreen.ip(2.5),),
+        backgroundColor: OurColors.initialPurple,
       ),
-      bottomNavigationBar: _bottomAppBar(),
+      bottomNavigationBar: _mode ? _bottomAppBarDriver() :_bottomAppBarPax(),
       body: SafeArea(
         child: PageStorage(
           bucket: _bucket,
@@ -69,14 +89,14 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             physics: BouncingScrollPhysics(),
             controller: _pageController,
             onPageChanged: (index) => pageChanged(index),
-            children: _children
+            children: _mode ? _childrenDriver : _childrenPax,
           )
         )
       )
     );
   }
 
-  Widget _bottomAppBar() {
+  Widget _bottomAppBarPax() {
     return BottomAppBar(
       child: Row(
         children: <Widget>[
@@ -85,6 +105,21 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           _bottomAppBarItem(FontAwesomeIcons.route, 1),
           _bottomAppBarItem(FontAwesomeIcons.userAlt, 2),
           SizedBox(width: 15.0)
+        ],
+      ),
+      shape: CircularNotchedRectangle(),
+      color: OurColors.grayishWhite,
+    );
+  }
+
+  Widget _bottomAppBarDriver() {
+    return BottomAppBar(
+      child: Row(
+        children: [
+          Expanded(child: SizedBox()),
+          _bottomAppBarItem(FontAwesomeIcons.home, 0),
+          _bottomAppBarItem(FontAwesomeIcons.userAlt, 1),
+          SizedBox(width: 15.0,)
         ],
       ),
       shape: CircularNotchedRectangle(),

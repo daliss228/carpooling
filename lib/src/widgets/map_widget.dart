@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_carpooling/src/models/route_model.dart';
+import 'package:flutter_carpooling/src/models/locality_model.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class MapWidget extends StatelessWidget {

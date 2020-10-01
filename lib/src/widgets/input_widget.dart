@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_carpooling/src/utils/responsive.dart';
 
 class InputWidget extends StatelessWidget {
   
@@ -16,6 +17,7 @@ class InputWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final _responsiveScreen = new Responsive(context);
     return TextFormField(
       textCapitalization: textCapitalization,
       obscureText: obscureText,
@@ -23,16 +25,16 @@ class InputWidget extends StatelessWidget {
       validator: validator,
       onChanged: onChanged,
       onSaved: onSaved,
-      style: TextStyle(fontFamily: "WorkSansSemiBold", fontSize: 16.0, color: Colors.black),
+      style: TextStyle(fontFamily: "WorkSansLight", fontSize: _responsiveScreen.ip(1.9), color: Colors.black),
       decoration: InputDecoration(
         border: InputBorder.none,
         icon: Icon(
           icono,
           color: Colors.black,
-          size: 22.0,
+          size: _responsiveScreen.ip(2),
         ),
         hintText: label,
-        hintStyle: TextStyle(fontFamily: "WorkSansSemiBold", fontSize: 17.0),
+        hintStyle: TextStyle(fontFamily: "WorkSansLight", fontSize: _responsiveScreen.ip(1.8)),
         errorText:errorLabel,
       ),
     );

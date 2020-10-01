@@ -1,13 +1,21 @@
+import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_carpooling/src/providers/user_provider/user_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_carpooling/src/providers/type_user_provider/type_user_info_provider.dart';
+import 'package:flutter_carpooling/src/user_preferences/user_prefs.dart';
 import 'package:flutter_carpooling/src/utils/colors.dart';
-import 'package:flutter_carpooling/src/widgets/loading_widget.dart';
+import 'package:flutter_carpooling/src/utils/responsive.dart';
+import 'package:flutter_carpooling/src/widgets/background_widget.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:keyboard_visibility/keyboard_visibility.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_carpooling/src/models/user_model.dart';
 import 'package:flutter_carpooling/src/widgets/alert_widget.dart';
 import 'package:flutter_carpooling/src/services/user_service.dart';
+import 'package:flutter_carpooling/src/utils/colors.dart' as Tema;
+
 
 class ProfilePage extends StatefulWidget {
 
@@ -34,13 +42,13 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
   final TextStyle _styleEditText = TextStyle(fontFamily: "WorkSansMedium", color: Colors.black, fontSize: 10.0);
   
   final UserService _userService = UserService();
-  final UsuarioService _authService = UsuarioService();
+  final UserService _authService = UserService();
+  final UserPreferences _prefs = new UserPreferences(); 
   final GlobalKey<FormState> _formKey1 = GlobalKey<FormState>();
   final GlobalKey<FormState> _formKey2 = GlobalKey<FormState>();
   final GlobalKey<FormState> _formKey3 = GlobalKey<FormState>();
   final GlobalKey<FormState> _formKey4 = GlobalKey<FormState>();
 
-  UserModel _user;
   bool _keyboardOpen = false;
   bool _obscureTextPass = true;
   bool _activeEditPass = false;
@@ -77,38 +85,119 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
   Widget build(BuildContext context) {
     super.build(context);
     final _screenSize = MediaQuery.of(context).size; 
+    final _responsiveScreen = new Responsive(context);
+    final _userInfo = Provider.of<UserInfoP>(context);
+    UserModel _userModel = _userInfo.getUserModel;
+    
+    _ciController.text = _userModel.ci;
+    _nameController.text = _userModel.name;
+    _emailController.text = _userModel.email;
+    _phoneController.text = _userModel.phone;
+    _lastnameController.text = _userModel.lastName;
+
     return Scaffold(
-      floatingActionButton: _keyboardOpen ? Container() : speedDial(_screenSize),
-      body: FutureBuilder(
-        future: _userService.readUser(),
-        builder: (context, snapshot) {
-          if (!snapshot.hasData) {
-            return LoadingWidget();
-          } else {
-            if (!snapshot.data["ok"]) {
-              return AlertWidget(title: "Error", message: snapshot.data["message"]);
-            } else {
-              _user = snapshot.data["value"];
-              _ciController.text = _user.ci;
-              _nameController.text = _user.name;
-              _emailController.text = _user.email;
-              _phoneController.text = _user.phone;
-              _lastnameController.text = _user.lastName;
-              return Stack(
-                children: <Widget>[
-                  _header(_screenSize),
-                  _body(_screenSize),
-                  _camera(_screenSize)
-                ],
-              );
-            }
-          }
-        }
-      )
+      floatingActionButton: _keyboardOpen ? Container() : speedDial(_screenSize, context),
+      body:Stack(
+        children: [
+          _backGround(_responsiveScreen),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 20),
+            child: CustomScrollView(
+              slivers: [
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Column(
+                    children: [
+                      SizedBox(height: _responsiveScreen.hp(3),),
+                      Row(
+                        children: [
+                          Expanded(child: Container()),
+                          FadeInRight(
+                            child: Text(
+                              'Mi Perfil', 
+                              style: TextStyle(fontSize: _responsiveScreen.ip(4), fontFamily: 'WorkSansLight'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      _content(_responsiveScreen, _userModel, _userInfo)
+                    ],
+                  ),
+                )
+              ],
+            ), 
+          ),
+        ],
+      ),
+      
+       
     ); 
   }
 
-  Widget speedDial(_screenSize) {
+  Widget _backGround(Responsive _responsiveScreen){
+    return Container(
+      height: _responsiveScreen.hp(100),
+      width: _responsiveScreen.wp(100),
+      child: Stack(
+        children: [
+          Positioned(
+              right: _responsiveScreen.wp(75),
+              child: FadeInLeft(child: BackgoundWidget(colors: [Tema.OurColors.lightBlue, Tema.OurColors.lightGreenishBlue], sizeWidget: _responsiveScreen.hp(34),))
+            ),
+            Positioned(
+              top: _responsiveScreen.hp(1),
+              right: _responsiveScreen.wp(75),
+              child: FadeInLeft(
+                 delay: Duration(milliseconds: 500),
+                child: BackgoundWidget(sizeWidget: _responsiveScreen.hp(30), colors: [Tema.OurColors.initialPurple, Tema.OurColors.finalPurple],)
+              )
+            ),
+            Positioned(
+              top: _responsiveScreen.hp(70),
+              left: _responsiveScreen.wp(75),
+              child: FadeInRight(child: BackgoundWidget(colors: [Tema.OurColors.lightBlue, Tema.OurColors.lightGreenishBlue], sizeWidget: _responsiveScreen.hp(30),))
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _content(Responsive _responsiveScreen, UserModel userModel, UserInfoP userInfo){
+    return Expanded(
+      child: Column(
+        children: [
+          Container(
+            width: _responsiveScreen.wp(80),
+            height: _responsiveScreen.hp(20),
+            child: Row(
+              children: [
+                Expanded(child: Container()),
+                FadeInRight(
+                  child: Container(
+                    height: _responsiveScreen.ip(11.2),
+                    width: _responsiveScreen.ip(11.2),
+                    child: Stack(
+                      children: [
+                        _photoUser(userModel, _responsiveScreen),
+                        Positioned(
+                          bottom: 1,
+                          child: _camera(_responsiveScreen, userModel)
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _body(_responsiveScreen, userInfo),
+        ],
+      )
+    );
+  }
+
+  Widget speedDial(_screenSize, BuildContext context) {
+    final typeUser = Provider.of<TypeUser>(context);
     return SpeedDial(
       marginRight: 8,
       marginBottom: 2,
@@ -131,6 +220,12 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
           label: 'Cerrar Sesión',
           labelStyle: _styleFAB,
           onTap: () async {
+            _prefs.uid = '';
+            _prefs.token = '';
+            _prefs.uidGroup = '';
+            _prefs.mode = '';
+            _prefs.lat = '';
+            _prefs.lng = '';
             await _authService.signOut();
             Navigator.pushReplacementNamed(context, 'login');
           },
@@ -138,11 +233,14 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
         SpeedDialChild(
           child: Icon(Icons.account_circle, color: Color(0XFF00B900)),
           backgroundColor: Colors.white,
-          label: 'Ser pasajero',
+          label: typeUser.getTypeuser == 'CONDUCTOR' ? 'Ser pasajero' : 'Ser conductor',
           labelStyle: _styleFAB,
-          onTap: () {}
+          onTap: () {
+            _prefs.mode = '';
+            Navigator.pushReplacementNamed(context, 'selectMode');
+          }
         ),
-        SpeedDialChild(
+        typeUser.getTypeuser == 'CONDUCTOR' ? SpeedDialChild(
           child: Icon(Icons.drive_eta, color: Color(0XFF0000B9)),
           backgroundColor: Colors.white,
           label: 'Mi auto',
@@ -150,68 +248,60 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
           onTap: () => {
             Navigator.pushNamed(context, 'regAuto', arguments: false)
           },
+        ): SpeedDialChild(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
         ),
       ],
     );
   }
 
   // Widgets para los campos a recibir
-  Widget _photoUser(){
-    return Container(
-      child: CircleAvatar(
-        backgroundColor: Colors.white,
-        radius: 66.0,
-        child: ClipOval(
-          child: (_user?.photo != null) ? FadeInImage(
-            image: NetworkImage(_user?.photo),
-            placeholder: AssetImage('assets/img/ripple-loading.gif'),
-            height: 125.0,
-            width: 125.0,
-            fit: BoxFit.fill,
-          )
-          : Container()
-        ),
+  Widget _photoUser(UserModel userModel, Responsive responsiveScreen){
+    return CircleAvatar(
+      backgroundColor: Tema.OurColors.lightGreenishBlue,
+      radius: responsiveScreen.ip(5.6),
+      child: ClipOval(
+        child: (userModel.photo != null) ? FadeInImage(
+          image: NetworkImage(userModel.photo),
+          placeholder: AssetImage('assets/img/ripple-loading.gif'),
+          height: responsiveScreen.ip(11),
+          width: responsiveScreen.ip(11),
+          fit: BoxFit.cover,
+        )
+        : Container()
       ),
     );
   }
 
-  Widget _camera(Size _screenSize){
-    return Positioned(
-      width: 265.0,
-      height: _screenSize.height * 0.40,
-      child: Align(
-        alignment: Alignment.centerRight,
-        child: CircleAvatar(
-          radius: 24.0,
-          backgroundColor: Colors.white,
-          child: CircleAvatar(
-            radius: 21.0,
-            backgroundColor: Colors.black12,
-            child: IconButton(
-              icon: Icon(FontAwesomeIcons.camera, color: OurColors.darkPurple, size: 20.0), 
-              onPressed: () => Navigator.pushNamed(context, 'photo', arguments: _user.photo),
+  Widget _camera(Responsive _responsiveScreen, UserModel userModel ){
+    return CircleAvatar(
+      radius: _responsiveScreen.ip(2),
+      backgroundColor: Colors.white,
+      child: Stack(
+        children: [
+          Positioned(
+            top: _responsiveScreen.ip(4) - _responsiveScreen.ip(3.9),
+            left: _responsiveScreen.ip(4) - _responsiveScreen.ip(3.9),
+            child: CircleAvatar(
+              radius: _responsiveScreen.ip(1.9),
+              backgroundColor: Tema.OurColors.initialPurple,
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _header(Size _screenSize){
-    return Stack(
-      children: <Widget>[
-        Positioned(
-          width: _screenSize.width,
-          height: (_screenSize.height * 0.30),
-          child: Center(
-            child: _photoUser(),
+          Positioned(
+            bottom: (_responsiveScreen.ip(1.9)/2) - _responsiveScreen.ip(2),
+            left: (_responsiveScreen.ip(1.9)/2) - _responsiveScreen.ip(2),
+            child: IconButton(
+              icon: Icon(FontAwesomeIcons.camera, color: Tema.OurColors.grayishWhite, size: _responsiveScreen.ip(2)), 
+              onPressed: () => Navigator.pushNamed(context, 'photo', arguments: userModel.photo),
+            ),
           ),
-        ),
-      ],
+        ],
+      ) 
     );
   }
 
-  Widget _nameUser(){
+  Widget _nameUser(UserInfoP userInfo){
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
       child: Row(
@@ -239,7 +329,10 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
           ),
           SizedBox(width: 10.0),
           GestureDetector(
-            onTap: () => _saveInputName(),
+            onTap: () {
+              userInfo.nameUser(_nameController.text); 
+              _saveInputName();
+            },
             child: Column(
               children: !_activeEditName ? <Widget>[
                 Icon(Icons.edit, size: 18.0, color: OurColors.darkPurple),
@@ -256,7 +349,7 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
     );
   }
 
-  Widget _lastnameUser(){
+  Widget _lastnameUser(UserInfoP userInfo){
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
       child: Row(
@@ -284,7 +377,10 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
           ),
           SizedBox(width: 10.0),
           GestureDetector(
-            onTap: () => _saveInputLastname(),
+            onTap: () {
+              userInfo.lastNameUser(_lastnameController.text);
+              _saveInputLastname();
+            },
             child: Column(
               children: !_activeEditLastname ? <Widget>[
                 Icon(Icons.edit, size: 18.0, color: OurColors.darkPurple),
@@ -301,7 +397,7 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
     );
   }
 
-  Widget _phoneUser(){
+  Widget _phoneUser(UserInfoP userInfo){
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
       child: Row(
@@ -330,7 +426,10 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
           ),
           SizedBox(width: 10.0),
           GestureDetector(
-            onTap: () => _saveInputPhone(),
+            onTap: () {
+              userInfo.phoneUser(_phoneController.text);
+              _saveInputPhone();
+            },
             child: Column(
               children: !_activeEditPhone ? <Widget>[
                 Icon(Icons.edit, size: 18.0, color: OurColors.darkPurple),
@@ -464,17 +563,17 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
     );
   }
 
-  Widget _body(Size _screenSize){
+  Widget _body(Responsive _responsiveScreen, UserInfoP userInfo){
     return SingleChildScrollView(
       child: Padding(
         padding: EdgeInsets.symmetric(vertical: 15.0),
         child: Column(
           children: <Widget>[
+            // Container(
+            //   height: _responsiveScreen.hp(2),
+            // ),
             Container(
-              height: _screenSize.height * 0.25,
-            ),
-            Container(
-              width: _screenSize.width * 0.85,
+              width: _responsiveScreen.wp(90),
               padding: EdgeInsets.symmetric(vertical: 20.0),
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -490,11 +589,11 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
               ),
               child: Column(
                 children: <Widget>[
-                  _nameUser(), 
-                  _lastnameUser(), 
+                  _nameUser(userInfo), 
+                  _lastnameUser(userInfo), 
                   _ciUser(),
                   _emailUser(),
-                  _phoneUser(),
+                  _phoneUser(userInfo),
                   _passUser(),
                   SizedBox(height: 5.0)
                 ]

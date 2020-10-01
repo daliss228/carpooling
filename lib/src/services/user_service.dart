@@ -1,17 +1,20 @@
 import 'dart:io';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter_carpooling/src/user_preferences/user_prefs.dart';
 import 'package:flutter_carpooling/src/utils/utils.dart';
 import 'package:flutter_carpooling/src/models/user_model.dart';
-import 'package:flutter_carpooling/src/preferencias_usuario/user_prefs.dart';
 
-class UsuarioService {
+
+class UserService {
 
   final FirebaseAuth _auth = FirebaseAuth.instance; 
-  final PreferenciasUsuario _prefs = PreferenciasUsuario();
-  final DatabaseReference _dbRef = FirebaseDatabase.instance.reference();
+  final UserPreferences _prefs = UserPreferences();
+  final DatabaseReference _dbRef = FirebaseDatabase.instance.reference(); 
+  final StorageReference _storeRef = FirebaseStorage(storageBucket: 'gs://dev-carpooling.appspot.com').ref();
 
   Future<bool> userDb(UserModel user) async {
     try{
@@ -61,6 +64,10 @@ class UsuarioService {
     AuthResult authResult;
     try {
       authResult = await _auth.signInWithEmailAndPassword(email: email, password: password); 
+      authResult.user.getIdToken().then((valueToken) {
+        _prefs.token = valueToken.token.toString();
+      });
+      _prefs.uid = authResult.user.uid.toString();
       return {"ok": true, "message": "Inicio de sesión exitoso!"}; 
     } on PlatformException catch(e){
       if (e.code.toString() == "ERROR_WRONG_PASSWORD") {
@@ -69,13 +76,6 @@ class UsuarioService {
         return {"ok": false, "message": "Demasiados intentos fallidos. \nPor favor, inténtelo de nuevo más tarde."}; 
       } else {
         return {"ok": false, "message": e.code.toString()}; 
-      }
-    }finally{
-      if(authResult.user.uid.length != 0){
-        authResult.user.getIdToken().then((token){
-          _prefs.token = token.token;
-        });
-        _prefs.uid = authResult.user.uid.toString();
       }
     }
   }
@@ -117,14 +117,6 @@ class UsuarioService {
     await _dbRef.child('pending_users').remove();
   }
 
-}
-
-// Todo: cambiar a un archivo UserService independiente
-class UserService {
-
-  final PreferenciasUsuario _prefs = PreferenciasUsuario();
-  final DatabaseReference _dbRef = FirebaseDatabase.instance.reference(); 
-  final StorageReference _storeRef = FirebaseStorage(storageBucket: 'gs://dev-carpooling.appspot.com').ref();
   
   Future<Map<String, dynamic>> readUser({driverUid}) async {
     try {
@@ -145,7 +137,7 @@ class UserService {
     }
   }
 
-  Future<Map<String, dynamic>> uploadPhotoUser(String oldPhoto, File imageFile) async {
+  Future<Map<String, dynamic>> uploadPhotoUser(String oldPhoto, File imageFile, BuildContext context) async {
     try {
       if (oldPhoto.isNotEmpty) {
         String nameImage = nameFromUrlPhoto(oldPhoto);
@@ -156,7 +148,8 @@ class UserService {
       StorageTaskSnapshot storageTaskSnapshot = await uploadTask.onComplete;
       String downloadUrl = await storageTaskSnapshot.ref.getDownloadURL();
       _dbRef.child("users").child(_prefs.uid).update({"photo": downloadUrl});
-      return {"ok": false, "message": "Uploaded image"}; 
+      
+      return {"ok": false, "message": "Uploaded image", 'link': downloadUrl}; 
     } catch (e) {
       return {"ok": false, "message": e.toString()}; 
     }
