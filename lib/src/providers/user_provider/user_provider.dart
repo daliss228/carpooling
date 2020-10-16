@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_carpooling/src/models/user_model.dart';
 
-class UserInfoP with ChangeNotifier{
+class UserInfo with ChangeNotifier{
   UserModel userModel;
 
   get getUserModel {

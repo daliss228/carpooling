@@ -27,7 +27,7 @@ class _UsualRoutePageState extends State<UsualRoutePage> with AfterLayoutMixin {
   GoogleMapController mapController; 
   String searchAddress;
   String _description;
-  Locality _geolocation;
+  LocalityModel _geolocation;
   Set<Marker> _markers = {};
   String _departTime = "--:--";
   List<bool> _days = List<bool>.generate(7, (index) => false);
@@ -87,7 +87,7 @@ class _UsualRoutePageState extends State<UsualRoutePage> with AfterLayoutMixin {
             if (_geolocation != null) {
               _geolocation = null;
             }
-            _geolocation = Locality(lat: latLng.latitude, lng: latLng.longitude);
+            _geolocation = LocalityModel(lat: latLng.latitude, lng: latLng.longitude);
             _markers.add(
               Marker(markerId: MarkerId("miMarker"), position: latLng)
             );
@@ -256,13 +256,13 @@ class _UsualRoutePageState extends State<UsualRoutePage> with AfterLayoutMixin {
     if (values != null) {
       _days = values['days'];
       _departTime = values['hour'];
-      Locality location = values['locality'];
+      LocalityModel location = values['locality'];
       _markers.add(Marker(markerId: MarkerId("miMarker"), position: LatLng(location.lat, location.lng)));
       _kGooglePlex = CameraPosition(
         target: LatLng(location.lat, location.lng),
         zoom: 16,
       );
-      _geolocation = Locality(lat: location.lat, lng: location.lng);
+      _geolocation = LocalityModel(lat: location.lat, lng: location.lng);
       location = null;
       setState(() {});
     }

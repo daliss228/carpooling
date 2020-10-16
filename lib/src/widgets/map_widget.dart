@@ -4,7 +4,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class MapWidget extends StatelessWidget {
 
-  final Locality latLng;
+  final LocalityModel latLng;
   final int type;
 
   MapWidget({@required this.latLng, @required this.type});

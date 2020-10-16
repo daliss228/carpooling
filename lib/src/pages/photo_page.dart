@@ -1,16 +1,16 @@
 import 'dart:io';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_carpooling/src/providers/user_provider/user_provider.dart';
-import 'package:flutter_carpooling/src/user_preferences/user_prefs.dart';
-import 'package:flutter_carpooling/src/widgets/alert_widget.dart';
-
+import 'package:flutter/cupertino.dart';
+import 'package:animate_do/animate_do.dart';
+import 'package:flutter_carpooling/src/widgets/circle_widget.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_carpooling/src/utils/colors.dart';
+import 'package:flutter_carpooling/src/utils/responsive.dart';
+import 'package:flutter_carpooling/src/widgets/alert_widget.dart';
 import 'package:flutter_carpooling/src/services/user_service.dart';
 import 'package:flutter_carpooling/src/widgets/loading_widget.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_carpooling/src/user_preferences/user_prefs.dart';
 
 // pagina para capturar o elegir la imagen
 class PhotoPage extends StatefulWidget {
@@ -54,6 +54,7 @@ class _PhotoPageState extends State<PhotoPage> with TickerProviderStateMixin{
   @override
   Widget build(BuildContext context) {
     _oldPhoto = ModalRoute.of(context).settings.arguments;
+    final _responsiveScreen = new Responsive(context);
     final _screenSize = MediaQuery.of(context).size; 
     return Scaffold(
       bottomNavigationBar: (_isLoading) ? BottomAppBar() : BottomAppBar(
@@ -94,33 +95,54 @@ class _PhotoPageState extends State<PhotoPage> with TickerProviderStateMixin{
       ? LoadingWidget()
       : Stack(
         children: <Widget>[
-          _body(_screenSize, context),
+          Positioned(
+              left: _responsiveScreen.wp(50),
+              bottom: _responsiveScreen.hp(55),
+              child: FadeInRight(
+                child: CircleWidget(radius: _responsiveScreen.wp(60), colors: [OurColors.initialPurple, OurColors.finalPurple.withOpacity(0.5)]))
+            ),
+            // Positioned(
+            //   left: _responsiveScreen.wp(30),
+            //   bottom: _responsiveScreen.hp(70),
+            //   child: FadeInRight(
+            //     delay: Duration(milliseconds: 1000),
+            //     child: CircleWidget(radius: _responsiveScreen.wp(60), colors: [OurColors.initialPurple, OurColors.finalPurple.withOpacity(0.1)]))
+            // ),
+            Positioned(
+              left: _responsiveScreen.wp(60),
+              bottom: _responsiveScreen.hp(80),
+              child: FadeInRight(
+                delay: Duration(milliseconds: 500),
+                child: CircleWidget(radius: _responsiveScreen.wp(40), colors:  [OurColors.lightBlue, OurColors.lightGreenishBlue.withOpacity(0.8)]))
+            ),
+          _body(_screenSize, context, _responsiveScreen),
           (_oldPhoto.isNotEmpty) ? _buttonComeback() : Container(),
         ],
       )
     );
   }
 
-  Widget _body(Size _screenSize, BuildContext context) {
+  Widget _body(Size _screenSize, BuildContext context, Responsive _responsiveScreen) {
     return ListView(
+      physics: BouncingScrollPhysics(),
       children: (_showAnimation) 
       ? <Widget>[
-        SizedBox(height: _screenSize.height * 0.68),
+        SizedBox(height: _responsiveScreen.hp(68)),
         Padding(
           padding: EdgeInsets.all(20.0),
-          child: Text("Agrega tu foto: \nCámara o galería?", textAlign: TextAlign.center, style: TextStyle(color: OurColors.lightGreenishBlue, fontSize: 17.0, fontFamily: "WorkSansBold")),
+          child: Text("Agrega tu foto: \nCámara o galería?", textAlign: TextAlign.center, style: TextStyle(color: OurColors.lightGreenishBlue, fontSize: _responsiveScreen.ip(2), fontFamily: "WorkSansBold")),
         ),
         _arrowDownAnimation()
       ] 
       : (_imageFile != null) ? <Widget>[
-        SizedBox(height: _screenSize.height * 0.1),
+        SizedBox(height: _responsiveScreen.hp(7.5)),
         Container(
           padding: EdgeInsets.all(32),
           child:  Image.file(_imageFile)
         ),
         Container(
           padding: EdgeInsets.only(right: 32, bottom: 32, left: 32),
-          child: _butonUploader(context)
+          child: _butonUploader(context, _responsiveScreen)
         )
       ] : <Widget>[ Container() ]
     );
@@ -157,62 +179,42 @@ class _PhotoPageState extends State<PhotoPage> with TickerProviderStateMixin{
     );
   }
 
-  Widget _butonUploader(BuildContext context){
+  Widget _butonUploader(BuildContext context, responsiveScreen){
     return Center(
-      child: Container(
-        margin: EdgeInsets.only(top: 10.0),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.all(Radius.circular(5.0)),
-          color: OurColors.lightGreenishBlue,
-          boxShadow: <BoxShadow>[
-            BoxShadow(
-              color: Colors.black45,
-              offset: Offset(0.0, 1.0),
-              blurRadius: 10.0,
-            ),
-          ],
-        ),
-        child: MaterialButton(
-          highlightColor: Colors.transparent,
-          splashColor: OurColors.lightGreenishBlue,
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 42.0),
-            child: Text("Continuar", style: TextStyle(color: Colors.white, fontSize: 16.0, fontFamily: "WorkSansBold")),
+      child: MaterialButton(
+        color: OurColors.lightGreenishBlue,
+        highlightColor: Colors.transparent,
+        splashColor: OurColors.lightGreenishBlue,
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 40.0),
+          child: Text("CONTINUAR", style: TextStyle(color: Colors.white, fontSize: responsiveScreen.ip(1.5), fontFamily: "WorkSansMedium"),
           ),
-          onPressed: _uploadPhotoUser,
         ),
+        onPressed: _uploadPhotoUser
       ),
     );
   }
 
   // seleccionar una imagen de la galeria o abrir la camera
   Future<void> _pickImage(ImageSource source) async {
-    File selected = await ImagePicker.pickImage(source: source, maxWidth: 500, maxHeight: 500);
+    // File selected = await ImagePicker.pickImage(source: source, maxWidth: 500, maxHeight: 500);
+    final picker = ImagePicker();
+    final pickedFile = await picker.getImage(source: source, maxWidth: 500, maxHeight: 500);
     setState(() {
-      _imageFile = selected;
+      _imageFile = File(pickedFile.path);
     });
   }
 
   // subir la url de la imagen al realtime
   Future<void> _uploadPhotoUser() async {
-    // final _userInfo = Provider.of<UserInfoP>(context);
     setState(() {
         _isLoading = true;
     });
-    Map result = await _usuarioService.uploadPhotoUser(_oldPhoto, _imageFile, context);
+    Map result = await _usuarioService.uploadPhotoUser(_oldPhoto, _imageFile);
     if (!result["ok"]) {
       mostrarAlerta(context, 'Error', result["message"]); 
     }
-    // _userInfo.photoUser(result['link']);
-
-    print(result['link']);
-    print('######################😠 😡 🤬 🤯');
-    if (_oldPhoto.isNotEmpty) {
-      Navigator.pushReplacementNamed(context, 'selectMode');
-    } else {
-      Navigator.pushReplacementNamed(context, 'selectMode');
-    }
-    
+    Navigator.pushReplacementNamed(context, 'selectMode');
   }
 
 }

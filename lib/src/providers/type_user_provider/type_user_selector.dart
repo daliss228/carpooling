@@ -28,14 +28,15 @@ class UserSelectorState extends State<TypeUserSelector> with AfterLayoutMixin {
   
   @override
   Widget build(BuildContext context) {
-    final userInfo = Provider.of<UserInfoP>(context);
+    final userInfo = Provider.of<UserInfo>(context);
     _getUserFromDBtoProvider(userInfo);
     return LoadingWidget();
   }
 
-  _getUserFromDBtoProvider(UserInfoP userInfo) async {
+  // carga toda la informacion del usuario en el estado
+  _getUserFromDBtoProvider(UserInfo userInfo) async {
     final _userService = new UserService();
-    final Map info = await _userService.readUser();
+    final info = await _userService.readUser();
     UserModel user = info['value'];
     userInfo.setUserModel = user;
     _prefs.uidGroup = user.uidGroup;

@@ -16,5 +16,4 @@ class TypeUser with ChangeNotifier {
   set setTypeUser(typeUser) {
     this._typeUser = typeUser;
   }
-
 }

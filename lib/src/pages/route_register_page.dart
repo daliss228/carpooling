@@ -27,7 +27,7 @@ class _RouteRegisterPageState extends State<RouteRegisterPage> {
   String _groupuid;
   String _description;
   TimeOfDay _time;
-  Locality _geolocation;
+  LocalityModel _geolocation;
   DateTime _selectedDate;
   Set<Marker> _markers = {};
   String _departTime = "--:--";
@@ -79,13 +79,13 @@ class _RouteRegisterPageState extends State<RouteRegisterPage> {
     if (values != null) {
       _days = values['days'];
       _departTime = values['hour'];
-      Locality location = values['locality'];
+      LocalityModel location = values['locality'];
       _markers.add(Marker(markerId: MarkerId("miMarker"), position: LatLng(location.lat, location.lng)));
       _kGooglePlex = CameraPosition(
         target: LatLng(location.lat, location.lng),
         zoom: 16,
       );
-      _geolocation = Locality(lat: location.lat, lng: location.lng);
+      _geolocation = LocalityModel(lat: location.lat, lng: location.lng);
       location = null;
       setState(() {});
     }
@@ -113,7 +113,7 @@ class _RouteRegisterPageState extends State<RouteRegisterPage> {
           if (_geolocation != null) {
             _geolocation = null;
           }
-          _geolocation = Locality(lat: latLng.latitude, lng: latLng.longitude);
+          _geolocation = LocalityModel(lat: latLng.latitude, lng: latLng.longitude);
           _markers.add(
             Marker(markerId: MarkerId("miMarker"), position: latLng)
           );
@@ -376,7 +376,7 @@ class _RouteRegisterPageState extends State<RouteRegisterPage> {
               _route.driverUid = _useruid;
               _route.group = _groupuid;
               _route.address = _description;
-              _route.coordinates = Locality(lat: _geolocation.lat, lng: _geolocation.lng);
+              _route.coordinates = LocalityModel(lat: _geolocation.lat, lng: _geolocation.lng);
               _route.schedule = Schedule(monday: _days[0], tuesday: _days[1], wednesday: _days[2], thursday: _days[3], friday: _days[4], saturday: _days[5], sunday: _days[6]);
               _route.date = toBeginningOfSentenceCase(DateFormat.yMMMMEEEEd('es').format(DateTime.now()));
               _route.hour = _departTime;

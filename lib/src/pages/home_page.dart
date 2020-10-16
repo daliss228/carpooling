@@ -12,85 +12,89 @@ import 'package:provider/provider.dart';
 
 // homepage con el navigatorbar
 class HomePage extends StatefulWidget {
-
   @override
   _HomePageState createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
-
+  
   int _currentIndex = 0;
   AnimationController _animationController;
   Animation<double> _animation;
 
-  final PageStorageBucket _bucket = PageStorageBucket();
-  final PageController _pageController = PageController(initialPage: 0, keepPage: true);
+  final _bucket = PageStorageBucket();
+  final  _pageController = PageController(initialPage: 0, keepPage: true);
 
-  final List<Widget> _childrenPax = [
-    PaxHomePage(key: PageStorageKey('paxhome')), 
+  final _childrenPax = [
+    PaxHomePage(key: PageStorageKey('paxhome')),
     PaxGroupRoutes(key: PageStorageKey('paxgroup')),
     ProfilePage()
   ];
 
-  final List<Widget> _childrenDriver = [
+  final _childrenDriver = [
     DriverHomePage(),
     ProfilePage(),
   ];
 
   @override
-  void initState() { 
+  void initState() {
     super.initState();
-    _animationController = AnimationController(vsync: this, duration: Duration(milliseconds: 500), );
-    _animation = Tween(begin: 1.0, end: 1.08).animate(CurvedAnimation(curve: Curves.ease, parent: _animationController));
+    _animationController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 500),
+    );
+    _animation = Tween(begin: 1.0, end: 1.08).animate(
+        CurvedAnimation(curve: Curves.ease, parent: _animationController));
     _animationController.addListener(() {
-    if (_animationController.status == AnimationStatus.completed){
-      _animationController.reverse();
-    } else if (_animationController.status == AnimationStatus.dismissed){
-      _animationController.stop();
-    }
+      if (_animationController.status == AnimationStatus.completed) {
+        _animationController.reverse();
+      } else if (_animationController.status == AnimationStatus.dismissed) {
+        _animationController.stop();
+      }
     });
   }
 
   @override
   void dispose() {
     _pageController?.dispose();
-    _animationController.dispose();
+    _animationController?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-
     final _typeUser = Provider.of<TypeUser>(context);
     final _argumentsInfo = Provider.of<ArgumentsInfo>(context);
     final _responsiveScreen = new Responsive(context);
-    bool _mode = _typeUser.getTypeuser == 'CONDUCTOR'; 
-    
+    bool _mode = _typeUser.getTypeuser == 'CONDUCTOR';
     return Scaffold(
       extendBody: true,
       floatingActionButtonLocation: FloatingActionButtonLocation.startDocked,
-      floatingActionButton: _mode ? FloatingActionButton(
+      floatingActionButton: _mode
+      ? FloatingActionButton(
         onPressed: () => {Navigator.pushNamed(context, 'route')},
         child: Icon(Icons.add, size: _responsiveScreen.ip(2.5)),
         backgroundColor: OurColors.initialPurple,
-      ) : FloatingActionButton(
+      )
+      : FloatingActionButton(
         onPressed: () {
           _argumentsInfo.setBackArrowUserRoute = true;
           Navigator.pushNamed(context, 'usualRoute');
-        }, 
-        child: Icon(Icons.search, size: _responsiveScreen.ip(2.5),),
+        },
+        child: Icon(
+          Icons.search,
+          size: _responsiveScreen.ip(2.5),
+        ),
         backgroundColor: OurColors.initialPurple,
       ),
-      bottomNavigationBar: _mode ? _bottomAppBarDriver() :_bottomAppBarPax(),
-      body: SafeArea(
-        child: PageStorage(
-          bucket: _bucket,
-          child: PageView(
-            physics: BouncingScrollPhysics(),
-            controller: _pageController,
-            onPageChanged: (index) => pageChanged(index),
-            children: _mode ? _childrenDriver : _childrenPax,
-          )
+      bottomNavigationBar: _mode ? _bottomAppBarDriver() : _bottomAppBarPax(),
+      body: PageStorage(
+        bucket: _bucket,
+        child: PageView(
+          physics: BouncingScrollPhysics(),
+          controller: _pageController,
+          onPageChanged: (index) => pageChanged(index),
+          children: _mode ? _childrenDriver : _childrenPax,
         )
       )
     );
@@ -119,7 +123,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
           Expanded(child: SizedBox()),
           _bottomAppBarItem(FontAwesomeIcons.home, 0),
           _bottomAppBarItem(FontAwesomeIcons.userAlt, 1),
-          SizedBox(width: 15.0,)
+          SizedBox(
+            width: 15.0,
+          )
         ],
       ),
       shape: CircularNotchedRectangle(),
@@ -134,7 +140,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         builder: (BuildContext context, Widget child) {
           return Transform.scale(
             scale: (_currentIndex == cant) ? _animation.value : 1.0,
-            child: Icon(icon, color: (_currentIndex == cant) ? OurColors.lightGreenishBlue : OurColors.darkGray)
+            child: Icon(icon,
+              color: (_currentIndex == cant)
+              ? OurColors.lightGreenishBlue
+              : OurColors.darkGray
+            )
           );
         },
       ),
@@ -145,8 +155,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   void pageChanged(int index) {
     setState(() {
       _currentIndex = index;
+      _animationController.forward();
     });
-    _animationController.forward();
   }
 
   void bottomTapped(int index) {
@@ -156,5 +166,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       _animationController.forward();
     });
   }
-
 }
+
+// https://github.com/flutter/flutter/issues/17555

@@ -60,15 +60,15 @@ class ListViewWidget extends StatelessWidget {
             }else{
               switch (routes.length) {
                 case 1 :
-                  return Container(height: _responsiveScreen.hp(70),);
+                  return Container(height: _responsiveScreen.hp(70));
                 case 2 :
-                  return Container(height: _responsiveScreen.hp(45),);
+                  return Container(height: _responsiveScreen.hp(45));
                 case 3 :
-                  return Container(height: _responsiveScreen.hp(20),);
+                  return Container(height: _responsiveScreen.hp(20));
                 case 4 :
-                  return Container(height: _responsiveScreen.hp(5),);
+                  return Container(height: _responsiveScreen.hp(5));
                 default:
-                  return Container(height: _responsiveScreen.hp(0),);
+                  return Container(height: _responsiveScreen.hp(0));
               }
             }
           },
@@ -79,6 +79,7 @@ class ListViewWidget extends StatelessWidget {
         color: Colors.white,
         backgroundColor: OurColors.initialPurple,
         child: ListView(
+          physics: BouncingScrollPhysics(),
           children: [
             Container(
               child: Column(

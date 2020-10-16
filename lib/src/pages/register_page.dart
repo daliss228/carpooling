@@ -3,6 +3,7 @@ import 'package:animate_do/animate_do.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_carpooling/src/models/user_model.dart';
+import 'package:flutter_carpooling/src/services/auth_service.dart';
 import 'package:flutter_carpooling/src/services/user_service.dart';
 import 'package:flutter_carpooling/src/user_preferences/user_prefs.dart';
 import 'package:flutter_carpooling/src/utils/responsive.dart';
@@ -23,14 +24,12 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
 
-  final usuarioProvider = new UserService(); // Llamando al provider de usuario
-  final user = new UserModel(); 
-  final prefs = new UserPreferences();
-  final formRegisterKey = GlobalKey<FormState>();// Declarando la llave del formulario
+  final _authService = new AuthService(); // Llamando al provider de usuario
+  final _user = new UserModel(); 
+  final _prefs = new UserPreferences();
+  final _formRegisterKey = GlobalKey<FormState>();// Declarando la llave del formulario
   String _password= ''; 
-  bool isloading = false;
-
-
+  bool _isloading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -86,7 +85,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
               )
             ), 
-            isloading? LoadingWidget(): Container(),
+            _isloading? LoadingWidget(): Container(),
           ],
         ),
       ),
@@ -131,11 +130,10 @@ class _RegisterPageState extends State<RegisterPage> {
     return SafeArea(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          
+        children: <Widget>[   
           SizedBox(height: _responsiveScreen.hp(4),),
           Form(
-            key: formRegisterKey,
+            key: _formRegisterKey,
             child: Column(
               children: <Widget>[
                 Center(
@@ -154,7 +152,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             label: 'Nombre', 
                             textCapitalization: TextCapitalization.sentences,
                             icono: FontAwesomeIcons.user,
-                            onSaved: (value){ user.name = value;  },
+                            onSaved: (value){ _user.name = value;  },
                             validator: (value){
                               if(RegExp(r'^[A-Za-záéíóúÁÉÍÓÚ]+$').hasMatch(value)){
                                 return null;
@@ -169,7 +167,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             label: 'Apellido', 
                             textCapitalization: TextCapitalization.sentences,
                             icono: FontAwesomeIcons.user,
-                            onSaved: (value) => user.lastName = value,
+                            onSaved: (value) => _user.lastName = value,
                             validator: (value){
                               if(RegExp(r'^[A-Za-záéíóúÁÉÍÓÚ]+$').hasMatch(value)){
                                 return null;
@@ -184,7 +182,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             label: 'Cédula', 
                             icono: FontAwesomeIcons.idCard,
                             inputType: TextInputType.number,
-                            onSaved: (value) => user.ci = value,
+                            onSaved: (value) => _user.ci = value,
                             validator: (value){
                               if(utils.isNumeric(value) && value.length == 10){
                                 return null; 
@@ -199,7 +197,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             label: 'Email', 
                             icono: FontAwesomeIcons.envelope, 
                             inputType: TextInputType.emailAddress,
-                            onSaved: (value) => user.email = value ,
+                            onSaved: (value) => _user.email = value ,
                             validator: (value){
                               Pattern pattern = r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
                               RegExp regExp = new RegExp(pattern); 
@@ -216,7 +214,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             label: 'Teléfono', 
                             icono: FontAwesomeIcons.list,
                             inputType: TextInputType.number,
-                            onSaved: (value) => user.phone = value,
+                            onSaved: (value) => _user.phone = value,
                             validator: (value){
                               if(utils.isNumeric(value) && value.length == 10){
                                 return null; 
@@ -255,7 +253,6 @@ class _RegisterPageState extends State<RegisterPage> {
                             },
                           ), 
                           SizedBox(height: _responsiveScreen.hp(0.5),),
-
                         ],
                       ),
                     ),
@@ -294,11 +291,10 @@ class _RegisterPageState extends State<RegisterPage> {
               onPressed: ()async{
                 await _registrar();
                 setState(() {
-                  isloading = false;
+                  _isloading = false;
                 });
               }
             ),
-          
             SizedBox(height: _responsiveScreen.hp(2),),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -334,31 +330,31 @@ class _RegisterPageState extends State<RegisterPage> {
 
   Future _registrar() async{
     
-    if(!formRegisterKey.currentState.validate()) return;
-    if(isloading)return;
-    formRegisterKey.currentState.save(); 
+    if(!_formRegisterKey.currentState.validate()) return;
+    if(_isloading)return;
+    _formRegisterKey.currentState.save(); 
     Map info;
     setState(() {
-      isloading = true; 
+      _isloading = true; 
     });
 
-    Map result = await usuarioProvider.searchCi(user.ci);
+    Map result = await _authService.searchCi(_user.ci);
 
     if(result['ok']){
-     info = await usuarioProvider.singUp(user.email, _password);
-     user.uidGroup = result['uidGroup']; 
+     info = await _authService.singUp(_user.email, _password);
+     _user.uidGroup = result['uidGroup']; 
     } else{
       mostrarAlerta(context, 'Ups!', result['mensaje']); 
       return; 
     }
 
     setState(() {
-      isloading = false; 
+      _isloading = false; 
     });
 
     if(info['ok']){
-      user.uid = prefs.uid; 
-      usuarioProvider.userDb(user); 
+      _user.uid = _prefs.uid; 
+      _authService.userDb(_user); 
       Navigator.pushReplacementNamed(context, 'photo', arguments: '');
     }else{
       mostrarAlerta(context, 'Ups!', info['mensaje']); 

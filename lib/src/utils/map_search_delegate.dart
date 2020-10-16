@@ -65,7 +65,7 @@ class DataSearch extends SearchDelegate{
                     Navigator.pushReplacementNamed(context, route , arguments: {
                       'days': this.days,
                       'hour': this.hour,
-                      'locality' : Locality(lat: location.lat, lng: location.lng)
+                      'locality' : LocalityModel(lat: location.lat, lng: location.lng)
                     });
                   },
                 );

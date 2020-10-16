@@ -1,53 +1,51 @@
-import 'package:animate_do/animate_do.dart';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:flutter_carpooling/src/providers/user_provider/user_provider.dart';
-import 'package:provider/provider.dart';
+import 'package:animate_do/animate_do.dart';
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
+import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_carpooling/src/providers/type_user_provider/type_user_info_provider.dart';
-import 'package:flutter_carpooling/src/user_preferences/user_prefs.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter_carpooling/src/utils/colors.dart';
 import 'package:flutter_carpooling/src/utils/responsive.dart';
-import 'package:flutter_carpooling/src/widgets/background_widget.dart';
-import 'package:flutter_speed_dial/flutter_speed_dial.dart';
-import 'package:keyboard_visibility/keyboard_visibility.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_carpooling/src/models/user_model.dart';
 import 'package:flutter_carpooling/src/widgets/alert_widget.dart';
 import 'package:flutter_carpooling/src/services/user_service.dart';
-import 'package:flutter_carpooling/src/utils/colors.dart' as Tema;
-
+import 'package:flutter_carpooling/src/services/auth_service.dart';
+import 'package:flutter_carpooling/src/widgets/background_widget.dart';
+import 'package:flutter_carpooling/src/user_preferences/user_prefs.dart';
+import 'package:flutter_carpooling/src/providers/user_provider/user_provider.dart';
+import 'package:flutter_carpooling/src/providers/type_user_provider/type_user_info_provider.dart';
 
 class ProfilePage extends StatefulWidget {
-
-  const ProfilePage({Key key}) : super(key: key);
 
   @override
   _ProfilePageState createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClientMixin {
-  
-  final TextEditingController _ciController = TextEditingController();
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _oldPassController = TextEditingController();
-  final TextEditingController _newPassController = TextEditingController();
-  final TextEditingController _lastnameController = TextEditingController();
-  
-  final TextStyle _styleTextHint = TextStyle(fontFamily: "WorkSansLight", fontSize: 16.0);
-  final TextStyle _styleErrorText = TextStyle(fontFamily: "WorkSansMedium", color: Color(0XFFE81935));
-  final TextStyle _styleFAB = TextStyle(fontFamily: "WorkSansLight", fontSize: 14.0, color: Colors.black);
-  final TextStyle _styleText = TextStyle(fontFamily: "WorkSansLight", fontSize: 16.0, color: Colors.black);
-  final TextStyle _styleEditText = TextStyle(fontFamily: "WorkSansMedium", color: Colors.black, fontSize: 10.0);
-  
-  final UserService _userService = UserService();
-  final UserService _authService = UserService();
-  final UserPreferences _prefs = new UserPreferences(); 
-  final GlobalKey<FormState> _formKey1 = GlobalKey<FormState>();
-  final GlobalKey<FormState> _formKey2 = GlobalKey<FormState>();
-  final GlobalKey<FormState> _formKey3 = GlobalKey<FormState>();
-  final GlobalKey<FormState> _formKey4 = GlobalKey<FormState>();
+class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
+
+  final _styleTextHint = TextStyle(fontFamily: "WorkSansLight", fontSize: 16.0);
+  final _styleErrorText = TextStyle(fontFamily: "WorkSansMedium", color: Color(0XFFE81935));
+  final _styleFAB = TextStyle(fontFamily: "WorkSansLight", fontSize: 14.0, color: Colors.black);
+  final _styleText = TextStyle(fontFamily: "WorkSansLight", fontSize: 16.0, color: Colors.black);
+  final _styleEditText = TextStyle(fontFamily: "WorkSansMedium", color: Colors.black, fontSize: 10.0);
+
+  final _ciController = TextEditingController();
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _oldPassController = TextEditingController();
+  final _newPassController = TextEditingController();
+  final _lastnameController = TextEditingController();
+
+  final _userService = UserService();
+  final _authService = AuthService();
+  final _prefs = new UserPreferences();
+  final _formKey1 = GlobalKey<FormState>();
+  final _formKey2 = GlobalKey<FormState>();
+  final _formKey3 = GlobalKey<FormState>();
+  final _formKey4 = GlobalKey<FormState>();
 
   bool _keyboardOpen = false;
   bool _obscureTextPass = true;
@@ -55,21 +53,32 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
   bool _activeEditName = false;
   bool _activeEditPhone = false;
   bool _activeEditLastname = false;
+  AnimationController _animationController;
+  List<Icon> icons = [ 
+    Icon(Icons.power_settings_new, color: Color(0XFFE90000)),
+    Icon(Icons.supervised_user_circle, color: Color(0XFF00B900)),
+    Icon(Icons.drive_eta, color: Color(0XFF0000B9)),
+  ];
 
   @override
   void initState() {
-    // visibilidad del teclado, lo que hace es detectar la visibilidad 
-    // del teclado si es true oculta el FAB y si es false muestra el FAB
-    KeyboardVisibilityNotification().addNewListener(
-      onChange: (bool visible) {
-        setState(() => _keyboardOpen = visible);
-      },
-    );
+    // visibilidad del teclado, detecta la visibilidad del teclado
+    // si es true oculta el FAB y si es false muestra el FAB
+    // KeyboardVisibilityNotification().addNewListener(
+    //   onChange: (bool visible) {
+    //     setState(() => _keyboardOpen = visible);
+    //   },
+    // );
+    // _keyboardOpen = KeyboardVisibilityProvider.isKeyboardVisible(context);
+    _animationController = new AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
     super.initState();
   }
 
   @override
-  void dispose() { 
+  bool get wantKeepAlive => true;
+
+  @override
+  void dispose() {
     _ciController.clear();
     _nameController.clear();
     _emailController.clear();
@@ -79,137 +88,203 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
   }
 
   @override
-  bool get wantKeepAlive => true;
-
-  @override
   Widget build(BuildContext context) {
     super.build(context);
-    final _screenSize = MediaQuery.of(context).size; 
     final _responsiveScreen = new Responsive(context);
-    final _userInfo = Provider.of<UserInfoP>(context);
+    final _userInfo = Provider.of<UserInfo>(context);
+    final _typeUser = Provider.of<TypeUser>(context);
     UserModel _userModel = _userInfo.getUserModel;
-    
     _ciController.text = _userModel.ci;
     _nameController.text = _userModel.name;
     _emailController.text = _userModel.email;
     _phoneController.text = _userModel.phone;
     _lastnameController.text = _userModel.lastName;
-
     return Scaffold(
-      floatingActionButton: _keyboardOpen ? Container() : speedDial(_screenSize, context),
-      body:Stack(
+      body: Stack(
         children: [
-          _backGround(_responsiveScreen),
-          Container(
-            padding: EdgeInsets.symmetric(horizontal: 20),
-            child: CustomScrollView(
-              slivers: [
-                SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: Column(
-                    children: [
-                      SizedBox(height: _responsiveScreen.hp(3),),
-                      Row(
-                        children: [
-                          Expanded(child: Container()),
-                          FadeInRight(
-                            child: Text(
-                              'Mi Perfil', 
-                              style: TextStyle(fontSize: _responsiveScreen.ip(4), fontFamily: 'WorkSansLight'),
+          _background(_responsiveScreen),
+          SafeArea(
+            child: Container(
+              padding:
+                  EdgeInsets.symmetric(horizontal: _responsiveScreen.wp(6)),
+              child: CustomScrollView(
+                slivers: [
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: Column(
+                      children: [
+                        SizedBox(height: _responsiveScreen.hp(3)),
+                        Row(
+                          children: [
+                            Expanded(child: Container()),
+                            FadeInRight(
+                              child: Text(
+                                'Mi Perfil',
+                                style: TextStyle(
+                                    fontSize: _responsiveScreen.ip(4),
+                                    fontFamily: 'WorkSansLight'),
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      _content(_responsiveScreen, _userModel, _userInfo)
-                    ],
-                  ),
-                )
-              ],
-            ), 
+                          ],
+                        ),
+                        _content(_responsiveScreen, _userModel, _userInfo)
+                      ],
+                    ),
+                  )
+                ],
+              ),
+            ),
           ),
+          // _keyboardOpen ? Container() : 
+          _newSpeedDial(_responsiveScreen, _typeUser.getTypeuser),
         ],
       ),
-      
-       
-    ); 
+    );
   }
 
-  Widget _backGround(Responsive _responsiveScreen){
+  Widget _background(Responsive _responsiveScreen) {
     return Container(
       height: _responsiveScreen.hp(100),
       width: _responsiveScreen.wp(100),
       child: Stack(
         children: [
           Positioned(
-              right: _responsiveScreen.wp(75),
-              child: FadeInLeft(child: BackgoundWidget(colors: [Tema.OurColors.lightBlue, Tema.OurColors.lightGreenishBlue], sizeWidget: _responsiveScreen.hp(34),))
-            ),
-            Positioned(
-              top: _responsiveScreen.hp(1),
-              right: _responsiveScreen.wp(75),
-              child: FadeInLeft(
-                 delay: Duration(milliseconds: 500),
-                child: BackgoundWidget(sizeWidget: _responsiveScreen.hp(30), colors: [Tema.OurColors.initialPurple, Tema.OurColors.finalPurple],)
+            right: _responsiveScreen.wp(75),
+            child: FadeInLeft(
+              child: BackgoundWidget(
+                colors: [OurColors.lightBlue, OurColors.lightGreenishBlue],
+                sizeWidget: _responsiveScreen.hp(34)
               )
-            ),
-            Positioned(
-              top: _responsiveScreen.hp(70),
-              left: _responsiveScreen.wp(75),
-              child: FadeInRight(child: BackgoundWidget(colors: [Tema.OurColors.lightBlue, Tema.OurColors.lightGreenishBlue], sizeWidget: _responsiveScreen.hp(30),))
-            ),
+            )
+          ),
+          Positioned(
+            top: _responsiveScreen.hp(1),
+            right: _responsiveScreen.wp(75),
+            child: FadeInLeft(
+              delay: Duration(milliseconds: 500),
+              child: BackgoundWidget(
+                sizeWidget: _responsiveScreen.hp(30),
+                colors: [OurColors.initialPurple, OurColors.finalPurple],
+              )
+            )
+          ),
+          Positioned(
+            top: _responsiveScreen.hp(70),
+            left: _responsiveScreen.wp(75),
+            child: FadeInRight(
+              child: BackgoundWidget(
+                colors: [OurColors.lightBlue, OurColors.lightGreenishBlue],
+                sizeWidget: _responsiveScreen.hp(30),
+              )
+            )
+          ),
         ],
       ),
     );
   }
 
-  Widget _content(Responsive _responsiveScreen, UserModel userModel, UserInfoP userInfo){
+  Widget _content(Responsive _responsiveScreen, UserModel userModel, UserInfo userInfo) {
     return Expanded(
       child: Column(
-        children: [
-          Container(
-            width: _responsiveScreen.wp(80),
-            height: _responsiveScreen.hp(20),
-            child: Row(
-              children: [
-                Expanded(child: Container()),
-                FadeInRight(
-                  child: Container(
-                    height: _responsiveScreen.ip(11.2),
-                    width: _responsiveScreen.ip(11.2),
-                    child: Stack(
-                      children: [
-                        _photoUser(userModel, _responsiveScreen),
-                        Positioned(
-                          bottom: 1,
-                          child: _camera(_responsiveScreen, userModel)
-                        ),
-                      ],
+      children: [
+        Container(
+          width: _responsiveScreen.wp(80),
+          height: _responsiveScreen.hp(20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              FadeInRight(
+                child: Stack(
+                  alignment: Alignment.centerRight,
+                  children: [
+                    Container(
+                      width: _responsiveScreen.ip(7) * 2,
+                      height: _responsiveScreen.ip(5.6) * 2,
                     ),
-                  ),
+                    _photoUser(userModel, _responsiveScreen),
+                    _camera(_responsiveScreen, userModel)
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          _body(_responsiveScreen, userInfo),
-        ],
-      )
+        ),
+        _body(_responsiveScreen, userInfo),
+      ],
+    ));
+  }
+
+  Widget _newSpeedDial(responsiveScreen, typeUser) {
+    return Positioned(
+      bottom: responsiveScreen.hp(7.0),
+      right: responsiveScreen.wp(2.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: new List.generate(icons.length, (int index) {
+          Widget child = new Container(
+            height: 60.0,
+            width: 56.0,
+            alignment: FractionalOffset.topCenter,
+            child: new ScaleTransition(
+              scale: new CurvedAnimation(
+                parent: _animationController,
+                curve: new Interval(
+                  0.0,
+                  1.0 - index / icons.length / 2.0,
+                  curve: Curves.easeOut
+                ),
+              ),
+              child: new FloatingActionButton(
+                heroTag: null,
+                backgroundColor: Colors.white,
+                mini: true,
+                child: icons[index],
+                onPressed: () {},
+              ),
+            ),
+          );
+          return child;
+        }).toList()..add(
+          new FloatingActionButton(
+            elevation: 0.0,
+            backgroundColor: Colors.transparent,
+            heroTag: null,
+            child: new AnimatedBuilder(
+              animation: _animationController,
+              builder: (BuildContext context, Widget child) {
+                return new Transform(
+                  transform: new Matrix4.rotationZ(_animationController.value * 0.5 * math.pi),
+                  alignment: FractionalOffset.center,
+                  child: new Icon(_animationController.isDismissed ? Icons.menu : Icons.close, color: Colors.white, size: responsiveScreen.ip(3.5)),
+                );
+              },
+            ),
+            onPressed: () {
+              if (_animationController.isDismissed) {
+                _animationController.forward();
+              } else {
+                _animationController.reverse();
+              }
+            },
+          ),
+        ),
+      ),
     );
   }
 
-  Widget speedDial(_screenSize, BuildContext context) {
-    final typeUser = Provider.of<TypeUser>(context);
+  Widget _speedDial(Responsive responsiveScreen, String typeUser) {
     return SpeedDial(
-      marginRight: 8,
-      marginBottom: 2,
+      // marginRight: 8,
+      // marginBottom: 2,
       animatedIcon: AnimatedIcons.menu_close,
-      animatedIconTheme: IconThemeData(size: 25.0, color: OurColors.lightGreenishBlue),
+      animatedIconTheme: IconThemeData(size: responsiveScreen.ip(3.5), color: Colors.black),
       closeManually: false,
       curve: Curves.bounceIn,
       overlayColor: Colors.black,
       overlayOpacity: 0.5,
       tooltip: 'Opciones',
       heroTag: 'speed-dial-hero-tag',
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.green,
       foregroundColor: Colors.black,
       elevation: 0.0,
       shape: CircleBorder(),
@@ -220,12 +295,6 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
           label: 'Cerrar Sesión',
           labelStyle: _styleFAB,
           onTap: () async {
-            _prefs.uid = '';
-            _prefs.token = '';
-            _prefs.uidGroup = '';
-            _prefs.mode = '';
-            _prefs.lat = '';
-            _prefs.lng = '';
             await _authService.signOut();
             Navigator.pushReplacementNamed(context, 'login');
           },
@@ -233,75 +302,70 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
         SpeedDialChild(
           child: Icon(Icons.account_circle, color: Color(0XFF00B900)),
           backgroundColor: Colors.white,
-          label: typeUser.getTypeuser == 'CONDUCTOR' ? 'Ser pasajero' : 'Ser conductor',
+          label: typeUser == 'CONDUCTOR' ? 'Ser pasajero' : 'Ser conductor',
           labelStyle: _styleFAB,
           onTap: () {
             _prefs.mode = '';
             Navigator.pushReplacementNamed(context, 'selectMode');
           }
         ),
-        typeUser.getTypeuser == 'CONDUCTOR' ? SpeedDialChild(
-          child: Icon(Icons.drive_eta, color: Color(0XFF0000B9)),
-          backgroundColor: Colors.white,
-          label: 'Mi auto',
-          labelStyle: _styleFAB,
-          onTap: () => {
-            Navigator.pushNamed(context, 'regAuto', arguments: false)
-          },
-        ): SpeedDialChild(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
+        typeUser == 'CONDUCTOR'
+        ? SpeedDialChild(
+            child: Icon(Icons.drive_eta, color: Color(0XFF0000B9)),
+            backgroundColor: Colors.white,
+            label: 'Mi auto',
+            labelStyle: _styleFAB,
+            onTap: () => {
+              Navigator.pushNamed(context, 'regAuto', arguments: false)
+            },
+          )
+        : SpeedDialChild(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
         ),
       ],
     );
   }
 
   // Widgets para los campos a recibir
-  Widget _photoUser(UserModel userModel, Responsive responsiveScreen){
+  Widget _photoUser(UserModel userModel, Responsive responsiveScreen) {
     return CircleAvatar(
-      backgroundColor: Tema.OurColors.lightGreenishBlue,
+      backgroundColor: Colors.white,
       radius: responsiveScreen.ip(5.6),
       child: ClipOval(
-        child: (userModel.photo != null) ? FadeInImage(
-          image: NetworkImage(userModel.photo),
-          placeholder: AssetImage('assets/img/ripple-loading.gif'),
-          height: responsiveScreen.ip(11),
-          width: responsiveScreen.ip(11),
-          fit: BoxFit.cover,
-        )
+        child: (userModel.photo != null)
+        ? FadeInImage(
+            image: NetworkImage(userModel.photo),
+            placeholder: AssetImage('assets/img/ripple-loading.gif'),
+            height: responsiveScreen.ip(11),
+            width: responsiveScreen.ip(11),
+            fit: BoxFit.cover,
+          )
         : Container()
       ),
     );
   }
 
-  Widget _camera(Responsive _responsiveScreen, UserModel userModel ){
-    return CircleAvatar(
-      radius: _responsiveScreen.ip(2),
-      backgroundColor: Colors.white,
-      child: Stack(
-        children: [
-          Positioned(
-            top: _responsiveScreen.ip(4) - _responsiveScreen.ip(3.9),
-            left: _responsiveScreen.ip(4) - _responsiveScreen.ip(3.9),
-            child: CircleAvatar(
-              radius: _responsiveScreen.ip(1.9),
-              backgroundColor: Tema.OurColors.initialPurple,
-            ),
+  Widget _camera(Responsive _responsiveScreen, UserModel userModel) {
+    return Positioned(
+      top: _responsiveScreen.hp(6.5),
+      right: _responsiveScreen.wp(20),
+      child: CircleAvatar(
+        radius: _responsiveScreen.ip(2.3),
+        backgroundColor: Colors.white,
+        child: CircleAvatar(
+          radius: _responsiveScreen.ip(2),
+          backgroundColor: Colors.black12,
+          child: IconButton(
+            icon: Icon(FontAwesomeIcons.camera, color: OurColors.darkPurple, size: _responsiveScreen.ip(2)),
+            onPressed: () => Navigator.pushNamed(context, 'photo', arguments: userModel.photo),
           ),
-          Positioned(
-            bottom: (_responsiveScreen.ip(1.9)/2) - _responsiveScreen.ip(2),
-            left: (_responsiveScreen.ip(1.9)/2) - _responsiveScreen.ip(2),
-            child: IconButton(
-              icon: Icon(FontAwesomeIcons.camera, color: Tema.OurColors.grayishWhite, size: _responsiveScreen.ip(2)), 
-              onPressed: () => Navigator.pushNamed(context, 'photo', arguments: userModel.photo),
-            ),
-          ),
-        ],
-      ) 
+        ),
+      ),
     );
   }
 
-  Widget _nameUser(UserInfoP userInfo){
+  Widget _nameUser(UserInfo userInfo) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
       child: Row(
@@ -316,10 +380,10 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                 textCapitalization: TextCapitalization.sentences,
                 decoration: InputDecoration(
                   icon: Icon(FontAwesomeIcons.user, color: OurColors.darkGray, size: 20.0),
-                  errorStyle: _styleErrorText
-                ),
+                  errorStyle: _styleErrorText),
                 validator: (value) {
-                  if (RegExp(r'^[A-Za-záéíóúÁÉÍÓÚ]+$').hasMatch(value) && value.length >= 3) {
+                  if (RegExp(r'^[A-Za-záéíóúÁÉÍÓÚ]+$').hasMatch(value) &&
+                      value.length >= 3) {
                     return null;
                   }
                   return 'Nombre incorrecto!';
@@ -330,15 +394,16 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
           SizedBox(width: 10.0),
           GestureDetector(
             onTap: () {
-              userInfo.nameUser(_nameController.text); 
+              userInfo.nameUser(_nameController.text);
               _saveInputName();
             },
             child: Column(
-              children: !_activeEditName ? <Widget>[
+              children: !_activeEditName
+              ? <Widget>[
                 Icon(Icons.edit, size: 18.0, color: OurColors.darkPurple),
                 Text('Editar', style: _styleEditText),
-              ]
-              : <Widget>[ 
+                ]
+              : <Widget>[
                 Icon(FontAwesomeIcons.check, size: 18.0, color: Colors.green),
                 Text('Ok', style: _styleEditText),
               ]
@@ -349,7 +414,7 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
     );
   }
 
-  Widget _lastnameUser(UserInfoP userInfo){
+  Widget _lastnameUser(UserInfo userInfo) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
       child: Row(
@@ -364,10 +429,10 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                 textCapitalization: TextCapitalization.sentences,
                 decoration: InputDecoration(
                   icon: Icon(FontAwesomeIcons.user, color: OurColors.darkGray, size: 20.0),
-                  errorStyle: _styleErrorText
-                ),
+                  errorStyle: _styleErrorText),
                 validator: (value) {
-                  if (RegExp(r'^[A-Za-záéíóúÁÉÍÓÚ]+$').hasMatch(value) && value.length >= 3) {
+                  if (RegExp(r'^[A-Za-záéíóúÁÉÍÓÚ]+$').hasMatch(value) &&
+                      value.length >= 3) {
                     return null;
                   }
                   return 'Apellido incorrecto!';
@@ -382,11 +447,12 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
               _saveInputLastname();
             },
             child: Column(
-              children: !_activeEditLastname ? <Widget>[
+              children: !_activeEditLastname
+              ? <Widget>[
                 Icon(Icons.edit, size: 18.0, color: OurColors.darkPurple),
                 Text('Editar', style: _styleEditText),
               ]
-              : <Widget>[ 
+              : <Widget>[
                 Icon(FontAwesomeIcons.check, size: 18.0, color: Colors.green),
                 Text('Ok', style: _styleEditText),
               ]
@@ -397,7 +463,7 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
     );
   }
 
-  Widget _phoneUser(UserInfoP userInfo){
+  Widget _phoneUser(UserInfo userInfo) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
       child: Row(
@@ -416,7 +482,8 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                   counterText: null
                 ),
                 validator: (value) {
-                  if (RegExp(r'^[0-9]+$').hasMatch(value) && value.length == 10) {
+                  if (RegExp(r'^[0-9]+$').hasMatch(value) &&
+                      value.length == 10) {
                     return null;
                   }
                   return 'Teléfono incorrecto!';
@@ -431,11 +498,12 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
               _saveInputPhone();
             },
             child: Column(
-              children: !_activeEditPhone ? <Widget>[
+              children: !_activeEditPhone
+              ? <Widget>[
                 Icon(Icons.edit, size: 18.0, color: OurColors.darkPurple),
                 Text('Editar', style: _styleEditText),
               ]
-              : <Widget>[ 
+              : <Widget>[
                 Icon(FontAwesomeIcons.check, size: 18.0, color: Colors.green),
                 Text('Ok', style: _styleEditText),
               ]
@@ -446,7 +514,7 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
     );
   }
 
-  Widget _ciUser(){
+  Widget _ciUser() {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
       child: TextField(
@@ -460,7 +528,7 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
     );
   }
 
-  Widget _emailUser(){
+  Widget _emailUser() {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
       child: TextField(
@@ -474,7 +542,7 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
     );
   }
 
-  Widget _passUser(){
+  Widget _passUser() {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 25.0, vertical: 3.0),
       child: Form(
@@ -491,7 +559,7 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                     style: _styleText,
                     decoration: InputDecoration(
                       icon: Icon(
-                        FontAwesomeIcons.lock, 
+                        FontAwesomeIcons.lock,
                         color: OurColors.darkGray,
                         size: 20.0,
                       ),
@@ -500,7 +568,7 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                       errorStyle: _styleErrorText,
                     ),
                     validator: (value) {
-                      if (value.length <= 6 && value != ""){
+                      if (value.length <= 6 && value != "") {
                         return 'Contraseña muy corta!';
                       }
                       return null;
@@ -511,11 +579,12 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                 GestureDetector(
                   onTap: () => _saveInputPass(),
                   child: Column(
-                    children: !_activeEditPass ? <Widget>[
+                    children: !_activeEditPass
+                    ? <Widget>[
                       Icon(Icons.edit, size: 18.0, color: OurColors.darkPurple),
                       Text('Editar', style: _styleEditText),
                     ]
-                    : <Widget>[ 
+                    : <Widget>[
                       Icon(FontAwesomeIcons.check, size: 18.0, color: Colors.green),
                       Text('Ok', style: _styleEditText),
                     ]
@@ -532,24 +601,25 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                   obscureText: _obscureTextPass,
                   style: _styleText,
                   decoration: InputDecoration(
-                    icon: Icon(FontAwesomeIcons.lock, color: OurColors.darkGray,size: 20.0),
+                    icon: Icon(FontAwesomeIcons.lock, color: OurColors.darkGray, size: 20.0),
                     hintText: 'Nueva Contraseña',
                     hintStyle: _styleTextHint,
                     errorStyle: _styleErrorText,
                     suffixIcon: GestureDetector(
                       onTap: _showTextPass,
-                      child: Icon(_obscureTextPass? FontAwesomeIcons.eye : FontAwesomeIcons.eyeSlash, size: 15.0, color: Colors.black),
+                      child: Icon(_obscureTextPass ? FontAwesomeIcons.eye : FontAwesomeIcons.eyeSlash, size: 15.0, color: Colors.black),
                     ),
                   ),
                   validator: (value) {
-                    if (value != "" && value.length <= 6){
+                    if (value != "" && value.length <= 6) {
                       if (_oldPassController.text == value) {
-                        return 'Contraseña muy corta!\nContraseñas no pueden ser iguales!';  
+                        return 'Contraseña muy corta!\nContraseñas no pueden ser iguales!';
                       } else {
-                        return 'Contraseña muy corta!';  
-                      } 
-                    } else if (value != "" && _oldPassController.text == value){
-                      return 'Contraseñas no pueden ser iguales!';  
+                        return 'Contraseña muy corta!';
+                      }
+                    } else if (value != "" &&
+                        _oldPassController.text == value) {
+                      return 'Contraseñas no pueden ser iguales!';
                     }
                     return null;
                   },
@@ -563,7 +633,7 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
     );
   }
 
-  Widget _body(Responsive _responsiveScreen, UserInfoP userInfo){
+  Widget _body(Responsive _responsiveScreen, UserInfo userInfo) {
     return SingleChildScrollView(
       child: Padding(
         padding: EdgeInsets.symmetric(vertical: 15.0),
@@ -580,17 +650,16 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                 borderRadius: BorderRadius.circular(25.0),
                 boxShadow: <BoxShadow>[
                   BoxShadow(
-                    color: Colors.black12,
-                    blurRadius: 3.0,
-                    offset: Offset(0.0, 4.0),
-                    spreadRadius: 3.0
-                  )
+                      color: Colors.black12,
+                      blurRadius: 3.0,
+                      offset: Offset(0.0, 4.0),
+                      spreadRadius: 3.0)
                 ]
               ),
               child: Column(
                 children: <Widget>[
-                  _nameUser(userInfo), 
-                  _lastnameUser(userInfo), 
+                  _nameUser(userInfo),
+                  _lastnameUser(userInfo),
                   _ciUser(),
                   _emailUser(),
                   _phoneUser(userInfo),
@@ -604,7 +673,7 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
       ),
     );
   }
-  
+
   Future<void> _saveInputName() async {
     if (_formKey1.currentState.validate()) {
       setState(() {
@@ -612,7 +681,7 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
       });
       if (!_activeEditName) {
         await _uploadUser("name", _nameController.text);
-      } 
+      }
     }
   }
 
@@ -639,22 +708,22 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
   }
 
   Future<void> _saveInputPass() async {
-    if (_formKey4.currentState.validate()) { 
+    if (_formKey4.currentState.validate()) {
       setState(() {
         _activeEditPass = !_activeEditPass;
       });
       if (!_activeEditPass && _oldPassController.text != "" && _newPassController.text != "") {
-        final response =  await _authService.reAuth(_emailController.text, _oldPassController.text, _newPassController.text);
+        final response = await _authService.reAuth(_emailController.text, _oldPassController.text, _newPassController.text);
         _oldPassController.clear();
         _newPassController.clear();
-        if(response['ok'] == false){
-          mostrarAlerta(context, 'Ups!', response['message']); 
+        if (response['ok'] == false) {
+          mostrarAlerta(context, 'Ups!', response['message']);
         }
       } else if (_oldPassController.text != "" || _newPassController.text != "") {
         setState(() {
           _activeEditPass = true;
         });
-      } else if (_oldPassController.text != "" && _newPassController.text != ""){
+      } else if (_oldPassController.text != "" && _newPassController.text != "") {
         setState(() {
           _activeEditPass = false;
         });

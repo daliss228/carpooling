@@ -8,7 +8,7 @@ import 'package:flutter_carpooling/src/user_preferences/user_prefs.dart';
 class LocalityService {
   final _dbRef = FirebaseDatabase.instance.reference(); 
   final _prefs = new UserPreferences();
-  Future<bool> localityDb (Locality coordinates) async {
+  Future<bool> localityDb (LocalityModel coordinates) async {
     try{
       await _dbRef.child('users/${_prefs.uid}/coordinates').set(coordinates.toJson());
       return true;

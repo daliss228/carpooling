@@ -1,12 +1,12 @@
-import 'dart:convert';
+// import 'dart:convert';
 import 'package:flutter_carpooling/src/models/car_model.dart';
 import 'package:flutter_carpooling/src/models/locality_model.dart';
 
 List<UserModel> userModelList(Map data) => List<UserModel>.from(data.entries.map((x) => UserModel.fromJson(x.value)));
 
-UserModel userModelFromJson(String str) => UserModel.fromJson(json.decode(str));
+// UserModel userModelFromJson(String str) => UserModel.fromJson(json.decode(str));
 
-String userModelToJson(UserModel data) => json.encode(data.toJson());
+// String userModelToJson(UserModel data) => json.encode(data.toJson());
 
 class UserModel {
   UserModel({
@@ -32,7 +32,7 @@ class UserModel {
   String photo;
   String phone;
   bool status;
-  Locality coordinates;
+  LocalityModel coordinates;
   String uidGroup;
 
   factory UserModel.fromJson(Map<dynamic, dynamic> json) => UserModel(
@@ -45,7 +45,7 @@ class UserModel {
     photo:       json["photo"] == null ? null : json["photo"],
     phone:       json["phone"] == null ? null : json["phone"],
     status:      json["status"] == null ? null : json["status"],
-    coordinates: json["coordinates"] == null ? null : Locality.fromJson(json["coordinates"]),
+    coordinates: json["coordinates"] == null ? null : LocalityModel.fromJson(json["coordinates"]),
     uidGroup:    json["uidGroup"] == null ? null : json["uidGroup"],
   );
 

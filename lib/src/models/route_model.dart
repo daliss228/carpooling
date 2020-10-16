@@ -29,7 +29,7 @@ class RouteModel {
   String address;
   String date;
   String group;
-  Locality coordinates;
+  LocalityModel coordinates;
   String driverUid;
   String hour;
   Schedule schedule;
@@ -43,7 +43,7 @@ class RouteModel {
     address: json["address"] == null ? null : json["address"],
     date: json["date"] == null ? null : json["date"],
     group: json["group"] == null ? null : json["group"],
-    coordinates: json["coordinates"] == null ? null : Locality.fromJson(json["coordinates"]),
+    coordinates: json["coordinates"] == null ? null : LocalityModel.fromJson(json["coordinates"]),
     driverUid: json["id_driver"] == null ? null : json["id_driver"],
     hour: json["hour"] == null ? null : json["hour"],
     schedule: json["schedule"] == null ? null : Schedule.fromJson(json["schedule"]),

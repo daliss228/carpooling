@@ -1,10 +1,5 @@
-import 'dart:convert';
-
-CarModel carModelFromJson(String str) => CarModel.fromJson(json.decode(str));
-
-String carModelToJson(CarModel data) => json.encode(data.toJson());
-
 class CarModel {
+  
     CarModel({
         this.brand,
         this.color,

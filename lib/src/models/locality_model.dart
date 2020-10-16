@@ -1,11 +1,6 @@
-
-import 'dart:convert';
-
-Locality localityModelFromJson(String str) => Locality.fromJson(json.decode(str));
-String localityModelToJson(Locality data) => json.encode(data.toJson());
-
-class Locality {
-  Locality({
+class LocalityModel {
+  
+  LocalityModel({
     this.lat,
     this.lng,
   });
@@ -13,7 +8,7 @@ class Locality {
   double lat;
   double lng;
 
-  factory Locality.fromJson(Map<dynamic, dynamic> json) => Locality(
+  factory LocalityModel.fromJson(Map<dynamic, dynamic> json) => LocalityModel(
     lat: json["lat"] == null ? null : json["lat"].toDouble(),
     lng: json["lng"] == null ? null : json["lng"].toDouble(),
   );

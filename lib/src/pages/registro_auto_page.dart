@@ -7,7 +7,7 @@ import 'package:flutter_carpooling/src/services/car_service.dart';
 import 'package:flutter_carpooling/src/user_preferences/user_prefs.dart';
 import 'package:flutter_carpooling/src/utils/responsive.dart';
 import 'package:flutter_carpooling/src/widgets/loading_widget.dart';
-import 'package:flutter_carpooling/src/utils/colors.dart' as Tema;
+import 'package:flutter_carpooling/src/utils/colors.dart';
 import 'package:flutter_carpooling/src/utils/utils.dart' as utils;
 
 class RegistroAutoPage extends StatefulWidget {
@@ -176,7 +176,7 @@ final TextEditingController _registryEdtCtr = TextEditingController();
         gradient: LinearGradient(
           begin: FractionalOffset(0.0, 0.3),
           end: FractionalOffset(0.0, 0.0),
-          colors:[Tema.OurColors.initialPurple, Tema.OurColors.finalPurple]
+          colors:[OurColors.initialPurple, OurColors.finalPurple]
         )
       ),
     );
@@ -243,7 +243,7 @@ final TextEditingController _registryEdtCtr = TextEditingController();
       onSaved: (value){car.registry = value;},
       decoration: InputDecoration(
         border: InputBorder.none,
-        hintText: "Ej placa: ABC-1234",
+        hintText: "Ejemplo: ABC-123",
         hintStyle: _styleHint,
         labelText: "Placa",
         icon: Icon(Icons.chrome_reader_mode, color: Colors.black, size: 20.0,), 
@@ -254,7 +254,7 @@ final TextEditingController _registryEdtCtr = TextEditingController();
     return TextFormField(
       controller: _brandEdtCtr,
       enabled: isEnabled,
-      textCapitalization: TextCapitalization.sentences,
+      textCapitalization: TextCapitalization.words,
       style: _styleText,
       validator: (value){
         if(value.length >= 3 && value.length <= 50){
@@ -265,7 +265,7 @@ final TextEditingController _registryEdtCtr = TextEditingController();
       onSaved: (value){ car.brand = value;},
       decoration: InputDecoration(
         border: InputBorder.none,
-        hintText: "Ej marca: Chevrolet",
+        hintText: "Ejemplo: Chevrolet",
         hintStyle: _styleHint,
         labelText: "Marca",
         icon: Icon(Icons.directions_car, color: Colors.black, size: 20.0,)
@@ -287,7 +287,7 @@ final TextEditingController _registryEdtCtr = TextEditingController();
       onSaved: (value){ car.model = value;},
       decoration: InputDecoration(
         border: InputBorder.none,
-        hintText: "Ej modelo: Aveo",
+        hintText: "Ejemplo: Aveo",
         hintStyle: _styleHint,
         labelText: "Modelo",
         icon: Icon(Icons.perm_data_setting, color: Colors.black, size: 20.0,)
@@ -314,7 +314,7 @@ final TextEditingController _registryEdtCtr = TextEditingController();
       onSaved: (value){ car.seat = numSeat;},
       decoration: InputDecoration(
         border: InputBorder.none,
-        hintText: "Ej asientos: 3",
+        hintText: "Ejemplo: 3",
         hintStyle: _styleHint,
         labelText: "Número de asientos:",
         icon: Icon(Icons.format_list_numbered, color: Colors.black, size: responsiveScreen.ip(2.5),)
@@ -323,39 +323,57 @@ final TextEditingController _registryEdtCtr = TextEditingController();
   }
 
   Widget _btnReg(Responsive responsiveScreen){
-    return Center(
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.all(Radius.circular(2.5)),
-          boxShadow: <BoxShadow>[
-            BoxShadow(
-              color: Colors.black45,
-              offset: Offset(0.0, 1.0),
-              blurRadius: 10.0,
-            ),
-          ],
-        ),
-        child: MaterialButton(
+    // return Center(
+    //   child: Container(
+    //     decoration: BoxDecoration(
+    //       borderRadius: BorderRadius.all(Radius.circular(2.5)),
+    //       boxShadow: <BoxShadow>[
+    //         BoxShadow(
+    //           color: Colors.black45,
+    //           offset: Offset(0.0, 1.0),
+    //           blurRadius: 10.0,
+    //         ),
+    //       ],
+    //     ),
+    //     child: 
+    //     MaterialButton(
           
-          color: Color(0xFF0393A5),
-          highlightColor: Colors.transparent,
-          splashColor: Tema.OurColors.lightGreenishBlue,
-          child: Padding(
-            padding: EdgeInsets.symmetric(vertical: responsiveScreen.wp(1) , horizontal: responsiveScreen.wp(5)),
-            child: Text(
-              "GUARDAR",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: responsiveScreen.ip(2),
-                fontFamily: "WorkSansBold"
-              ),
-            ),
+    //       color: Color(0xFF0393A5),
+    //       highlightColor: Colors.transparent,
+    //       splashColor: Tema.OurColors.lightGreenishBlue,
+    //       child: Padding(
+    //         padding: EdgeInsets.symmetric(vertical: responsiveScreen.wp(1) , horizontal: responsiveScreen.wp(5)),
+    //         child: Text(
+    //           "GUARDAR",
+    //           style: TextStyle(
+    //             color: Colors.white,
+    //             fontSize: responsiveScreen.ip(2),
+    //             fontFamily: "WorkSansBold"
+    //           ),
+    //         ),
+    //       ),
+    //       onPressed: isEnabled ? () async{
+    //         await _saveCar();}  : null,
+    //     )
+    //   ),
+    // ); 
+    return Center(
+      child: MaterialButton(
+        color: OurColors.lightGreenishBlue,
+        highlightColor: Colors.transparent,
+        splashColor: OurColors.lightGreenishBlue,
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 40.0),
+          child: Text("GUARDAR", style: TextStyle(color: Colors.white, fontSize: responsiveScreen.ip(1.5), fontFamily: "WorkSansMedium"),
           ),
-          onPressed: isEnabled? ()async{
-            await _saveCar();}  : null,
-        )
+        ),
+        onPressed: isEnabled 
+        ? () async{
+          await _saveCar();
+        }  
+        : null,
       ),
-    ); 
+    );
   }
 
 
