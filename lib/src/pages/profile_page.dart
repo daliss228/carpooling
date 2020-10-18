@@ -2,8 +2,8 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
-import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_carpooling/src/utils/colors.dart';
@@ -62,14 +62,11 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
 
   @override
   void initState() {
-    // visibilidad del teclado, detecta la visibilidad del teclado
-    // si es true oculta el FAB y si es false muestra el FAB
-    // KeyboardVisibilityNotification().addNewListener(
-    //   onChange: (bool visible) {
-    //     setState(() => _keyboardOpen = visible);
-    //   },
-    // );
-    // _keyboardOpen = KeyboardVisibilityProvider.isKeyboardVisible(context);
+    KeyboardVisibility.onChange.listen((bool visible) {
+      setState(() {
+        _keyboardOpen = visible;
+      });
+    });
     _animationController = new AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
     super.initState();
   }
@@ -100,13 +97,13 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
     _phoneController.text = _userModel.phone;
     _lastnameController.text = _userModel.lastName;
     return Scaffold(
+      floatingActionButton: _keyboardOpen ? Container() : _speedDial(_responsiveScreen, _typeUser.getTypeuser),
       body: Stack(
         children: [
           _background(_responsiveScreen),
           SafeArea(
             child: Container(
-              padding:
-                  EdgeInsets.symmetric(horizontal: _responsiveScreen.wp(6)),
+              padding: EdgeInsets.symmetric(horizontal: _responsiveScreen.wp(6)),
               child: CustomScrollView(
                 slivers: [
                   SliverFillRemaining(
@@ -118,12 +115,7 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
                           children: [
                             Expanded(child: Container()),
                             FadeInRight(
-                              child: Text(
-                                'Mi Perfil',
-                                style: TextStyle(
-                                    fontSize: _responsiveScreen.ip(4),
-                                    fontFamily: 'WorkSansLight'),
-                              ),
+                              child: Text('Mi Perfil', style: TextStyle(fontSize: _responsiveScreen.ip(4), fontFamily: 'WorkSansLight')),
                             ),
                           ],
                         ),
@@ -135,8 +127,6 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
               ),
             ),
           ),
-          // _keyboardOpen ? Container() : 
-          _newSpeedDial(_responsiveScreen, _typeUser.getTypeuser),
         ],
       ),
     );
@@ -214,77 +204,19 @@ class _ProfilePageState extends State<ProfilePage> with TickerProviderStateMixin
     ));
   }
 
-  Widget _newSpeedDial(responsiveScreen, typeUser) {
-    return Positioned(
-      bottom: responsiveScreen.hp(7.0),
-      right: responsiveScreen.wp(2.0),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: new List.generate(icons.length, (int index) {
-          Widget child = new Container(
-            height: 60.0,
-            width: 56.0,
-            alignment: FractionalOffset.topCenter,
-            child: new ScaleTransition(
-              scale: new CurvedAnimation(
-                parent: _animationController,
-                curve: new Interval(
-                  0.0,
-                  1.0 - index / icons.length / 2.0,
-                  curve: Curves.easeOut
-                ),
-              ),
-              child: new FloatingActionButton(
-                heroTag: null,
-                backgroundColor: Colors.white,
-                mini: true,
-                child: icons[index],
-                onPressed: () {},
-              ),
-            ),
-          );
-          return child;
-        }).toList()..add(
-          new FloatingActionButton(
-            elevation: 0.0,
-            backgroundColor: Colors.transparent,
-            heroTag: null,
-            child: new AnimatedBuilder(
-              animation: _animationController,
-              builder: (BuildContext context, Widget child) {
-                return new Transform(
-                  transform: new Matrix4.rotationZ(_animationController.value * 0.5 * math.pi),
-                  alignment: FractionalOffset.center,
-                  child: new Icon(_animationController.isDismissed ? Icons.menu : Icons.close, color: Colors.white, size: responsiveScreen.ip(3.5)),
-                );
-              },
-            ),
-            onPressed: () {
-              if (_animationController.isDismissed) {
-                _animationController.forward();
-              } else {
-                _animationController.reverse();
-              }
-            },
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _speedDial(Responsive responsiveScreen, String typeUser) {
     return SpeedDial(
-      // marginRight: 8,
-      // marginBottom: 2,
+      marginRight: 8,
+      marginBottom: 5,
       animatedIcon: AnimatedIcons.menu_close,
-      animatedIconTheme: IconThemeData(size: responsiveScreen.ip(3.5), color: Colors.black),
+      animatedIconTheme: IconThemeData(size: responsiveScreen.ip(3.5), color: Colors.white),
       closeManually: false,
       curve: Curves.bounceIn,
       overlayColor: Colors.black,
       overlayOpacity: 0.5,
       tooltip: 'Opciones',
       heroTag: 'speed-dial-hero-tag',
-      backgroundColor: Colors.green,
+      backgroundColor: Colors.transparent,
       foregroundColor: Colors.black,
       elevation: 0.0,
       shape: CircleBorder(),

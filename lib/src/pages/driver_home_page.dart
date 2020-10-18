@@ -97,7 +97,6 @@ class _DriverHomePageState extends State<DriverHomePage> with AutomaticKeepAlive
             return CircularProgressIndicator();
           }
         }
-        
       ),
     );
 

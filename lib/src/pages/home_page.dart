@@ -39,12 +39,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: Duration(milliseconds: 500),
-    );
-    _animation = Tween(begin: 1.0, end: 1.08).animate(
-        CurvedAnimation(curve: Curves.ease, parent: _animationController));
+    _animationController = AnimationController(vsync: this, duration: Duration(milliseconds: 500));
+    _animation = Tween(begin: 1.0, end: 1.08).animate(CurvedAnimation(curve: Curves.ease, parent: _animationController));
     _animationController.addListener(() {
       if (_animationController.status == AnimationStatus.completed) {
         _animationController.reverse();
@@ -68,7 +64,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     final _responsiveScreen = new Responsive(context);
     bool _mode = _typeUser.getTypeuser == 'CONDUCTOR';
     return Scaffold(
-      extendBody: true,
+      extendBody: false,
       floatingActionButtonLocation: FloatingActionButtonLocation.startDocked,
       floatingActionButton: _mode
       ? FloatingActionButton(
@@ -166,6 +162,5 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       _animationController.forward();
     });
   }
-}
 
-// https://github.com/flutter/flutter/issues/17555
+}

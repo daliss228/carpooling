@@ -1,9 +1,11 @@
 import 'dart:io';
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter_carpooling/src/widgets/circle_widget.dart';
-import 'package:image_picker/image_picker.dart';
+// import 'package:image_picker/image_picker.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_carpooling/src/utils/colors.dart';
 import 'package:flutter_carpooling/src/utils/responsive.dart';
@@ -19,9 +21,17 @@ class PhotoPage extends StatefulWidget {
 
 class _PhotoPageState extends State<PhotoPage> with TickerProviderStateMixin{
   
+  // final picker = ImagePicker();
+  // PickedFile _imageFile;
+
+  CameraController controller;
+  Future<void> _initializeCameraControllerFuture;
+
   File _imageFile;
   String useruid;
   String _oldPhoto;
+  dynamic pickImageError;
+  String retrieveDataError;
   bool _isLoading = false;
   bool _showAnimation = true;
   Animation _arrowAnimation;
@@ -30,12 +40,12 @@ class _PhotoPageState extends State<PhotoPage> with TickerProviderStateMixin{
 
   @override
   void initState() { 
+    _cameraController = CameraController(widget.camera, ResolutionPreset.medium);        _initializeCameraControllerFuture = _cameraController.initialize();
+    _initializeCameraControllerFuture = _cameraController.initialize();
     final _prefs = UserPreferences();
     useruid = _prefs.uid;
-    _arrowAnimationController = AnimationController(
-        vsync: this, duration: Duration(milliseconds: 1200));
-    _arrowAnimation = Tween(begin: 50.0, end: 70.0).animate(CurvedAnimation(
-        curve: Curves.easeInOutCirc, parent: _arrowAnimationController));
+    _arrowAnimationController = AnimationController(vsync: this, duration: Duration(milliseconds: 1200));
+    _arrowAnimation = Tween(begin: 50.0, end: 70.0).animate(CurvedAnimation(curve: Curves.easeInOutCirc, parent: _arrowAnimationController));
     _arrowAnimationController.addStatusListener((AnimationStatus status) {
       if (status == AnimationStatus.completed) {
         _arrowAnimationController.repeat();
@@ -47,6 +57,7 @@ class _PhotoPageState extends State<PhotoPage> with TickerProviderStateMixin{
 
   @override
   void dispose() {
+    controller?.dispose();
     _arrowAnimationController?.dispose();
     super.dispose();
   }
@@ -96,25 +107,25 @@ class _PhotoPageState extends State<PhotoPage> with TickerProviderStateMixin{
       : Stack(
         children: <Widget>[
           Positioned(
-              left: _responsiveScreen.wp(50),
-              bottom: _responsiveScreen.hp(55),
-              child: FadeInRight(
-                child: CircleWidget(radius: _responsiveScreen.wp(60), colors: [OurColors.initialPurple, OurColors.finalPurple.withOpacity(0.5)]))
-            ),
-            // Positioned(
-            //   left: _responsiveScreen.wp(30),
-            //   bottom: _responsiveScreen.hp(70),
-            //   child: FadeInRight(
-            //     delay: Duration(milliseconds: 1000),
-            //     child: CircleWidget(radius: _responsiveScreen.wp(60), colors: [OurColors.initialPurple, OurColors.finalPurple.withOpacity(0.1)]))
-            // ),
-            Positioned(
-              left: _responsiveScreen.wp(60),
-              bottom: _responsiveScreen.hp(80),
-              child: FadeInRight(
-                delay: Duration(milliseconds: 500),
-                child: CircleWidget(radius: _responsiveScreen.wp(40), colors:  [OurColors.lightBlue, OurColors.lightGreenishBlue.withOpacity(0.8)]))
-            ),
+            left: _responsiveScreen.wp(50),
+            bottom: _responsiveScreen.hp(55),
+            child: FadeInRight(
+              child: CircleWidget(radius: _responsiveScreen.wp(60), colors: [OurColors.initialPurple, OurColors.finalPurple.withOpacity(0.5)]))
+          ),
+          // Positioned(
+          //   left: _responsiveScreen.wp(30),
+          //   bottom: _responsiveScreen.hp(70),
+          //   child: FadeInRight(
+          //     delay: Duration(milliseconds: 1000),
+          //     child: CircleWidget(radius: _responsiveScreen.wp(60), colors: [OurColors.initialPurple, OurColors.finalPurple.withOpacity(0.1)]))
+          // ),
+          Positioned(
+            left: _responsiveScreen.wp(60),
+            bottom: _responsiveScreen.hp(80),
+            child: FadeInRight(
+              delay: Duration(milliseconds: 500),
+              child: CircleWidget(radius: _responsiveScreen.wp(40), colors:  [OurColors.lightBlue, OurColors.lightGreenishBlue.withOpacity(0.8)]))
+          ),
           _body(_screenSize, context, _responsiveScreen),
           (_oldPhoto.isNotEmpty) ? _buttonComeback() : Container(),
         ],
@@ -138,7 +149,17 @@ class _PhotoPageState extends State<PhotoPage> with TickerProviderStateMixin{
         SizedBox(height: _responsiveScreen.hp(7.5)),
         Container(
           padding: EdgeInsets.all(32),
-          child:  Image.file(_imageFile)
+          // child:  Image.file(_imageFile)
+          child: FutureBuilder(
+          future: _initializeCameraControllerFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.done) {
+              return CameraPreview(_cameraController);
+            } else {
+              return Center(child: CircularProgressIndicator());
+            }
+          },
+      ),
         ),
         Container(
           padding: EdgeInsets.only(right: 32, bottom: 32, left: 32),
@@ -148,6 +169,37 @@ class _PhotoPageState extends State<PhotoPage> with TickerProviderStateMixin{
     );
   }
 
+  void _takePicture(BuildContext context) async {
+    try {
+      await _initializeCameraControllerFuture;
+
+      final path =
+          join((await getTemporaryDirectory()).path, '${DateTime.now()}.png');
+
+      await _cameraController.takePicture(path);
+
+      Navigator.pop(context,path);
+
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  void _showCamera() async {
+
+    final cameras = await availableCameras();
+    final camera = cameras.first;
+
+    final result = await Navigator.push(
+        context,
+        MaterialPageRoute(
+            builder: (context) => TakePicturePage(camera: camera)));
+
+    setState(() {
+      _path = result; 
+    });
+
+  }
   Widget _buttonComeback() {
     return SafeArea(
       child: Container(
@@ -195,14 +247,64 @@ class _PhotoPageState extends State<PhotoPage> with TickerProviderStateMixin{
     );
   }
 
+  // Widget _previewImage() {
+  //   final Text retrieveError = _getRetrieveErrorWidget();
+  //   if (retrieveError != null) {
+  //     return retrieveError;
+  //   }
+  //   if (_imageFile != null) {
+  //     return Image.file(File(_imageFile.path));
+  //   } else if (pickImageError != null) {
+  //     return Text(
+  //       'Pick image error: $pickImageError',
+  //       textAlign: TextAlign.center,
+  //     );
+  //   } else {
+  //     return const Text(
+  //       'You have not yet picked an image.',
+  //       textAlign: TextAlign.center,
+  //     );
+  //   }
+  // }
+
+  // Text _getRetrieveErrorWidget() {
+  //   if (retrieveDataError != null) {
+  //     final Text result = Text(retrieveDataError);
+  //     retrieveDataError = null;
+  //     return result;
+  //   }
+  //   return null;
+  // }
+
+  // Future<void> retrieveLostData() async {
+  //   final LostData response = await picker.getLostData();
+  //   if (response.isEmpty) return;
+  //   if (response.file != null) {
+  //     setState(() {
+  //       _imageFile = File(response.file.path);  
+  //     });
+  //   } else {
+  //     retrieveDataError = response.exception.code;
+  //   }
+  // }
+
   // seleccionar una imagen de la galeria o abrir la camera
   Future<void> _pickImage(ImageSource source) async {
     // File selected = await ImagePicker.pickImage(source: source, maxWidth: 500, maxHeight: 500);
-    final picker = ImagePicker();
-    final pickedFile = await picker.getImage(source: source, maxWidth: 500, maxHeight: 500);
-    setState(() {
-      _imageFile = File(pickedFile.path);
-    });
+    try {
+      final pickedFile = await picker.getImage(source: source, maxWidth: 500, maxHeight: 500);
+      if (pickedFile != null) {
+        setState(() {
+          _imageFile = File(pickedFile.path);  
+        });
+      } else {
+        print('image no seleccionada');
+      }
+    } catch (e) {
+      setState(() {
+        pickImageError = e;
+      });
+    }
   }
 
   // subir la url de la imagen al realtime
