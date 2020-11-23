@@ -1,7 +1,8 @@
 import 'dart:math';
-import 'package:flutter_carpooling/src/models/route_model.dart';
+import 'package:intl/intl.dart';
+import 'package:flutter_carpooling/src/prefs/user_prefs.dart';
 import 'package:flutter_carpooling/src/models/user_model.dart';
-import 'package:flutter_carpooling/src/user_preferences/user_prefs.dart';
+import 'package:flutter_carpooling/src/models/route_model.dart';
 
 bool isNumeric(String s){
   if (s.isEmpty) return false; 
@@ -17,13 +18,15 @@ bool atLeast1True(List<bool> days) {
 }
 
 List<String> numAvalibleSeats(List<RouteModel> routes) {
-  List<String> avalibleSeats = [];
+  List<String> avalibleSeats = new List<String>();
   for (RouteModel route in routes) {
-    final result = route.driver.car.seat - ((route.users == null) ? 0 : route.users.length);
+    final result = route.seat - ((route.users == null) ? 0 : route.users.length);
     avalibleSeats.add(result.toString());
   }
   return avalibleSeats;
 }
+
+String readableDate(String time) => toBeginningOfSentenceCase(DateFormat('yMMMMd', 'es').format(DateTime.parse(time)));
 
 String stringSchedule(Schedule schedule) {
     String stringDays = "";
@@ -59,16 +62,14 @@ String nameFromUrlPhoto(String url) => url.replaceAll(RegExp(r'https://firebases
 bool verifyUserRegister(List<UserModel> users) {
   final UserPreferences _prefs = UserPreferences();
   final String myUser = _prefs.uid;
-  bool flag = false;
   if (users != null) {
     for (UserModel user in users) {
-      if (myUser == user.uid) {
-        flag = true;
-        break;
+      if (myUser == user.id) {
+        return true;
       }
     }
   }
-  return flag;
+  return false;
 }
 
 double getKilometers(double lat1, double lon1, double lat2, double lon2){
@@ -85,3 +86,57 @@ double getKilometers(double lat1, double lon1, double lat2, double lon2){
 double rad( double x ){
   return x*pi/180;
 }
+
+bool validatorChecks(List<bool> checks) {
+  for (bool check in checks) {
+    if (check) {
+      return true;
+    }
+  }
+  return false;
+}
+
+double driverRating(Map<String, double> ratings) {
+  if (ratings != null) {    
+    return ratings.values.map((rate) => rate).reduce((a, b) => a + b) / ratings.length;
+  } else {
+    return 0;
+  }
+}
+
+double checkIfUserRated(Map<String, double> ratings, String myID) {
+  if (ratings != null) {
+    for (var rate in ratings.entries) {
+      if (rate.key == myID) {
+        return rate.value;
+      }
+    }
+  }
+  return 0;
+}
+
+String firebaseErrorMessages(String err) {
+  switch (err) {
+    case "wrong-password":
+      return "Contraseña no válida."; 
+    case "user-not-found":
+    case "invalid_email":
+    case "email-already-in-use":
+    case "account-exists-with-different-credential":
+      return "Correo electrónico no válidos."; 
+      break;
+    case "too-many-requests":
+      return "Demasiados intentos fallidos. \nPor favor, inténtelo de nuevo más tarde."; 
+      break;
+    case "user-disabled":
+      return "Usuario deshabilitado. \nCuenta deshabilitada por el administrador."; 
+      break;
+    case "network-request-failed":
+      return "Error de red. \nConexión interrumpida o host inaccesible."; 
+      break;
+    default:
+      return "Acción fallida. \nPor favor, intente otra vez."; 
+      break;
+  }
+}
+

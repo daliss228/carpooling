@@ -1,3 +1,4 @@
+// TODO: Eliminar la propiedad seat
 class CarModel {
   
     CarModel({

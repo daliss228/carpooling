@@ -2,25 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter_carpooling/src/utils/colors.dart';
+import 'package:flutter_carpooling/src/prefs/user_prefs.dart';
 import 'package:flutter_carpooling/src/utils/responsive.dart';
-import 'package:flutter_carpooling/src/models/user_model.dart';
+import 'package:flutter_carpooling/src/providers/map_provider.dart';
+import 'package:flutter_carpooling/src/providers/user_provider.dart';
 import 'package:flutter_carpooling/src/widgets/rectangle_widget.dart';
-import 'package:flutter_carpooling/src/user_preferences/user_prefs.dart';
-import 'package:flutter_carpooling/src/providers/user_provider/user_provider.dart';
-import 'package:flutter_carpooling/src/providers/arguments_provider/arguments_provider.dart';
-import 'package:flutter_carpooling/src/providers/type_user_provider/type_user_info_provider.dart';
+import 'package:flutter_carpooling/src/providers/routes_provider.dart';
+import 'package:flutter_carpooling/src/providers/arguments_provider.dart';
 
 class ModePage extends StatefulWidget {
+
   @override
   _ModePageState createState() => _ModePageState();
 }
 
 class _ModePageState extends State<ModePage> {
-  final UserPreferences _prefs = new UserPreferences(); 
+
+  final _prefs = UserPreferences(); 
+
   @override
   Widget build(BuildContext context) {
-    final typeUser = Provider.of<TypeUser>(context);
-    final responsiveScreen = new Responsive(context);
+    final responsiveScreen = Responsive(context);
     return Scaffold(
       body: SingleChildScrollView(
         child: Stack(
@@ -41,9 +43,9 @@ class _ModePageState extends State<ModePage> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: <Widget> [
-                    _userModeButton('pasajero.png', 'PASAJERO', context, responsiveScreen, OurColors.initialPurple, typeUser),
+                    _userModeButton('pasajero.png', 'PASAJERO', OurColors.initialPurple, context, responsiveScreen),
                     SizedBox(width: responsiveScreen.wp(10)),
-                    _userModeButton('conductor.png', 'CONDUCTOR', context, responsiveScreen, OurColors.lightGreenishBlue, typeUser)
+                    _userModeButton('conductor.png', 'CONDUCTOR', OurColors.lightGreenishBlue, context, responsiveScreen)
                   ],
                 ),
               ),
@@ -78,32 +80,31 @@ class _ModePageState extends State<ModePage> {
     );
   }
 
-  Widget _userModeButton(String imagen, String usuario, BuildContext context, Responsive responsiveScreen, Color colorBtn, TypeUser typeUser) {
-    final _userInfo = Provider.of<UserInfo>(context);
-    final _argumentsInfo = Provider.of<ArgumentsInfo>(context);
-    UserModel userModel;
+  Widget _userModeButton(String imagen, String usuario, Color colorBtn, BuildContext context, Responsive responsiveScreen) {
+    final mapProvider = Provider.of<MapProvider>(context);
+    final userProvider = Provider.of<UserProvider>(context);
+    final argumentsInfo = Provider.of<ArgumentsInfo>(context);
+    final routesProvider = Provider.of<RoutesProvider>(context);
     return FadeInUp(
       delay: Duration(milliseconds: 200),
       duration: Duration(milliseconds: 2000),
       child: GestureDetector(
         onTap: () async {
-          typeUser.setTypeUser = usuario;
           _prefs.mode = usuario;
-          if( typeUser.getTypeuser == 'CONDUCTOR' ){
-            userModel = _userInfo.getUserModel;
-            if(userModel.car != null){
+          mapProvider.clearValues();
+          if (usuario == 'CONDUCTOR' ) {
+            if (userProvider.user.car != null) {
+              routesProvider.orderMyDriverRoutes();
               Navigator.pushReplacementNamed(context, 'home');
-            }else{
+            } else {
               Navigator.pushReplacementNamed(context, 'regAuto', arguments: true);
             }
-          }else{
-            userModel = _userInfo.getUserModel;
-            if(userModel.coordinates != null){
-              _prefs.lat = userModel.coordinates.lat.toString();
-              _prefs.lng = userModel.coordinates.lng.toString();
+          } else {
+            if(userProvider.user.coordinates != null){
+              routesProvider.orderMyPaxRoutes();
               Navigator.pushReplacementNamed(context, 'home');
             }else{
-              _argumentsInfo.setBackArrowUserRoute = false;
+              argumentsInfo.backArrowUserRoute = false;
               Navigator.pushReplacementNamed(context, 'usualRoute');
             }
           }

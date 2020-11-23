@@ -17,9 +17,7 @@ class UserPreferences {
   }
 
   // GET y SET del token
-  get token {
-    return _prefs.getString('token') ?? '';
-  }
+  get token => _prefs.getString('token') ?? '';
 
   set token( String value ) {
     _prefs.setString('token', value);
@@ -27,9 +25,7 @@ class UserPreferences {
 
   // GET y SET del uid
 
-  get uid{
-    return _prefs.getString('uid') ?? ''; 
-  }
+  get uid => _prefs.getString('uid') ?? ''; 
 
   set uid( String value ){
     _prefs.setString('uid', value);
@@ -37,39 +33,29 @@ class UserPreferences {
 
   // GET y SET del uid
 
-  get uidGroup{
-    return _prefs.getString('uidGroup') ?? ''; 
-  }
+  get uidGroup => _prefs.getString('uidGroup') ?? ''; 
 
   set uidGroup( String value ){
     _prefs.setString('uidGroup', value);
   }
 
-  get mode{
-    return _prefs.getString('mode') ?? '';
-  }
+  get mode => _prefs.getString('mode') ?? '';
 
   set mode(String value){
     _prefs.setString('mode', value);
   }
 
-  get lat{
-    return _prefs.getString('lat') ?? '';
-  }
+  get lat => _prefs.getString('lat') ?? '';
 
   set lat(String value){
     _prefs.setString('lat', value);
   }
 
-  get lng{
-    return _prefs.getString('lng') ?? '';
-  }
+  get lng => _prefs.getString('lng') ?? '';
 
   set lng(String value){
     _prefs.setString('lng', value);
   }
-
-
 
 }
 

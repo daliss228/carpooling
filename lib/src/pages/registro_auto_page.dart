@@ -1,14 +1,13 @@
-import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-
-import 'package:flutter_carpooling/src/models/car_model.dart';
-import 'package:flutter_carpooling/src/services/car_service.dart';
-import 'package:flutter_carpooling/src/user_preferences/user_prefs.dart';
-import 'package:flutter_carpooling/src/utils/responsive.dart';
-import 'package:flutter_carpooling/src/widgets/loading_widget.dart';
+import 'package:animate_do/animate_do.dart';
+import 'package:flutter_carpooling/src/utils/utils.dart';
 import 'package:flutter_carpooling/src/utils/colors.dart';
-import 'package:flutter_carpooling/src/utils/utils.dart' as utils;
+import 'package:flutter_carpooling/src/models/car_model.dart';
+import 'package:flutter_carpooling/src/prefs/user_prefs.dart';
+import 'package:flutter_carpooling/src/utils/responsive.dart';
+import 'package:flutter_carpooling/src/services/car_service.dart';
+import 'package:flutter_carpooling/src/widgets/loading_widget.dart';
 
 class RegistroAutoPage extends StatefulWidget {
   @override
@@ -61,7 +60,7 @@ final TextEditingController _registryEdtCtr = TextEditingController();
 
   Future<void> loadingData() async {
     try{
-      Map _carResult = await carProvider.carSearch(uid);
+      Map _carResult = await carProvider.searchCar(uid);
       CarModel carModel = _carResult["carData"];
       isloading = false;
       setState(() {
@@ -154,11 +153,11 @@ final TextEditingController _registryEdtCtr = TextEditingController();
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           SizedBox(height: responsiveScreen.hp(4),),
-          FadeInLeft(child: Text('Tu automóvil', style: TextStyle(fontSize: responsiveScreen.ip(4), fontFamily: 'WorkSansLight', color: Colors.white), )),
+          FadeInLeft(child: Text('Mi automóvil', style: TextStyle(fontSize: responsiveScreen.ip(4), fontFamily: 'WorkSansLight', color: Colors.white), )),
           SizedBox(height: responsiveScreen.hp(1),),
           FadeInLeft(
             child: Text(
-              'No olvides registrar correctamente la información de tu automóvil.',
+              'No olvides registrar correctamente la información del automóvil.',
               style: TextStyle(fontSize: responsiveScreen.ip(1.6) , fontWeight: FontWeight.w300, color: Colors.white),
               textAlign: TextAlign.justify,
             ),
@@ -243,7 +242,7 @@ final TextEditingController _registryEdtCtr = TextEditingController();
       onSaved: (value){car.registry = value;},
       decoration: InputDecoration(
         border: InputBorder.none,
-        hintText: "Ejemplo: ABC-123",
+        hintText: "Ejemplo: ABC123",
         hintStyle: _styleHint,
         labelText: "Placa",
         icon: Icon(Icons.chrome_reader_mode, color: Colors.black, size: 20.0,), 
@@ -303,7 +302,7 @@ final TextEditingController _registryEdtCtr = TextEditingController();
       keyboardType: TextInputType.number,
       style: _styleText,
       validator: (value){
-        if(utils.isNumeric(value) && value.length == 1){
+        if(isNumeric(value) && value.length == 1){
           numSeat = int.parse(value);
           if(numSeat >= 2 && numSeat <= 8){
             return null;  
@@ -498,15 +497,14 @@ final TextEditingController _registryEdtCtr = TextEditingController();
 
 
 
-  _saveCar() async{
-    
+  _saveCar() async{  
     if(!formRegisterAutoKey.currentState.validate()) return; 
     formRegisterAutoKey.currentState.save(); 
     if(isloading) return;
     setState(() {
       isloading = true; 
     });
-    await carProvider.carDb(uid, car);
+    await carProvider.createCar(uid, car);
     setState(() {
       isloading = false;
     });

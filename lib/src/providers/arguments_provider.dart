@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 
-class ArgumentsInfo with ChangeNotifier{
+class ArgumentsInfo with ChangeNotifier {
+
   bool _backArrowUsualRoute;
 
-  get getBackArrowUserRoute{
+  bool get backArrowUserRoute {
     return this._backArrowUsualRoute;
   }
 
-  set setBackArrowUserRoute( bool backArrowUsualRoute ){
+  set backArrowUserRoute( bool backArrowUsualRoute ){
     this._backArrowUsualRoute = backArrowUsualRoute;
   }
+  
 }

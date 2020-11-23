@@ -7,7 +7,7 @@ import 'package:flutter_carpooling/src/pages/register_page.dart';
 import 'package:flutter_carpooling/src/pages/usual_route_page.dart';
 import 'package:flutter_carpooling/src/pages/registro_auto_page.dart';
 import 'package:flutter_carpooling/src/pages/route_register_page.dart';
-import 'package:flutter_carpooling/src/providers/type_user_provider/type_user_selector.dart';
+import 'package:flutter_carpooling/src/providers/type_user_selector.dart';
 
 Map<String, WidgetBuilder> getAplicationRoutes (){
   return <String, WidgetBuilder>{ 
@@ -19,6 +19,6 @@ Map<String, WidgetBuilder> getAplicationRoutes (){
     'route'     : (BuildContext context) => RouteRegisterPage(),
     'regAuto'   : (BuildContext context) => RegistroAutoPage(),
     'photo'     : (BuildContext context) => PhotoPage(), 
-    'selectMode': (BuildContext context) => TypeUserSelector(),
+    'selectMode': (BuildContext context) => UserSelector(),
   };
 }

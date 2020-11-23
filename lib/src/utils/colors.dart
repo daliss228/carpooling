@@ -11,5 +11,9 @@ class OurColors {
   static const Color darkGray = Color(0XFF333333);
   static const Color initialPurple = Color.fromRGBO(53, 54, 101, 1.0);
   static const Color finalPurple = Color.fromRGBO(35, 37, 57, 1.0);
-  
+  static const Color red = Color(0XFFE90000);
+  static const Color blue = Color(0XFF0000B9);
+  static const Color green = Color(0XFF00B900);
+  static const Color yellow = Color(0XFFFDCC00);
+
 }

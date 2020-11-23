@@ -1,18 +1,20 @@
 import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/foundation.dart';
 import 'package:animate_do/animate_do.dart';
-import 'package:flutter_carpooling/src/widgets/circle_widget.dart';
-// import 'package:image_picker/image_picker.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_carpooling/src/utils/colors.dart';
 import 'package:flutter_carpooling/src/utils/responsive.dart';
 import 'package:flutter_carpooling/src/widgets/alert_widget.dart';
+import 'package:flutter_carpooling/src/widgets/take_picture.dart';
+import 'package:flutter_carpooling/src/widgets/circle_widget.dart';
 import 'package:flutter_carpooling/src/services/user_service.dart';
 import 'package:flutter_carpooling/src/widgets/loading_widget.dart';
-import 'package:flutter_carpooling/src/user_preferences/user_prefs.dart';
+import 'package:flutter_carpooling/src/providers/map_provider.dart';
+import 'package:flutter_carpooling/src/providers/user_provider.dart';
 
 // pagina para capturar o elegir la imagen
 class PhotoPage extends StatefulWidget {
@@ -21,31 +23,21 @@ class PhotoPage extends StatefulWidget {
 
 class _PhotoPageState extends State<PhotoPage> with TickerProviderStateMixin{
   
-  // final picker = ImagePicker();
-  // PickedFile _imageFile;
+  final _picker = ImagePicker();
+  final _userService = UserService();
 
-  CameraController controller;
-  Future<void> _initializeCameraControllerFuture;
-
-  File _imageFile;
-  String useruid;
-  String _oldPhoto;
-  dynamic pickImageError;
-  String retrieveDataError;
-  bool _isLoading = false;
-  bool _showAnimation = true;
   Animation _arrowAnimation;
   AnimationController _arrowAnimationController;
-  UserService _usuarioService = UserService();
+  
+  File _imageFile;
+  String oldPhoto;
+  bool _isLoading = false;
+  bool _showAnimation = true;
 
   @override
   void initState() { 
-    _cameraController = CameraController(widget.camera, ResolutionPreset.medium);        _initializeCameraControllerFuture = _cameraController.initialize();
-    _initializeCameraControllerFuture = _cameraController.initialize();
-    final _prefs = UserPreferences();
-    useruid = _prefs.uid;
     _arrowAnimationController = AnimationController(vsync: this, duration: Duration(milliseconds: 1200));
-    _arrowAnimation = Tween(begin: 50.0, end: 70.0).animate(CurvedAnimation(curve: Curves.easeInOutCirc, parent: _arrowAnimationController));
+    _arrowAnimation = Tween(begin: 50.0, end: 65.0).animate(CurvedAnimation(curve: Curves.easeInOutCirc, parent: _arrowAnimationController));
     _arrowAnimationController.addStatusListener((AnimationStatus status) {
       if (status == AnimationStatus.completed) {
         _arrowAnimationController.repeat();
@@ -57,150 +49,116 @@ class _PhotoPageState extends State<PhotoPage> with TickerProviderStateMixin{
 
   @override
   void dispose() {
-    controller?.dispose();
     _arrowAnimationController?.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    _oldPhoto = ModalRoute.of(context).settings.arguments;
-    final _responsiveScreen = new Responsive(context);
-    final _screenSize = MediaQuery.of(context).size; 
+    final responsiveScreen = Responsive(context);
+    final mapProvider = Provider.of<MapProvider>(context);
+    if (mapProvider.auxiliary) {
+      oldPhoto = Provider.of<UserProvider>(context).user.photo;
+    }
     return Scaffold(
-      bottomNavigationBar: (_isLoading) ? BottomAppBar() : BottomAppBar(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: <Widget>[
-            IconButton(
-              icon: Icon(
-                Icons.photo_camera,
-                size: 32,
-              ),
-              onPressed: () {
-                setState(() {
-                  _showAnimation = false;  
-                });
-                _pickImage(ImageSource.camera);
-              },
-              color: OurColors.lightGreenishBlue,
-            ),
-            IconButton(
-              icon: Icon(
-                Icons.photo_library,
-                size: 32,
-              ),
-              onPressed: () {
-                setState(() {
-                  _showAnimation = false;
-                });
-                _pickImage(ImageSource.gallery);
-              },
-              color: OurColors.lightGreenishBlue,
-            ),
-          ],
-        ),
-      ),
+      bottomNavigationBar: _isLoading ? BottomAppBar() : _bottomAppBar(responsiveScreen),
       body: _isLoading 
       ? LoadingWidget()
       : Stack(
         children: <Widget>[
-          Positioned(
-            left: _responsiveScreen.wp(50),
-            bottom: _responsiveScreen.hp(55),
-            child: FadeInRight(
-              child: CircleWidget(radius: _responsiveScreen.wp(60), colors: [OurColors.initialPurple, OurColors.finalPurple.withOpacity(0.5)]))
-          ),
-          // Positioned(
-          //   left: _responsiveScreen.wp(30),
-          //   bottom: _responsiveScreen.hp(70),
-          //   child: FadeInRight(
-          //     delay: Duration(milliseconds: 1000),
-          //     child: CircleWidget(radius: _responsiveScreen.wp(60), colors: [OurColors.initialPurple, OurColors.finalPurple.withOpacity(0.1)]))
-          // ),
-          Positioned(
-            left: _responsiveScreen.wp(60),
-            bottom: _responsiveScreen.hp(80),
-            child: FadeInRight(
-              delay: Duration(milliseconds: 500),
-              child: CircleWidget(radius: _responsiveScreen.wp(40), colors:  [OurColors.lightBlue, OurColors.lightGreenishBlue.withOpacity(0.8)]))
-          ),
-          _body(_screenSize, context, _responsiveScreen),
-          (_oldPhoto.isNotEmpty) ? _buttonComeback() : Container(),
+          _background(responsiveScreen),
+          _body(responsiveScreen, mapProvider),
+          mapProvider.auxiliary ? _buttonComeback(context, responsiveScreen) : Container(),
         ],
       )
     );
   }
 
-  Widget _body(Size _screenSize, BuildContext context, Responsive _responsiveScreen) {
-    return ListView(
-      physics: BouncingScrollPhysics(),
-      children: (_showAnimation) 
-      ? <Widget>[
-        SizedBox(height: _responsiveScreen.hp(68)),
-        Padding(
-          padding: EdgeInsets.all(20.0),
-          child: Text("Agrega tu foto: \nCámara o galería?", textAlign: TextAlign.center, style: TextStyle(color: OurColors.lightGreenishBlue, fontSize: _responsiveScreen.ip(2), fontFamily: "WorkSansBold")),
-        ),
-        _arrowDownAnimation()
-      ] 
-      : (_imageFile != null) ? <Widget>[
-        SizedBox(height: _responsiveScreen.hp(7.5)),
-        Container(
-          padding: EdgeInsets.all(32),
-          // child:  Image.file(_imageFile)
-          child: FutureBuilder(
-          future: _initializeCameraControllerFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.done) {
-              return CameraPreview(_cameraController);
-            } else {
-              return Center(child: CircularProgressIndicator());
-            }
-          },
+  Widget _bottomAppBar(Responsive responsiveScreen) {
+    return BottomAppBar(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: <Widget>[
+          IconButton(
+            color: OurColors.lightGreenishBlue,
+            icon: Icon( FontAwesomeIcons.cameraRetro, size: responsiveScreen.ip(2.8)),
+            onPressed: () {
+              setState(() {
+                _showAnimation = false;  
+              });
+              _takePicture(context);
+            },
+          ),
+          IconButton(
+            color: OurColors.lightGreenishBlue,
+            icon: Icon(FontAwesomeIcons.solidImages, size: responsiveScreen.ip(2.8)),
+            onPressed: () {
+              setState(() {
+                _showAnimation = false;
+              });
+              _pickImage();
+            },
+          ),
+        ],
       ),
-        ),
-        Container(
-          padding: EdgeInsets.only(right: 32, bottom: 32, left: 32),
-          child: _butonUploader(context, _responsiveScreen)
-        )
-      ] : <Widget>[ Container() ]
     );
   }
 
-  void _takePicture(BuildContext context) async {
-    try {
-      await _initializeCameraControllerFuture;
-
-      final path =
-          join((await getTemporaryDirectory()).path, '${DateTime.now()}.png');
-
-      await _cameraController.takePicture(path);
-
-      Navigator.pop(context,path);
-
-    } catch (e) {
-      print(e);
-    }
+  Widget _background(Responsive responsiveScreen) {
+    return Stack(
+      children: [
+        Positioned(
+          left: responsiveScreen.wp(50),
+          bottom: responsiveScreen.hp(55),
+          child: FadeInRight(child: CircleWidget(radius: responsiveScreen.wp(60), colors: [OurColors.initialPurple, OurColors.finalPurple.withOpacity(0.5)]))
+        ),
+        Positioned(
+          left: responsiveScreen.wp(60),
+          bottom: responsiveScreen.hp(80),
+          child: FadeInRight(
+            delay: Duration(milliseconds: 500),
+            child: CircleWidget(radius: responsiveScreen.wp(40), colors:  [OurColors.lightBlue, OurColors.lightGreenishBlue.withOpacity(0.8)])
+          )
+        ),
+      ],
+    );
   }
 
-  void _showCamera() async {
-
-    final cameras = await availableCameras();
-    final camera = cameras.first;
-
-    final result = await Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) => TakePicturePage(camera: camera)));
-
-    setState(() {
-      _path = result; 
-    });
-
+  Widget _body(Responsive responsiveScreen, MapProvider mapProvider) {
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      child: _showAnimation
+      ? Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Padding(
+            padding: EdgeInsets.all(20.0),
+            child: Text("Agrega tu foto: \nCámara o galería?", textAlign: TextAlign.center, style: TextStyle(color: OurColors.lightGreenishBlue, fontSize: responsiveScreen.ip(2.0), fontFamily: "WorkSansBold")),
+          ),
+          _arrowDownAnimation(),
+          SizedBox(height: responsiveScreen.hp(1.5)),
+        ],
+      )
+      : (_imageFile != null) ? Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: responsiveScreen.ip(35),
+            height: responsiveScreen.ip(35),
+            child: ClipOval(
+              child: Image.file(_imageFile, fit: BoxFit.fill),
+            )
+          ),
+          SizedBox(height: responsiveScreen.hp(4.0)),
+          _butonUploader(responsiveScreen, mapProvider)
+        ],
+      ) : Container(),
+    );
   }
-  Widget _buttonComeback() {
+
+  Widget _buttonComeback(BuildContext context, Responsive responsiveScreen) {
     return SafeArea(
       child: Container(
         padding: EdgeInsets.all(15.0),
@@ -208,7 +166,7 @@ class _PhotoPageState extends State<PhotoPage> with TickerProviderStateMixin{
           padding: EdgeInsets.all(10.0),
           borderRadius: BorderRadius.circular(30.0),
           color: Colors.black26,
-          child: Icon(Icons.arrow_back, color: Colors.white),
+          child: Icon(Icons.arrow_back, color: Colors.white, size: responsiveScreen.ip(2.5)),
           onPressed: () => Navigator.pop(context)
         ),
       ),
@@ -231,7 +189,7 @@ class _PhotoPageState extends State<PhotoPage> with TickerProviderStateMixin{
     );
   }
 
-  Widget _butonUploader(BuildContext context, responsiveScreen){
+  Widget _butonUploader(Responsive responsiveScreen, MapProvider mapProvider){
     return Center(
       child: MaterialButton(
         color: OurColors.lightGreenishBlue,
@@ -239,82 +197,59 @@ class _PhotoPageState extends State<PhotoPage> with TickerProviderStateMixin{
         splashColor: OurColors.lightGreenishBlue,
         child: Padding(
           padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 40.0),
-          child: Text("CONTINUAR", style: TextStyle(color: Colors.white, fontSize: responsiveScreen.ip(1.5), fontFamily: "WorkSansMedium"),
+          child: Text(
+            "CONTINUAR",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: responsiveScreen.ip(1.5),
+              fontFamily: "WorkSansMedium"
+            ),
           ),
         ),
-        onPressed: _uploadPhotoUser
-      ),
+        onPressed: () => _uploadPhotoUser(mapProvider)
+      )
     );
   }
 
-  // Widget _previewImage() {
-  //   final Text retrieveError = _getRetrieveErrorWidget();
-  //   if (retrieveError != null) {
-  //     return retrieveError;
-  //   }
-  //   if (_imageFile != null) {
-  //     return Image.file(File(_imageFile.path));
-  //   } else if (pickImageError != null) {
-  //     return Text(
-  //       'Pick image error: $pickImageError',
-  //       textAlign: TextAlign.center,
-  //     );
-  //   } else {
-  //     return const Text(
-  //       'You have not yet picked an image.',
-  //       textAlign: TextAlign.center,
-  //     );
-  //   }
-  // }
-
-  // Text _getRetrieveErrorWidget() {
-  //   if (retrieveDataError != null) {
-  //     final Text result = Text(retrieveDataError);
-  //     retrieveDataError = null;
-  //     return result;
-  //   }
-  //   return null;
-  // }
-
-  // Future<void> retrieveLostData() async {
-  //   final LostData response = await picker.getLostData();
-  //   if (response.isEmpty) return;
-  //   if (response.file != null) {
-  //     setState(() {
-  //       _imageFile = File(response.file.path);  
-  //     });
-  //   } else {
-  //     retrieveDataError = response.exception.code;
-  //   }
-  // }
+  Future<void> _takePicture(BuildContext context) async {
+    CameraDescription camera;
+    final cameras = await availableCameras();
+    if (cameras.isEmpty) return;
+    for (CameraDescription cameraDescription in cameras) {
+      if (cameraDescription.lensDirection == CameraLensDirection.front) {
+        camera = cameraDescription;
+        break;
+      }
+    }
+    final result = await Navigator.push(context, MaterialPageRoute(
+      builder: (context) => TakePicture(camera: camera)
+    ));
+    if (result != null) {
+      setState(() {
+        _imageFile = File(result);
+      });  
+    }
+  }
 
   // seleccionar una imagen de la galeria o abrir la camera
-  Future<void> _pickImage(ImageSource source) async {
-    // File selected = await ImagePicker.pickImage(source: source, maxWidth: 500, maxHeight: 500);
-    try {
-      final pickedFile = await picker.getImage(source: source, maxWidth: 500, maxHeight: 500);
-      if (pickedFile != null) {
-        setState(() {
-          _imageFile = File(pickedFile.path);  
-        });
-      } else {
-        print('image no seleccionada');
-      }
-    } catch (e) {
+  Future<void> _pickImage() async {
+    final pickedFile = await _picker.getImage(source: ImageSource.gallery, maxWidth: 500, maxHeight: 500);
+    if (pickedFile != null) {
       setState(() {
-        pickImageError = e;
+        _imageFile = File(pickedFile.path);
       });
     }
   }
 
   // subir la url de la imagen al realtime
-  Future<void> _uploadPhotoUser() async {
+  Future<void> _uploadPhotoUser(MapProvider mapProvider) async {
     setState(() {
-        _isLoading = true;
+      _isLoading = true;
     });
-    Map result = await _usuarioService.uploadPhotoUser(_oldPhoto, _imageFile);
+    mapProvider.auxiliary = false;
+    final result = await _userService.uploadPhotoUser(oldPhoto, _imageFile);
     if (!result["ok"]) {
-      mostrarAlerta(context, 'Error', result["message"]); 
+      showAlert(context, 'Error', Icons.sentiment_dissatisfied, result["message"]); 
     }
     Navigator.pushReplacementNamed(context, 'selectMode');
   }
