@@ -5,10 +5,6 @@ import 'package:flutter_carpooling/src/models/locality_model.dart';
 
 List<RouteModel> routeModelList(Map data) => List<RouteModel>.from(data.entries.map((x) => RouteModel.fromJson(x.value)));
 
-RouteModel routeModelFromJson(String str) => RouteModel.fromJson(json.decode(str));
-
-String routeModelToJson(RouteModel data) => json.encode(data.toJson());
-
 class RouteModel {
 
   RouteModel({
