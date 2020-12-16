@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:animate_do/animate_do.dart';
-import 'package:flutter_carpooling/src/utils/utils.dart';
+import 'package:flutter_carpooling/src/utils/helpers.dart';
 import 'package:flutter_carpooling/src/utils/colors.dart';
 import 'package:flutter_carpooling/src/models/car_model.dart';
-import 'package:flutter_carpooling/src/prefs/user_prefs.dart';
+import 'package:flutter_carpooling/src/utils/user_prefs.dart';
 import 'package:flutter_carpooling/src/utils/responsive.dart';
 import 'package:flutter_carpooling/src/services/car_service.dart';
 import 'package:flutter_carpooling/src/widgets/loading_widget.dart';
 
-class RegistroAutoPage extends StatefulWidget {
+class AutoRegisterPage extends StatefulWidget {
+  
   @override
-  _RegistroAutoPageState createState() => _RegistroAutoPageState();
+  _AutoRegisterPageState createState() => _AutoRegisterPageState();
 }
 
-
-class _RegistroAutoPageState extends State<RegistroAutoPage> {
+class _AutoRegisterPageState extends State<AutoRegisterPage> {
 final TextEditingController _registryEdtCtr = TextEditingController();
   final TextEditingController _brandEdtCtr = TextEditingController();
   final TextEditingController _modelEdtCtr = TextEditingController();
@@ -231,7 +231,7 @@ final TextEditingController _registryEdtCtr = TextEditingController();
     return TextFormField(
       controller: _registryEdtCtr,
       enabled: isEnabled,
-      textCapitalization: TextCapitalization.words,
+      textCapitalization: TextCapitalization.characters,
       style: _styleText,
       validator: (value){
         if(RegExp(r'^[A-Z0-9]+$').hasMatch(value) && value.length >= 6 && value.length <= 7){
@@ -320,7 +320,7 @@ final TextEditingController _registryEdtCtr = TextEditingController();
       ),
     );
   }
-
+  // TODO: ojo con este codigo
   Widget _btnReg(Responsive responsiveScreen){
     // return Center(
     //   child: Container(
@@ -508,7 +508,7 @@ final TextEditingController _registryEdtCtr = TextEditingController();
     setState(() {
       isloading = false;
     });
-    Navigator.pushReplacementNamed(context, 'selectMode'); 
+    Navigator.pushReplacementNamed(context, 'after'); 
 
   }
 

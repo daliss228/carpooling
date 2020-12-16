@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:flutter_carpooling/src/utils/utils.dart';
+import 'package:flutter_carpooling/src/utils/helpers.dart';
 import 'package:flutter_carpooling/src/utils/colors.dart';
-import 'package:flutter_carpooling/src/prefs/user_prefs.dart';
+import 'package:flutter_carpooling/src/utils/user_prefs.dart';
 import 'package:flutter_carpooling/src/utils/responsive.dart';
 import 'package:flutter_carpooling/src/models/user_model.dart';
 import 'package:flutter_carpooling/src/widgets/input_widget.dart';
 import 'package:flutter_carpooling/src/widgets/alert_widget.dart';
+import 'package:flutter_carpooling/src/providers/ui_provider.dart';
 import 'package:flutter_carpooling/src/widgets/circle_widget.dart';
 import 'package:flutter_carpooling/src/services/auth_service.dart';
 import 'package:flutter_carpooling/src/widgets/loading_widget.dart';
@@ -21,67 +23,73 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
 
-  final _authService = new AuthService(); // Llamando al provider de usuario
-  final _user = new UserModel(); 
-  final _prefs  = new UserPreferences();
-  final _formRegisterKey = GlobalKey<FormState>();// Declarando la llave del formulario
+  final _user = UserModel(); 
+  final _prefs  = UserPreferences();
+  final _authService = AuthService();
+  final _formRegisterKey = GlobalKey<FormState>();
+
   String _password= ''; 
   bool _isloading = false;
 
   @override
   Widget build(BuildContext context) {
-    final responsiveScreen = new Responsive(context);
+    final responsiveScreen = Responsive(context);
     return Scaffold(
-      body: Container(
-        height: double.infinity,
-        width: double.infinity,
-        child: Stack(
-          children: <Widget>[
-            Positioned(
-              left: responsiveScreen.wp(50),
-              top: responsiveScreen.hp(60),
-              child: FadeInRight(
-                child: CircleWidget(radius: responsiveScreen.wp(60), colors: [OurColors.initialPurple, OurColors.finalPurple.withOpacity(0.5)]))
-            ),
-            Positioned(
-              left: responsiveScreen.wp(30),
-              top: responsiveScreen.hp(75),
-              child: FadeInRight(
-                delay: Duration(milliseconds: 1000),
-                child: CircleWidget(radius: responsiveScreen.wp(60), colors: [OurColors.initialPurple, OurColors.finalPurple.withOpacity(0.1)]))
-            ),
-            Positioned(
-              left: responsiveScreen.wp(50),
-              top: responsiveScreen.hp(75),
-              child: FadeInRight(
-                delay: Duration(milliseconds: 500),
-                child: CircleWidget(radius: responsiveScreen.wp(40), colors:  [OurColors.lightBlue, OurColors.lightGreenishBlue.withOpacity(0.8)]))
-            ),
-            SingleChildScrollView(
-              child: SafeArea(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _header(responsiveScreen),
-                    _form(responsiveScreen)
-                  ],
-                ) 
+      body: GestureDetector(
+        onTap: (){
+          FocusScope.of(context).requestFocus(FocusNode());
+        },
+        child: Container(
+          height: double.infinity,
+          width: double.infinity,
+          child: Stack(
+            children: <Widget>[
+              Positioned(
+                left: responsiveScreen.wp(50),
+                top: responsiveScreen.hp(60),
+                child: FadeInRight(
+                  child: CircleWidget(radius: responsiveScreen.wp(60), colors: [OurColors.initialPurple, OurColors.finalPurple.withOpacity(0.5)]))
               ),
-            ), 
-            SafeArea(
-              child: Container(
-                margin: EdgeInsets.all(15.0),
-                child: CupertinoButton(
-                  padding: EdgeInsets.all(10.0),
-                  borderRadius: BorderRadius.circular(30.0),
-                  color: Colors.black26,
-                  child: Icon(Icons.arrow_back, color: Colors.white,), 
-                  onPressed: () => Navigator.pushReplacementNamed(context, 'login'),
+              Positioned(
+                left: responsiveScreen.wp(30),
+                top: responsiveScreen.hp(75),
+                child: FadeInRight(
+                  delay: Duration(milliseconds: 1000),
+                  child: CircleWidget(radius: responsiveScreen.wp(60), colors: [OurColors.initialPurple, OurColors.finalPurple.withOpacity(0.1)]))
+              ),
+              Positioned(
+                left: responsiveScreen.wp(50),
+                top: responsiveScreen.hp(75),
+                child: FadeInRight(
+                  delay: Duration(milliseconds: 500),
+                  child: CircleWidget(radius: responsiveScreen.wp(40), colors:  [OurColors.lightBlue, OurColors.lightGreenishBlue.withOpacity(0.8)]))
+              ),
+              SingleChildScrollView(
+                child: SafeArea(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _header(responsiveScreen),
+                      _form(responsiveScreen)
+                    ],
+                  ) 
                 ),
-              ),
-            ), 
-            _isloading? LoadingWidget(): Container(),
-          ],
+              ), 
+              SafeArea(
+                child: Container(
+                  margin: EdgeInsets.all(15.0),
+                  child: CupertinoButton(
+                    padding: EdgeInsets.all(10.0),
+                    borderRadius: BorderRadius.circular(30.0),
+                    color: Colors.black26,
+                    child: Icon(Icons.arrow_back, color: Colors.white,), 
+                    onPressed: () => Navigator.pushReplacementNamed(context, 'login'),
+                  ),
+                ),
+              ), 
+              _isloading? LoadingWidget(): Container(),
+            ],
+          ),
         ),
       ),
     );
@@ -152,7 +160,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               if(RegExp(r'^[A-Za-záéíóúÁÉÍÓÚ]+$').hasMatch(value)){
                                 return null;
                               }
-                              return 'Nombre de usuario invalido';
+                              return 'El nombre no es válido';
                             },
                           ),
                           SizedBox(height: responsiveScreen.hp(0.5),),
@@ -167,12 +175,12 @@ class _RegisterPageState extends State<RegisterPage> {
                               if(RegExp(r'^[A-Za-záéíóúÁÉÍÓÚ]+$').hasMatch(value)){
                                 return null;
                               }
-                              return 'Apellido de usuario invalido';
+                              return 'El apellido no es válido!';
                             },
                           ),
-                          SizedBox(height: responsiveScreen.hp(0.5),),
+                          SizedBox(height: responsiveScreen.hp(0.5)),
                           _separator(responsiveScreen),
-                          SizedBox(height: responsiveScreen.hp(0.5),),
+                          SizedBox(height: responsiveScreen.hp(0.5)),
                           InputWidget(
                             label: 'Cédula', 
                             icono: FontAwesomeIcons.idCard,
@@ -182,7 +190,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               if(isNumeric(value) && value.length == 10){
                                 return null; 
                               }
-                              return 'La cédula ingresada no es válida';
+                              return 'La cédula no es válida!';
                             },
                           ),
                           SizedBox(height: responsiveScreen.hp(0.5),),
@@ -199,7 +207,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               if(regExp.hasMatch(value)){
                                 return null; 
                               }
-                              return 'Ingrese un email válido';
+                              return 'El email no es válido!';
                             },
                           ),
                           SizedBox(height: responsiveScreen.hp(0.5),),
@@ -214,7 +222,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               if(isNumeric(value) && value.length == 10){
                                 return null; 
                               }
-                              return 'El número ingresado no es válido';
+                              return 'El teléfono no es válido!';
                             },
                           ),
                           SizedBox(height: responsiveScreen.hp(0.5),),
@@ -230,7 +238,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                 _password = value; 
                                 return null;
                               }
-                              return 'Ingrese una contraseña mayor a 6 caracteres'; 
+                              return 'La contraseña es muy corta!'; 
                             },
                           ),
                           SizedBox(height: responsiveScreen.hp(0.5),),
@@ -244,7 +252,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               if(_password == value){
                                 return null; 
                               }
-                              return 'Las contraseñas no coinciden';
+                              return 'Las contraseñas no coinciden!';
                             },
                           ), 
                           SizedBox(height: responsiveScreen.hp(0.5),),
@@ -263,32 +271,31 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-  Widget _botones(Responsive responsiveScreen){
+  Widget _botones(Responsive responsiveScreen) {
     return Center(
       child: Column(
         children: <Widget>[  
-          MaterialButton(
-            color: OurColors.lightGreenishBlue,
-            highlightColor: Colors.transparent,
-            splashColor: OurColors.lightGreenishBlue,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 40.0),
-              child: Text(
-                "REGISTRAME",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: responsiveScreen.ip(1.5),
-                  fontFamily: "WorkSansMedium"
+          Consumer<UIProvider>(builder: (context, provider, child) {
+            return MaterialButton(
+              color: OurColors.lightGreenishBlue,
+              highlightColor: Colors.transparent,
+              splashColor: OurColors.lightGreenishBlue,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 40.0),
+                child: Text(
+                  "REGISTRAME",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: responsiveScreen.ip(1.5),
+                    fontFamily: "WorkSansMedium"
+                  ),
                 ),
               ),
-            ),
-            onPressed: ()async{
-              await _registrar();
-              setState(() {
-                _isloading = false;
-              });
-            }
-          ),
+              onPressed: () async{
+                await _userRegister(provider);
+              }
+            );
+          }),
           SizedBox(height: responsiveScreen.hp(2)),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -321,33 +328,34 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-  Future _registrar() async{
+  Future _userRegister(UIProvider uiProvider) async{
     if(!_formRegisterKey.currentState.validate()) return;
-    if(_isloading)return;
     _formRegisterKey.currentState.save(); 
     SystemChannels.textInput.invokeMethod('TextInput.hide');
-    setState(() {
-      _isloading = true; 
-    });
+    setState(() { _isloading = true; });
     final resultCI = await _authService.searchCi(_user.ci);
     if(resultCI['ok']){
       _user.idGroup = _prefs.uidGroup; 
       final resultSingUp = await _authService.singUp(_user.email, _password);
       if (resultSingUp['ok']) {
+        _user.status = true;
         _user.id = _prefs.uid; 
         _authService.createUser(_user); 
         final resultRegisterUser = await _authService.createUser(_user); 
         if (resultRegisterUser['ok']) {
+          uiProvider.backArrow = false;
           Navigator.pushReplacementNamed(context, 'photo');
         } else {
-          showAlert(context, 'Ups!', Icons.sentiment_dissatisfied, resultRegisterUser['message']); 
-          return; 
+          setState(() { _isloading = false; });
+          showAlert(context, 'Ups!', Icons.sentiment_dissatisfied, resultRegisterUser['message']);
         }
       } else {
+        setState(() { _isloading = false; });
         showAlert(context, 'Ups!', Icons.sentiment_dissatisfied, resultSingUp['message']); 
         return; 
       }
     } else{
+      setState(() { _isloading = false; });
       showAlert(context, 'Ups!', Icons.sentiment_dissatisfied, resultCI['message']); 
       return; 
     }

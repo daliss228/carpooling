@@ -56,7 +56,7 @@ class _PaxGroupRoutesState extends State<PaxGroupRoutes> with AutomaticKeepAlive
                       style: TextStyle(
                         fontSize: responsiveScreen.ip(4),
                         fontFamily: 'WorkSansLight',
-                        color: OurColors.darkGray
+                        color: OurColors.black
                       ),
                     ),
                   ),

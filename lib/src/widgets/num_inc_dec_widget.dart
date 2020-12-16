@@ -5,10 +5,11 @@ import 'package:flutter_carpooling/src/utils/responsive.dart';
 class NumIncDecWidget extends StatefulWidget {
 
   final Function(int) onChanged;
-  final int value;
+  final int initValue;
+  final int difValue;
 
-  NumIncDecWidget({this.onChanged, this.value}) {
-    assert(this.onChanged != null, this.value != null);
+  NumIncDecWidget({@required this.onChanged, this.initValue = 0, this.difValue = 0}) {
+    assert(this.onChanged != null, this.initValue != null);
   }
 
   @override
@@ -21,7 +22,7 @@ class _NumIncDecWidgetState extends State<NumIncDecWidget> {
 
   @override
   void initState() {
-    value = widget.value;
+    value = widget.initValue;
     super.initState();
   }
 
@@ -32,9 +33,9 @@ class _NumIncDecWidgetState extends State<NumIncDecWidget> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         IconButton(
-          icon: Icon(Icons.remove_circle_outline, size: responsiveScreen.ip(3), color: OurColors.darkGray),
+          icon: Icon(Icons.remove_circle_outline, size: responsiveScreen.ip(3), color: OurColors.black),
           onPressed: () {
-            if (value > 1) {
+            if (value > 0) {
               setState(() {
                 value--;
               });  
@@ -43,14 +44,15 @@ class _NumIncDecWidgetState extends State<NumIncDecWidget> {
           },
         ),
         Container(
-          width: 30,
+          width: 30.0,
           alignment: Alignment.center,
-          child: Text('$value', style: TextStyle(fontFamily: 'WorkSansLight', fontSize: responsiveScreen.ip(1.8), color: OurColors.darkGray)),
+          child: Text('$value', style: TextStyle(fontFamily: 'WorkSansLight', fontSize: responsiveScreen.ip(1.8), color: OurColors.black)),
         ),
         IconButton(
-          icon: Icon(Icons.add_circle_outline, size: responsiveScreen.ip(3), color: OurColors.darkGray),
+          icon: Icon(Icons.add_circle_outline, size: responsiveScreen.ip(3), color: OurColors.black),
           onPressed: () {
-            if (value < 10) {
+            print('😏😏😏😏😏😏😏😏😏😏😏😏😏😏😏😏😏😏😏😏😏😏😏😏😏😏 $value + ${widget.difValue} = ${(value + widget.difValue)}');
+            if ((value + widget.difValue) < 10) {
               setState(() {
                 value++;
               });

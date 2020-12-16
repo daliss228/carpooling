@@ -6,13 +6,12 @@ import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:keyboard_visibility/keyboard_visibility.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_carpooling/src/utils/colors.dart';
-import 'package:flutter_carpooling/src/prefs/user_prefs.dart';
+import 'package:flutter_carpooling/src/utils/user_prefs.dart';
 import 'package:flutter_carpooling/src/utils/responsive.dart';
-import 'package:flutter_carpooling/src/models/user_model.dart';
 import 'package:flutter_carpooling/src/widgets/alert_widget.dart';
 import 'package:flutter_carpooling/src/services/user_service.dart';
+import 'package:flutter_carpooling/src/providers/ui_provider.dart';
 import 'package:flutter_carpooling/src/services/auth_service.dart';
-import 'package:flutter_carpooling/src/providers/map_provider.dart';
 import 'package:flutter_carpooling/src/providers/user_provider.dart';
 import 'package:flutter_carpooling/src/widgets/background_widget.dart';
 
@@ -32,9 +31,9 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
   final _newPassController = TextEditingController();
   final _lastnameController = TextEditingController();
 
+  final _prefs = UserPreferences();
   final _userService = UserService();
   final _authService = AuthService();
-  final _prefs = UserPreferences();
   final _formKey1 = GlobalKey<FormState>();
   final _formKey2 = GlobalKey<FormState>();
   final _formKey3 = GlobalKey<FormState>();
@@ -56,6 +55,12 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
         setState(() => _keyboardOpen = visible);
       },
     );
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    _ciController.text = userProvider.user.ci;
+    _nameController.text = userProvider.user.name;
+    _emailController.text = userProvider.user.email;
+    _phoneController.text = userProvider.user.phone;
+    _lastnameController.text = userProvider.user.lastname;
     super.initState();
   }
 
@@ -76,37 +81,14 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
   Widget build(BuildContext context) {
     super.build(context);
     final responsiveScreen = Responsive(context);
-    final mapProvider = Provider.of<MapProvider>(context);
-    final userProvider = Provider.of<UserProvider>(context);
-    _ciController.text = userProvider.user.ci;
-    _nameController.text = userProvider.user.name;
-    _emailController.text = userProvider.user.email;
-    _phoneController.text = userProvider.user.phone;
-    _lastnameController.text = userProvider.user.lastname;
     return GestureDetector(
       onTap: () => FocusScope.of(context).requestFocus(FocusNode()),
       child: Scaffold(
-        floatingActionButton: _keyboardOpen ? Container() : _speedDial(responsiveScreen, _prefs.mode),
+        floatingActionButton: !_keyboardOpen ? _speedDial(responsiveScreen, _prefs.mode) : null,
         body: Stack(
           children: [
             _background(responsiveScreen),
-            SafeArea(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    SizedBox(height: responsiveScreen.hp(3)),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20.0),
-                      child: FadeInRight(
-                        child: Text('Mi Perfil', style: TextStyle(fontSize: responsiveScreen.ip(4), fontFamily: 'WorkSansLight', color: OurColors.darkGray))
-                      ),
-                    ),
-                    _content(responsiveScreen, userProvider, mapProvider)
-                  ],
-                ),
-              ),
-            ),
+            _body(responsiveScreen)
           ],
         ),
       ),
@@ -154,33 +136,75 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
     );
   }
 
-  Widget _content(Responsive responsiveScreen, UserProvider userInfo, MapProvider mapProvider){
-    return Column(
-      children: [
-        Padding(
-          padding: EdgeInsets.symmetric(vertical: responsiveScreen.hp(6), horizontal: responsiveScreen.wp(6)),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              FadeInRight(
-                child: Stack(
-                  alignment: Alignment.centerRight,
-                  children: [
-                    Container(
-                      width: responsiveScreen.ip(7.0) * 2,
-                      height: responsiveScreen.ip(5.6) * 2,
-                    ),
-                    _photoUser(userInfo.user, responsiveScreen),
-                    _camera(responsiveScreen, userInfo.user, mapProvider)
-                  ],
-                ),
-              ),
-            ],
+  Widget _body(Responsive responsiveScreen){
+    return SafeArea(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          SizedBox(height: responsiveScreen.hp(3)),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20.0),
+            child: FadeInRight(
+              child: Text('Mi Perfil', style: TextStyle(fontSize: responsiveScreen.ip(4), fontFamily: 'WorkSansLight', color: OurColors.black))
+            ),
           ),
-        ),
-        _body(responsiveScreen, userInfo.user),
-        SizedBox(height: 50.0),
-      ],
+          Expanded(
+            child: ListView(
+              physics: BouncingScrollPhysics(),
+              children: [
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: responsiveScreen.hp(6), horizontal: responsiveScreen.wp(6)),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      FadeInRight(
+                        child: Stack(
+                          alignment: Alignment.centerRight,
+                          children: [
+                            Container(
+                              width: responsiveScreen.ip(7.0) * 2,
+                              height: responsiveScreen.ip(5.6) * 2,
+                            ),
+                            _photoUser(responsiveScreen),
+                            _camera(responsiveScreen),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: EdgeInsets.symmetric(vertical: 15.0),
+                  margin: EdgeInsets.symmetric(horizontal: responsiveScreen.wp(6)),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(25.0),
+                    boxShadow: <BoxShadow>[
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 3.0,
+                        offset: Offset(0.0, 4.0),
+                        spreadRadius: 3.0
+                      )
+                    ]
+                  ),
+                  child: Column(
+                    children: <Widget>[
+                      _nameUser(responsiveScreen),
+                      _lastnameUser(responsiveScreen),
+                      _ciUser(responsiveScreen),
+                      _emailUser(responsiveScreen),
+                      _phoneUser(responsiveScreen),
+                      _passUser(responsiveScreen)
+                    ]
+                  )
+                ),
+                SizedBox(height: 50.0),
+              ],
+            )
+          )
+        ],
+      ),
     );
   }
 
@@ -195,7 +219,7 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
       curve: Curves.bounceIn,
       overlayColor: Colors.black,
       tooltip: 'Opciones',
-      heroTag: 'speed-dial-hero-tag',
+      heroTag: 'speed-dial-hero-tag1',
       foregroundColor: Colors.black,
       backgroundColor: Colors.transparent,
       animatedIcon: AnimatedIcons.menu_close,
@@ -216,66 +240,67 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
           backgroundColor: Colors.white,
           label: 'Cambiar modo',
           labelStyle: TextStyle(fontFamily: "WorkSansLight", fontSize: responsiveScreen.ip(1.6), color: Colors.black),
-          onTap: () {
-            Navigator.pushReplacementNamed(context, 'mode');
-          }
+          onTap: () => Navigator.pushReplacementNamed(context, 'mode')
         ),
         typeUser == 'CONDUCTOR'
         ? SpeedDialChild(
-            child: Icon(Icons.drive_eta, color: OurColors.green, size: responsiveScreen.ip(2.8)),
-            backgroundColor: Colors.white,
-            label: 'Mi auto',
-            labelStyle: TextStyle(fontFamily: "WorkSansLight", fontSize: responsiveScreen.ip(1.6), color: Colors.black),
-            onTap: () => {
-              Navigator.pushNamed(context, 'regAuto', arguments: false)
-            },
+          child: Icon(Icons.drive_eta, color: OurColors.green, size: responsiveScreen.ip(2.8)),
+          backgroundColor: Colors.white,
+          label: 'Mi auto',
+          labelStyle: TextStyle(fontFamily: "WorkSansLight", fontSize: responsiveScreen.ip(1.6), color: Colors.black),
+          onTap: () => Navigator.pushNamed(context, 'auto', arguments: false)
         )
         : SpeedDialChild(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
         ),
       ],
     );
   }
 
   // Widgets para los campos a recibir
-  Widget _photoUser(UserModel userModel, Responsive responsiveScreen) {
-    return ClipOval(
-      child: (userModel.photo != null)
-      ? FadeInImage(
-          image: NetworkImage(userModel.photo),
-          placeholder: AssetImage('assets/img/ripple-loading.gif'),
-          height: responsiveScreen.ip(11),
-          width: responsiveScreen.ip(11),
-          fit: BoxFit.cover,
-        )
-      : Container()
-    );
+  Widget _photoUser(Responsive responsiveScreen) {
+    return Consumer<UserProvider>(builder: (context, provider, child) {
+      return ClipOval(
+        child: (provider.user.photo != null)
+        ? FadeInImage(
+            image: NetworkImage(provider.user.photo),
+            placeholder: AssetImage('assets/img/ripple-loading.gif'),
+            height: responsiveScreen.ip(11),
+            width: responsiveScreen.ip(11),
+            fit: BoxFit.cover,
+          )
+        : Container()
+      );
+    });
   }
 
-  Widget _camera(Responsive responsiveScreen, UserModel userModel, MapProvider mapProvider) {
+  Widget _camera(Responsive responsiveScreen) {
     return Positioned(
       bottom: 0,
       right: responsiveScreen.ip(8.0),
-      child: InkWell(
-        onTap: () {
-          mapProvider.auxiliary = true;
-          Navigator.pushNamed(context, 'photo');
-        },
-        child: CircleAvatar(
-          backgroundColor: Colors.white,
-          radius: responsiveScreen.ip(2.3),
-          child: CircleAvatar(
-            radius: responsiveScreen.ip(2),
-            backgroundColor: Colors.black12,
-            child: Icon(FontAwesomeIcons.camera, color: OurColors.darkPurple, size: responsiveScreen.ip(2)),
-          ),
-        ),
+      child: Consumer<UIProvider>(builder: (context, provider, child) {
+          return InkWell(
+            onTap: () {
+              provider.backArrow = true;
+              Navigator.pushNamed(context, 'photo');
+            },
+            child: CircleAvatar(
+              backgroundColor: Colors.white,
+              radius: responsiveScreen.ip(2.3),
+              child: CircleAvatar(
+                radius: responsiveScreen.ip(2),
+                backgroundColor: Colors.black12,
+                child: Icon(FontAwesomeIcons.camera, color: OurColors.darkPurple, size: responsiveScreen.ip(2)),
+              ),
+            ),
+          );
+        }
       ),
     );
   }
 
-  Widget _nameUser(UserModel user, Responsive responsiveScreen) {
+  Widget _nameUser(Responsive responsiveScreen) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 25.0),
       child: Row(
@@ -286,10 +311,10 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
               child: TextFormField(
                 controller: _nameController,
                 enabled: _activeEditName,
-                style: TextStyle(fontFamily: "WorkSansLight", fontSize: responsiveScreen.ip(2), color: OurColors.darkGray),
+                style: TextStyle(fontFamily: "WorkSansLight", fontSize: responsiveScreen.ip(2), color: OurColors.black),
                 textCapitalization: TextCapitalization.sentences,
                 decoration: InputDecoration(
-                  icon: Icon(FontAwesomeIcons.user, color: OurColors.darkGray, size: responsiveScreen.ip(2)),
+                  icon: Icon(FontAwesomeIcons.user, color: OurColors.black, size: responsiveScreen.ip(2)),
                   errorStyle: TextStyle(fontFamily: "WorkSansMedium", color: Color(0XFFE81935))
                 ),
                 validator: (value) {
@@ -303,10 +328,7 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
           ),
           SizedBox(width: 10.0),
           GestureDetector(
-            onTap: () {
-              user.name = _nameController.text;
-              _saveInputName();
-            },
+            onTap: () => _saveInputName(),
             child: Column(
               children: !_activeEditName
               ? <Widget>[
@@ -324,7 +346,7 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
     );
   }
 
-  Widget _lastnameUser(UserModel user, Responsive responsiveScreen) {
+  Widget _lastnameUser(Responsive responsiveScreen) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 25.0),
       child: Row(
@@ -335,10 +357,10 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
               child: TextFormField(
                 controller: _lastnameController,
                 enabled: _activeEditLastname,
-                style: TextStyle(fontFamily: "WorkSansLight", fontSize: responsiveScreen.ip(2), color: OurColors.darkGray),
+                style: TextStyle(fontFamily: "WorkSansLight", fontSize: responsiveScreen.ip(2), color: OurColors.black),
                 textCapitalization: TextCapitalization.sentences,
                 decoration: InputDecoration(
-                  icon: Icon(FontAwesomeIcons.user, color: OurColors.darkGray, size: responsiveScreen.ip(2)),
+                  icon: Icon(FontAwesomeIcons.user, color: OurColors.black, size: responsiveScreen.ip(2)),
                   errorStyle: TextStyle(fontFamily: "WorkSansMedium", color: Color(0XFFE81935))
                 ),
                 validator: (value) {
@@ -350,10 +372,7 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
           ),
           SizedBox(width: 10.0),
           GestureDetector(
-            onTap: () {
-              user.lastname = _lastnameController.text;
-              _saveInputLastname();
-            },
+            onTap: () => _saveInputLastname(),
             child: Column(
               children: !_activeEditLastname
               ? <Widget>[
@@ -371,7 +390,7 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
     );
   }
 
-  Widget _phoneUser(UserModel user, Responsive responsiveScreen) {
+  Widget _phoneUser(Responsive responsiveScreen) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 25.0),
       child: Row(
@@ -382,10 +401,10 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
               child: TextFormField(
                 controller: _phoneController,
                 enabled: _activeEditPhone,
-                style: TextStyle(fontFamily: "WorkSansLight", fontSize: responsiveScreen.ip(2), color: OurColors.darkGray),
+                style: TextStyle(fontFamily: "WorkSansLight", fontSize: responsiveScreen.ip(2), color: OurColors.black),
                 textCapitalization: TextCapitalization.sentences,
                 decoration: InputDecoration(
-                  icon: Icon(FontAwesomeIcons.mobileAlt, color: OurColors.darkGray, size: responsiveScreen.ip(2)),
+                  icon: Icon(FontAwesomeIcons.mobileAlt, color: OurColors.black, size: responsiveScreen.ip(2)),
                   errorStyle: TextStyle(fontFamily: "WorkSansMedium", color: Color(0XFFE81935)),
                   counterText: null
                 ),
@@ -398,19 +417,16 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
           ),
           SizedBox(width: 10.0),
           GestureDetector(
-            onTap: () {
-              user.phone = _phoneController.text;
-              _saveInputPhone();
-            },
+            onTap: () => _saveInputPhone(),
             child: Column(
               children: !_activeEditPhone
               ? <Widget>[
                 Icon(Icons.edit, size: 18.0, color: OurColors.darkPurple),
-                Text('Editar', style: TextStyle(fontFamily: "WorkSansMedium", color: OurColors.darkGray, fontSize: responsiveScreen.ip(1.2))),
+                Text('Editar', style: TextStyle(fontFamily: "WorkSansMedium", color: OurColors.black, fontSize: responsiveScreen.ip(1.2))),
               ]
               : <Widget>[
                 Icon(FontAwesomeIcons.check, size: 18.0, color: OurColors.green),
-                Text('Ok', style: TextStyle(fontFamily: "WorkSansMedium", color: OurColors.darkGray, fontSize: responsiveScreen.ip(1.2))),
+                Text('Ok', style: TextStyle(fontFamily: "WorkSansMedium", color: OurColors.black, fontSize: responsiveScreen.ip(1.2))),
               ]
             ),
           ),
@@ -425,10 +441,10 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
       child: TextField(
         controller: _ciController,
         enabled: false,
-        style: TextStyle(fontFamily: "WorkSansLight", fontSize: responsiveScreen.ip(2), color: OurColors.darkGray),
+        style: TextStyle(fontFamily: "WorkSansLight", fontSize: responsiveScreen.ip(2), color: OurColors.black),
         decoration: InputDecoration(
           contentPadding: EdgeInsets.all(0.0),
-          icon: Icon(FontAwesomeIcons.idCard, color: OurColors.darkGray, size: responsiveScreen.ip(2)),
+          icon: Icon(FontAwesomeIcons.idCard, color: OurColors.black, size: responsiveScreen.ip(2)),
         ),
       ),
     );
@@ -440,9 +456,9 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
       child: TextField(
         enabled: false,
         controller: _emailController,
-        style: TextStyle(fontFamily: "WorkSansLight", fontSize: responsiveScreen.ip(2), color: OurColors.darkGray),
+        style: TextStyle(fontFamily: "WorkSansLight", fontSize: responsiveScreen.ip(2), color: OurColors.black),
         decoration: InputDecoration(
-          icon: Icon(FontAwesomeIcons.envelope, color: OurColors.darkGray, size: responsiveScreen.ip(2)),
+          icon: Icon(FontAwesomeIcons.envelope, color: OurColors.black, size: responsiveScreen.ip(2)),
         ),
       ),
     );
@@ -462,9 +478,9 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                     controller: _oldPassController,
                     enabled: _activeEditPass,
                     obscureText: true,
-                    style: TextStyle(fontFamily: "WorkSansLight", fontSize: responsiveScreen.ip(2), color: OurColors.darkGray),
+                    style: TextStyle(fontFamily: "WorkSansLight", fontSize: responsiveScreen.ip(2), color: OurColors.black),
                     decoration: InputDecoration(
-                      icon: Icon(FontAwesomeIcons.lock, color: OurColors.darkGray, size: responsiveScreen.ip(2)),
+                      icon: Icon(FontAwesomeIcons.lock, color: OurColors.black, size: responsiveScreen.ip(2)),
                       hintText: _activeEditPass ? 'Anterior Contraseña' : 'Mi Contraseña',
                       hintStyle: _activeEditPass ? TextStyle(fontFamily: "WorkSansLight", fontSize: responsiveScreen.ip(2)) : TextStyle(fontFamily: "WorkSansLight", fontSize: responsiveScreen.ip(2), color: Colors.black),
                       errorStyle: TextStyle(fontFamily: "WorkSansMedium", color: Color(0XFFE81935)),
@@ -501,15 +517,15 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
                 child: TextFormField(
                   controller: _newPassController,
                   obscureText: _obscureTextPass,
-                  style: TextStyle(fontFamily: "WorkSansLight", fontSize: responsiveScreen.ip(2), color: OurColors.darkGray),
+                  style: TextStyle(fontFamily: "WorkSansLight", fontSize: responsiveScreen.ip(2), color: OurColors.black),
                   decoration: InputDecoration(
-                    icon: Icon(FontAwesomeIcons.lock, color: OurColors.darkGray, size: responsiveScreen.ip(2)),
+                    icon: Icon(FontAwesomeIcons.lock, color: OurColors.black, size: responsiveScreen.ip(2)),
                     hintText: 'Nueva Contraseña',
                     hintStyle: TextStyle(fontFamily: "WorkSansLight", fontSize: responsiveScreen.ip(2)),
                     errorStyle: TextStyle(fontFamily: "WorkSansMedium", color: Color(0XFFE81935)),
                     suffixIcon: GestureDetector(
                       onTap: _showTextPass,
-                      child: Icon(_obscureTextPass ? FontAwesomeIcons.eye : FontAwesomeIcons.eyeSlash, size: 15.0, color: OurColors.darkGray),
+                      child: Icon(_obscureTextPass ? FontAwesomeIcons.eye : FontAwesomeIcons.eyeSlash, size: 15.0, color: OurColors.black),
                     ),
                   ),
                   validator: (value) {
@@ -532,35 +548,6 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
           ],
         ),
       ),
-    );
-  }
-
-  Widget _body(Responsive responsiveScreen, UserModel user) {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 15.0),
-      margin: EdgeInsets.symmetric(horizontal: responsiveScreen.wp(6)),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(25.0),
-        boxShadow: <BoxShadow>[
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 3.0,
-            offset: Offset(0.0, 4.0),
-            spreadRadius: 3.0
-          )
-        ]
-      ),
-      child: Column(
-        children: <Widget>[
-          _nameUser(user, responsiveScreen),
-          _lastnameUser(user, responsiveScreen),
-          _ciUser(responsiveScreen),
-          _emailUser(responsiveScreen),
-          _phoneUser(user, responsiveScreen),
-          _passUser(responsiveScreen)
-        ]
-      )
     );
   }
 

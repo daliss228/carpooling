@@ -5,10 +5,12 @@ import 'package:flutter_carpooling/src/models/locality_model.dart';
 
 class MapProvider with ChangeNotifier {
   
-  int _seat;
-  int _numUsers;
   String _hour;
+  // int _numUsers;
   String _description;
+  Map<String, String> _idUsers;
+  
+  int _seat = 0;
   bool _auxiliary = false;
   List<bool> _days = List<bool>.generate(7, (i) => false);
   
@@ -16,12 +18,19 @@ class MapProvider with ChangeNotifier {
   Set<Marker> _markers = Set<Marker>();
   CameraPosition _kGooglePlex = CameraPosition(target: LatLng(-0.179292, -78.486155), zoom: 12);
 
-  int get numUsers => this._numUsers;
+  Map<String, String> get idUsers => this._idUsers;
 
-  set numUsers(int numUsers) {
-    this._numUsers = numUsers;
+  set idUsers(Map<String, String> idUsers) {
+    this._idUsers = idUsers;
     notifyListeners();
   }
+
+  // int get numUsers => this._numUsers;
+
+  // set numUsers(int numUsers) {
+  //   this._numUsers = numUsers;
+  //   notifyListeners();
+  // }
 
   int get seat => this._seat;
 
@@ -92,9 +101,10 @@ class MapProvider with ChangeNotifier {
   }
 
   void clearValues() {
+    this._seat = 0;
     this._hour = null;
-    this._seat = null;
-    this._numUsers = null;
+    // this._numUsers = null;
+    this._idUsers = null;
     this._auxiliary = false;
     this._description = null;
     this._geolocation = null;

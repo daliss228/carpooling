@@ -123,7 +123,7 @@ class _LoginPageState extends State<LoginPage> {
                               Pattern pattern = r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
                               RegExp regExp = new RegExp(pattern);
                               if(regExp.hasMatch(value)) return null;
-                              return 'Ingrese un email válido';
+                              return 'El email no es válido!';
                             },
                           ),
                           SizedBox(height: _responsiveScreen.hp(1),),
@@ -138,7 +138,7 @@ class _LoginPageState extends State<LoginPage> {
                               if(value.length > 6){
                                 return null;
                               }
-                              return 'Ingrese una contraseña mayor a 6 caracteres'; 
+                              return 'La contraseña es muy corta!'; 
                             },
                           ),
                         ],
@@ -177,9 +177,6 @@ class _LoginPageState extends State<LoginPage> {
               ),
               onPressed: () async {
                 await _login(context); 
-                // setState(() {
-                //   _isloading = true;
-                // });
               }
             ),
             SizedBox(height: _responsiveScreen.hp(2),),
@@ -221,11 +218,11 @@ class _LoginPageState extends State<LoginPage> {
     SystemChannels.textInput.invokeMethod('TextInput.hide');
     setState(() { _isloading = true; });
     final response =  await _authService.signIn(_email, _password);
-    setState(() { _isloading = false; });
     if (response['ok'] == true) {
-      Navigator.pushReplacementNamed(context, 'selectMode');
+      Navigator.pushReplacementNamed(context, 'after');
     } else {
-      showAlert(context, 'Ups!', Icons.sentiment_dissatisfied, response['message']); 
+      setState(() { _isloading = false; });
+      showAlert(context, 'Ups!', Icons.sentiment_dissatisfied, response['message']);
     }
   }
 

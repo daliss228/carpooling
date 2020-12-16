@@ -2,21 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter_carpooling/src/utils/colors.dart';
-import 'package:flutter_carpooling/src/prefs/user_prefs.dart';
+import 'package:flutter_carpooling/src/utils/user_prefs.dart';
 import 'package:flutter_carpooling/src/utils/responsive.dart';
+import 'package:flutter_carpooling/src/providers/ui_provider.dart';
 import 'package:flutter_carpooling/src/providers/map_provider.dart';
 import 'package:flutter_carpooling/src/providers/user_provider.dart';
 import 'package:flutter_carpooling/src/widgets/rectangle_widget.dart';
 import 'package:flutter_carpooling/src/providers/routes_provider.dart';
-import 'package:flutter_carpooling/src/providers/arguments_provider.dart';
 
-class ModePage extends StatefulWidget {
-
-  @override
-  _ModePageState createState() => _ModePageState();
-}
-
-class _ModePageState extends State<ModePage> {
+class ModePage extends StatelessWidget {
 
   final _prefs = UserPreferences(); 
 
@@ -81,77 +75,74 @@ class _ModePageState extends State<ModePage> {
   }
 
   Widget _userModeButton(String imagen, String usuario, Color colorBtn, BuildContext context, Responsive responsiveScreen) {
-    final mapProvider = Provider.of<MapProvider>(context);
-    final userProvider = Provider.of<UserProvider>(context);
-    final argumentsInfo = Provider.of<ArgumentsInfo>(context);
-    final routesProvider = Provider.of<RoutesProvider>(context);
     return FadeInUp(
       delay: Duration(milliseconds: 200),
       duration: Duration(milliseconds: 2000),
-      child: GestureDetector(
-        onTap: () async {
-          _prefs.mode = usuario;
-          mapProvider.clearValues();
-          if (usuario == 'CONDUCTOR' ) {
-            if (userProvider.user.car != null) {
-              routesProvider.orderMyDriverRoutes();
-              Navigator.pushReplacementNamed(context, 'home');
+      child: Consumer4<MapProvider, RoutesProvider, UserProvider, UIProvider>(builder: (context, mapProvider, routesProvider, userProvider, uIProvider, child) {
+        return GestureDetector(
+          onTap: () async {
+            _prefs.mode = usuario;
+            mapProvider.clearValues();
+            routesProvider.readGroupRoute();
+            if (usuario == 'CONDUCTOR' ) {
+              if (userProvider.user.car != null) {            
+                Navigator.pushReplacementNamed(context, 'home');
+              } else {
+                Navigator.pushReplacementNamed(context, 'auto', arguments: true);
+              }
             } else {
-              Navigator.pushReplacementNamed(context, 'regAuto', arguments: true);
+              if(userProvider.user.coordinates != null){            
+                Navigator.pushReplacementNamed(context, 'home');
+              }else{
+                uIProvider.backArrow = false;
+                Navigator.pushReplacementNamed(context, 'usualRoute');
+              }
             }
-          } else {
-            if(userProvider.user.coordinates != null){
-              routesProvider.orderMyPaxRoutes();
-              Navigator.pushReplacementNamed(context, 'home');
-            }else{
-              argumentsInfo.backArrowUserRoute = false;
-              Navigator.pushReplacementNamed(context, 'usualRoute');
-            }
-          }
-        },
-        child: Container(
-          height: responsiveScreen.hp(24),
-          width: responsiveScreen.wp(39),
-          child: Stack(
-            children: <Widget>[
-              Positioned(
-                left: (responsiveScreen.wp(38)/2) - (responsiveScreen.hp(13) /2),
-                child: CircleAvatar(
-                  backgroundColor: Colors.transparent,
-                  radius: responsiveScreen.ip(6),
-                  child: Image(
-                    image: AssetImage('assets/img/$imagen'),
-                    height: responsiveScreen.hp(13),
+          },
+          child: Container(
+            height: responsiveScreen.hp(24),
+            width: responsiveScreen.wp(39),
+            child: Stack(
+              children: <Widget>[
+                Positioned(
+                  left: (responsiveScreen.wp(38)/2) - (responsiveScreen.hp(13) /2),
+                  child: CircleAvatar(
+                    backgroundColor: Colors.transparent,
+                    radius: responsiveScreen.ip(6),
+                    child: Image(
+                      image: AssetImage('assets/img/$imagen'),
+                      height: responsiveScreen.hp(13),
+                    ),
                   ),
                 ),
-              ),
-              Positioned(
-                top: responsiveScreen.hp(12),
-                left: (responsiveScreen.wp(38)/2 - responsiveScreen.wp(35)/2),
-                child: Container( 
-                  height: responsiveScreen.hp(8),
-                  width: responsiveScreen.wp(35),
-                  margin: EdgeInsets.all(responsiveScreen.ip(0.5)),
-                  decoration: BoxDecoration(
-                    border: Border.all(width: 3.5),
-                    boxShadow: <BoxShadow>[
-                      BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 10.0,
-                        spreadRadius: 1.0,
-                        offset: Offset(0.0, 10.0)
-                      )
-                    ],
-                    color: colorBtn,
-                    borderRadius: BorderRadius.circular(30.0)
+                Positioned(
+                  top: responsiveScreen.hp(12),
+                  left: (responsiveScreen.wp(38)/2 - responsiveScreen.wp(35)/2),
+                  child: Container( 
+                    height: responsiveScreen.hp(8),
+                    width: responsiveScreen.wp(35),
+                    margin: EdgeInsets.all(responsiveScreen.ip(0.5)),
+                    decoration: BoxDecoration(
+                      border: Border.all(width: 3.5),
+                      boxShadow: <BoxShadow>[
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 10.0,
+                          spreadRadius: 1.0,
+                          offset: Offset(0.0, 10.0)
+                        )
+                      ],
+                      color: colorBtn,
+                      borderRadius: BorderRadius.circular(30.0)
+                    ),
+                    child: Center(child: Text(usuario, style: TextStyle(fontSize: responsiveScreen.ip(1.5), fontFamily: "WorkSansBold", color: Colors.white))),
                   ),
-                  child: Center(child: Text(usuario, style: TextStyle(fontSize: responsiveScreen.ip(1.5), fontFamily: "WorkSansBold", color: Colors.white))),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      }),
     );
   }
 }

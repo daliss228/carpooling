@@ -11,24 +11,4 @@ class UserProvider with ChangeNotifier{
     this._userModel = userModel;
   }
 
-  set name(String name) {
-    this._userModel.name = name;
-    notifyListeners();
-  }
-
-  set lastname(String lastName) {
-    this._userModel.lastname = lastName;
-    notifyListeners();
-  }
-
-  set phone(String phone) {
-    this._userModel.phone = phone;
-    notifyListeners();
-  }
-
-  set photo(String photo) {
-    this._userModel.photo = photo;
-    notifyListeners();
-  }
-
 }

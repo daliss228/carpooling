@@ -5,8 +5,6 @@
 	<key>NSCameraUsageDescription</key>
 	<string>Puede esta aplicación usar la cámara?</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Puede esta aplicación usar el micrófono?</string>
-	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Puede esta aplicación usar la galeria?</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>

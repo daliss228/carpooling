@@ -1,8 +1,7 @@
 import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:flutter_carpooling/src/utils/utils.dart';
-import 'package:flutter_carpooling/src/prefs/user_prefs.dart';
+import 'package:flutter_carpooling/src/utils/user_prefs.dart';
 import 'package:flutter_carpooling/src/models/user_model.dart';
 import 'package:flutter_carpooling/src/models/locality_model.dart';
 
@@ -16,8 +15,14 @@ class UserService {
     try {
       final result = (await _dbRef.child("users").child((userUid == null) ? _prefs.uid : userUid).once()).value;
       final user = UserModel.fromJson(result);
-      return {"ok": true, "value": user}; 
+      if (user.status) {
+        return {"ok": true, "value": user}; 
+      } else {
+        throw("El usuario está deshabilitado!");
+      }
     } on FirebaseException catch (e) {
+      return {"ok": false, "message": e.message}; 
+    } catch (e) {
       return {"ok": false, "message": e.toString()}; 
     }
   }
@@ -27,24 +32,27 @@ class UserService {
       _dbRef.child("users").child(_prefs.uid).update({property: value});
       return {"ok": true}; 
     } on FirebaseException catch (e) {
-      return {"ok": false, "message": e.message.toString()}; 
+      return {"ok": false, "message": e.message}; 
+    } catch (e) {
+      return {'ok': false, 'message': e.toString()}; 
     }
   }
 
-  Future<Map<String, dynamic>> uploadPhotoUser(String oldPhoto, File imageFile) async {
+  Future<Map<String, dynamic>> uploadPhotoUser(bool oldPhoto, File imageFile) async {
     try {
-      if (oldPhoto != null) {
-        final nameImage = nameFromUrlPhoto(oldPhoto);
-        await _storeRef.child(nameImage).delete();
+      if (oldPhoto == true) {
+        await _storeRef.child("${_prefs.uid}.png").delete();
       }
-      String filePath = "${DateTime.now()}.png";
+      String filePath = "${_prefs.uid}.png";
       UploadTask uploadTask = _storeRef.child(filePath).putFile(imageFile);
       TaskSnapshot storageTaskSnapshot = await uploadTask;
       String downloadUrl = await storageTaskSnapshot.ref.getDownloadURL();
       await _dbRef.child("users").child(_prefs.uid).update({"photo": downloadUrl});
       return {"ok": true, "message": "Imagen registrada correctamente"}; 
     } on FirebaseException catch (e) {
-      return {"ok": false, "message": e.message.toString()}; 
+      return {"ok": false, "message": e.message}; 
+    } catch (e) {
+      return {'ok': false, 'message': e.toString()}; 
     }
   }
 
@@ -54,6 +62,8 @@ class UserService {
       return {"ok": true, "message": "Coordenadas registradas correctamente"};
     } on FirebaseException catch (e) {
       return {"ok": false, "message": e.message.toString()}; 
+    } catch (e) {
+      return {'ok': false, 'message': e.toString()}; 
     }
   }
 
@@ -66,7 +76,9 @@ class UserService {
       }
       return {"ok": true, "message": "Calificación registrada correctamente"};
     } on FirebaseException catch (e) {
-      return {"ok": false, "message": e.message.toString()}; 
+      return {"ok": false, "message": e.message}; 
+    } catch (e) {
+      return {'ok': false, 'message': e.toString()}; 
     }
   }
 

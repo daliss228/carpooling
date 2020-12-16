@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter_carpooling/src/models/user_model.dart';
 import 'package:flutter_carpooling/src/models/locality_model.dart';
 

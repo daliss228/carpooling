@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'package:flutter_carpooling/src/utils/utils.dart';
-import 'package:flutter_carpooling/src/prefs/user_prefs.dart';
+import 'package:flutter_carpooling/src/utils/helpers.dart';
+import 'package:flutter_carpooling/src/utils/user_prefs.dart';
 import 'package:flutter_carpooling/src/models/user_model.dart';
 
 class AuthService {
@@ -15,8 +15,10 @@ class AuthService {
       await _dbRef.child('users/${user.id}').set(user.toJson());
       return {"ok": true, "message": "Registro de usuario creado exitosamente"}; 
     } on FirebaseException catch (e) {
-      return {"ok": false, "message": e.message.toString()}; 
-    }   
+      return {"ok": false, "message": e.message}; 
+    } catch (e) {
+      return {'ok': false, 'message': e.toString()}; 
+    }
   }
 
   Future<Map<String, dynamic>> searchCi(String ci) async {
@@ -29,35 +31,37 @@ class AuthService {
         return {'ok': false, 'message': 'Al parecer tu CI no esta asociada con ningún grupo de vecinos, comunícate con el administrador de tu localidad.'};
       }
     } on FirebaseException catch (e) {
-      return {'ok': false, 'message': e.message.toString()};
+      return {'ok': false, 'message': e.message};
+    } catch (e) {
+      return {'ok': false, 'message': e.toString()}; 
     }
   }
 
   Future<Map<String, dynamic>> singUp(String email, String password) async {
     try{
-      final result = await _auth.createUserWithEmailAndPassword(email: email, password: password); 
-      if(result.user != null){
-        _prefs.token = await result.user.getIdToken();
-        _prefs.uid = result.user.uid;
-      }
+      final authResult = await _auth.createUserWithEmailAndPassword(email: email, password: password); 
+      _prefs.uid = authResult.user.uid;
+      _prefs.token = await authResult.user.getIdToken();
       return {'ok': true, 'message': 'Usuario registrado correctamente'};
     } on FirebaseAuthException catch(e){
-      return {'ok': false, 'message': e.message.toString()}; 
+      return {'ok': false, 'message': firebaseErrorMessages(e.code)}; 
+    } catch (e) {
+      return {'ok': false, 'message': e.toString()}; 
     }
 
   }
 
   Future<Map<String, dynamic>> signIn(String email, String password) async {
-    UserCredential authResult;
     try {
-      authResult = await _auth.signInWithEmailAndPassword(email: email, password: password); 
-      authResult.user.getIdToken().then((valueToken) {
-        _prefs.token = valueToken;
-      });
-      _prefs.uid = authResult.user.uid.toString();
+      final authResult = await _auth.signInWithEmailAndPassword(email: email, password: password); 
+      _prefs.uid = authResult.user.uid;
+      _prefs.token = await authResult.user.getIdToken();
+      _prefs.uidGroup = (await _dbRef.child("users").child(authResult.user.uid).child("id_group").once()).value;
       return {"ok": true, "message": "Inicio de sesión exitoso!"}; 
     } on FirebaseAuthException catch (e){
       return {"ok": false, "message": firebaseErrorMessages(e.code)};
+    } catch (e) {
+      return {'ok': false, 'message': e.toString()}; 
     }
   } 
 
@@ -72,25 +76,25 @@ class AuthService {
       );
       if (authResult.user.uid.length != 0) {
         user.updatePassword(newPass);
-        authResult.user.getIdToken().then((token){
-          _prefs.token = token;
-        });
+        _prefs.token = await authResult.user.getIdToken();
         return {"ok": true, "message": "Contraseña cambiada con éxito!"}; 
       } else {
         throw "Se he producido un error"; 
       }
     } on FirebaseAuthException catch(e){ 
       return {"ok": false, "message": firebaseErrorMessages(e.code)};
+    } catch (e) {
+      return {'ok': false, 'message': e.toString()}; 
     }
   }
 
   Future<void> signOut() async {
-    _auth.signOut(); 
     _prefs.lat = '';
     _prefs.lng = '';
     _prefs.mode = '';
     _prefs.token = '';
     _prefs.uidGroup = '';
+    await _auth.signOut(); 
   }
 
 }

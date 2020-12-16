@@ -13,7 +13,7 @@ void showAlert(BuildContext context, String title, IconData icon, String message
         ),
         title: Text(
           title,
-          style: TextStyle(fontSize: responsiveScreen.ip(2), fontFamily: 'WorkSansSemiBold', color: OurColors.darkGray),
+          style: TextStyle(fontSize: responsiveScreen.ip(2), fontFamily: 'WorkSansSemiBold', color: OurColors.black),
         ),
         content: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -23,7 +23,7 @@ void showAlert(BuildContext context, String title, IconData icon, String message
             SizedBox(height: 20.0),
             Text(
               message,
-              style: TextStyle(fontSize: responsiveScreen.ip(1.7), fontFamily: 'WorkSansRegular', color: OurColors.darkGray),
+              style: TextStyle(fontSize: responsiveScreen.ip(1.7), fontFamily: 'WorkSansRegular', color: OurColors.black),
             ),
           ],
         ),
@@ -40,7 +40,8 @@ class AlertWidget extends StatelessWidget {
   final String title;
   final String message;
   final IconData icon;
-  AlertWidget({Key key, this.title, this.icon, this.message});
+  final Function onPressed;
+  AlertWidget({@required this.title, @required this.icon, @required this.message, @required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -50,6 +51,7 @@ class AlertWidget extends StatelessWidget {
         borderRadius: BorderRadius.circular(20.0)
       ),
       child: AlertDialog(
+        elevation: 4.0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20.0)
         ),
@@ -70,7 +72,10 @@ class AlertWidget extends StatelessWidget {
           ],
         ),
         actions: <Widget>[
-          FlatButton(onPressed: ()=> Navigator.of(context).pop(), child: Text('OK', style: TextStyle(fontFamily: 'WorkSansSemiBold', color: Color(0xFF0393A5), fontSize: responsiveScreen.ip(2))))
+          FlatButton(
+            onPressed: () => this.onPressed(),
+            child: Text('OK', style: TextStyle(fontFamily: 'WorkSansSemiBold', color: Color(0xFF0393A5), fontSize: responsiveScreen.ip(2)))
+          )
         ],
       ),
     ); 

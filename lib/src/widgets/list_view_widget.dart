@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_carpooling/src/utils/utils.dart';
 import 'package:flutter_carpooling/src/utils/colors.dart';
 import 'package:flutter_carpooling/src/utils/responsive.dart';
 import 'package:flutter_carpooling/src/models/route_model.dart';
 import 'package:flutter_carpooling/src/widgets/card_widget.dart';
 
 class ListViewWidget extends StatelessWidget {
-
   final List<RouteModel> routes;
   final Future<void> Function() onRefresh;
 
@@ -14,23 +12,23 @@ class ListViewWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _responsiveScreen = Responsive(context);
+    final responsiveScreen = Responsive(context);
     ScrollController _gridController = ScrollController();
     _gridController.addListener(() {
       if(_gridController.position.pixels == _gridController.position.maxScrollExtent){
         double spaceFinal;
         switch (this.routes.length) {
           case 1:
-            spaceFinal = _gridController.position.maxScrollExtent - _responsiveScreen.hp(70);
+            spaceFinal = _gridController.position.maxScrollExtent - responsiveScreen.hp(70);
             break;
           case 2:
-            spaceFinal = _gridController.position.maxScrollExtent - _responsiveScreen.hp(45);
+            spaceFinal = _gridController.position.maxScrollExtent - responsiveScreen.hp(45);
             break;
           case 3:
-            spaceFinal = _gridController.position.maxScrollExtent - _responsiveScreen.hp(20);
+            spaceFinal = _gridController.position.maxScrollExtent - responsiveScreen.hp(20);
             break;
           case 4:
-            spaceFinal = _gridController.position.maxScrollExtent - _responsiveScreen.hp(5);
+            spaceFinal = _gridController.position.maxScrollExtent - responsiveScreen.hp(5);
             break;
           default: 
             spaceFinal = _gridController.position.maxScrollExtent;
@@ -53,23 +51,22 @@ class ListViewWidget extends StatelessWidget {
         padding: EdgeInsets.only(top: 20.0, bottom: 20.0),
         itemCount: (this.routes != null) ? this.routes.length + 1 : 1,
         itemBuilder: (BuildContext context, int i){
-          final seats = numAvalibleSeats(routes);
           if (this.routes.length == 0) {
-            return thereAreNoRoutes(_responsiveScreen);
+            return _ThereAreNoRoutes();
           } else if (i < this.routes.length) {
-            return CardWidget(route: this.routes[i], seatsAvailable: seats[i]);
+            return CardWidget(route: this.routes[i]);
           } else {
             switch (this.routes.length) {
               case 1 :
-                return Container(height: _responsiveScreen.hp(70));
+                return Container(height: responsiveScreen.hp(70));
               case 2 :
-                return Container(height: _responsiveScreen.hp(45));
+                return Container(height: responsiveScreen.hp(45));
               case 3 :
-                return Container(height: _responsiveScreen.hp(20));
+                return Container(height: responsiveScreen.hp(20));
               case 4 :
-                return Container(height: _responsiveScreen.hp(5));
+                return Container(height: responsiveScreen.hp(5));
               default :
-                return Container(height: _responsiveScreen.hp(0));
+                return Container(height: responsiveScreen.hp(0));
             }
           }
         },
@@ -77,7 +74,13 @@ class ListViewWidget extends StatelessWidget {
     );
   }
 
-  Widget thereAreNoRoutes(Responsive responsiveScreen) {
+}
+
+class _ThereAreNoRoutes extends StatelessWidget {
+
+  @override
+  Widget build(BuildContext context) {
+    final responsiveScreen = Responsive(context);
     return Container(
       height: responsiveScreen.hp(80),
       child: Center(

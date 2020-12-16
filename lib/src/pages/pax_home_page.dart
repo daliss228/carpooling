@@ -23,42 +23,41 @@ class _PaxHomePageState extends State<PaxHomePage> with AutomaticKeepAliveClient
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final _responsiveScreen = new Responsive(context); 
-    // final routesProvider = Provider.of<RoutesProvider>(context);
+    final responsiveScreen = new Responsive(context); 
     return Scaffold(
       body: Stack(
         children: <Widget>[
           Positioned(
-            right: _responsiveScreen.wp(75),
-            child: FadeInLeft(child: BackgoundWidget(colors: [OurColors.lightBlue, OurColors.lightGreenishBlue], sizeWidget: _responsiveScreen.hp(34)))
+            right: responsiveScreen.wp(75),
+            child: FadeInLeft(child: BackgoundWidget(colors: [OurColors.lightBlue, OurColors.lightGreenishBlue], sizeWidget: responsiveScreen.hp(34)))
           ),
           Positioned(
-            top: _responsiveScreen.hp(1),
-            right: _responsiveScreen.wp(75),
+            top: responsiveScreen.hp(1),
+            right: responsiveScreen.wp(75),
             child: FadeInLeft(
               delay: Duration(milliseconds: 500),
-              child: BackgoundWidget(sizeWidget: _responsiveScreen.hp(30), colors: [OurColors.initialPurple, OurColors.finalPurple])
+              child: BackgoundWidget(sizeWidget: responsiveScreen.hp(30), colors: [OurColors.initialPurple, OurColors.finalPurple])
             )
           ),
           Positioned(
-            top: _responsiveScreen.hp(70),
-            left: _responsiveScreen.wp(75),
-            child: FadeInRight(child: BackgoundWidget(colors: [OurColors.lightBlue, OurColors.lightGreenishBlue], sizeWidget: _responsiveScreen.hp(30)))
+            top: responsiveScreen.hp(70),
+            left: responsiveScreen.wp(75),
+            child: FadeInRight(child: BackgoundWidget(colors: [OurColors.lightBlue, OurColors.lightGreenishBlue], sizeWidget: responsiveScreen.hp(30)))
           ),
           SafeArea(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                SizedBox(height: _responsiveScreen.hp(3)),
+                SizedBox(height: responsiveScreen.hp(3)),
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 20.0),
                   child: FadeInRight(
                     child: Text(
                       'Mis Rutas', 
                       style: TextStyle(
-                        fontSize: _responsiveScreen.ip(4),
+                        fontSize: responsiveScreen.ip(4),
                         fontFamily: 'WorkSansLight',
-                        color: OurColors.darkGray
+                        color: OurColors.black
                       ),
                     ),
                   ),

@@ -56,7 +56,7 @@ class _DriverHomePageState extends State<DriverHomePage> with AutomaticKeepAlive
                       style: TextStyle(
                         fontSize: _responsiveScreen.ip(4),
                         fontFamily: 'WorkSansLight',
-                        color: OurColors.darkGray
+                        color: OurColors.black
                       ),
                     ),
                   ),

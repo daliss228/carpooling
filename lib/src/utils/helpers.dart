@@ -1,8 +1,9 @@
 import 'dart:math';
 import 'package:intl/intl.dart';
-import 'package:flutter_carpooling/src/prefs/user_prefs.dart';
+import 'package:flutter_carpooling/src/utils/user_prefs.dart';
 import 'package:flutter_carpooling/src/models/user_model.dart';
 import 'package:flutter_carpooling/src/models/route_model.dart';
+
 
 bool isNumeric(String s){
   if (s.isEmpty) return false; 
@@ -56,8 +57,6 @@ String stringSchedule(Schedule schedule) {
     }
   return stringDays;
 }
-
-String nameFromUrlPhoto(String url) => url.replaceAll(RegExp(r'https://firebasestorage.googleapis.com/v0/b/dev-carpooling.appspot.com/o/'), '').replaceAll('%20', ' ').replaceAll('%3A', ':').split('?')[0];
 
 bool verifyUserRegister(List<UserModel> users) {
   final UserPreferences _prefs = UserPreferences();
@@ -123,7 +122,7 @@ String firebaseErrorMessages(String err) {
     case "invalid_email":
     case "email-already-in-use":
     case "account-exists-with-different-credential":
-      return "Correo electrónico no válidos."; 
+      return "Correo electrónico no válido."; 
       break;
     case "too-many-requests":
       return "Demasiados intentos fallidos. \nPor favor, inténtelo de nuevo más tarde."; 
@@ -140,3 +139,13 @@ String firebaseErrorMessages(String err) {
   }
 }
 
+class Reports {
+  static List<String> list = [
+    "Actitud grosera, vulgar o insultante",
+    "Discurso que denota acoso o odio",
+    "Actitud amenazante, violenta o suicida",
+    "No se ha presentado",
+    "Ha dejado de responder",
+    "Otro hecho inadecuado"
+  ];
+}

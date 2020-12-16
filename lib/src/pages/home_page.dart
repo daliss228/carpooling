@@ -3,12 +3,12 @@ import 'package:provider/provider.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_carpooling/src/utils/colors.dart';
 import 'package:flutter_carpooling/src/utils/responsive.dart';
-import 'package:flutter_carpooling/src/prefs/user_prefs.dart';
+import 'package:flutter_carpooling/src/utils/user_prefs.dart';
 import 'package:flutter_carpooling/src/pages/profile_page.dart';
 import 'package:flutter_carpooling/src/pages/pax_home_page.dart';
+import 'package:flutter_carpooling/src/providers/ui_provider.dart';
 import 'package:flutter_carpooling/src/pages/driver_home_page.dart';
 import 'package:flutter_carpooling/src/pages/pax_group_route_page.dart';
-import 'package:flutter_carpooling/src/providers/arguments_provider.dart';
 
 // homepage con el navigatorbar
 class HomePage extends StatefulWidget {
@@ -19,10 +19,10 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
   
   int _currentIndex = 0;
-  UserPreferences _prefs;
   Animation<double> _animation;
   AnimationController _animationController;
-  final _pageController = PageController(initialPage: 0, keepPage: true);
+  UserPreferences _prefs = UserPreferences();
+  final _pageController = PageController(initialPage: 0);
   final _childrenPax = [
     PaxHomePage(),
     PaxGroupRoutes(),
@@ -35,14 +35,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
   @override
   void initState() {
-    _prefs = UserPreferences();
     _animationController = AnimationController(vsync: this, duration: Duration(milliseconds: 250));
     _animation = Tween(begin: 1.0, end: 1.1).animate(CurvedAnimation(curve: Curves.ease, parent: _animationController));
     _animationController.addListener(() {
       if (_animationController.status == AnimationStatus.completed) {
         _animationController.reverse();
-      }  else if (_animationController.status == AnimationStatus.dismissed){
-        _animationController.stop();
       }
     });
     super.initState();
@@ -59,7 +56,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   Widget build(BuildContext context) {
     bool mode = _prefs.mode == 'CONDUCTOR';
     final responsiveScreen = Responsive(context);
-    final argumentsInfo = Provider.of<ArgumentsInfo>(context);
+    final uIProvider = Provider.of<UIProvider>(context);
     final showFab = MediaQuery.of(context).viewInsets.bottom == 0.0;
     return Scaffold(
       resizeToAvoidBottomPadding: true,
@@ -67,13 +64,17 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       floatingActionButtonLocation: FloatingActionButtonLocation.startDocked,
       floatingActionButton: showFab ? (mode
       ? FloatingActionButton(
-        onPressed: () => {Navigator.pushNamed(context, 'route')},
+        heroTag: 'FabDriver',
+        onPressed: () {
+          Navigator.pushNamed(context, 'route');
+        },
         child: Icon(Icons.add, size: responsiveScreen.ip(2.5)),
         backgroundColor: OurColors.darkPurple,
       )
       : FloatingActionButton(
+        heroTag: 'FabPax',
         onPressed: () {
-          argumentsInfo.backArrowUserRoute = true;
+          uIProvider.backArrow = true;
           Navigator.pushNamed(context, 'usualRoute');
         },
         child: Icon(
@@ -94,8 +95,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   Widget _bottomAppBarPax(Responsive responsiveScreen) {
     return BottomAppBar(
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
         children: <Widget>[
-          Expanded(child: SizedBox()),
           _bottomAppBarItem(FontAwesomeIcons.home, 0, responsiveScreen),
           _bottomAppBarItem(FontAwesomeIcons.route, 1, responsiveScreen),
           _bottomAppBarItem(FontAwesomeIcons.userAlt, 2, responsiveScreen),
@@ -110,13 +111,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   Widget _bottomAppBarDriver(Responsive responsiveScreen) {
     return BottomAppBar(
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          Expanded(child: SizedBox()),
           _bottomAppBarItem(FontAwesomeIcons.home, 0, responsiveScreen),
           _bottomAppBarItem(FontAwesomeIcons.userAlt, 1, responsiveScreen),
-          SizedBox(
-            width: 15.0,
-          )
+          SizedBox(width: 15.0)
         ],
       ),
       shape: CircularNotchedRectangle(),
@@ -135,7 +134,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               size: responsiveScreen.ip(2.8),
               color: (_currentIndex == cant)
               ? OurColors.lightGreenishBlue
-              : OurColors.darkGray
+              : OurColors.black
             )
           );
         },
@@ -154,6 +153,5 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   void bottomTapped(int index) {
     _pageController.animateToPage(index, duration: Duration(milliseconds: 500), curve: Curves.ease);
   }
-
 
 }

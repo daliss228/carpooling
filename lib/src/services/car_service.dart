@@ -12,6 +12,8 @@ class CarService {
       return {"ok": true, "message": "Carro creado con éxito."};
     } on FirebaseException catch (e) {
       return {"ok": false, "message": e.message.toString()};
+    } catch (e) {
+      return {'ok': false, 'message': e.toString()}; 
     }
   }
 
@@ -23,6 +25,8 @@ class CarService {
       throw "No hay un automóvil registrado.";
     } on FirebaseException catch (e) {
       return {"ok": false, "message": e.message.toString()};
+    } catch (e) {
+      return {'ok': false, 'message': e.toString()}; 
     }
   }
 }

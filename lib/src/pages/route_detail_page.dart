@@ -2,35 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:animate_do/animate_do.dart';
-import 'package:smooth_star_rating/smooth_star_rating.dart'; 
+import 'package:smooth_star_rating/smooth_star_rating.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:flutter_carpooling/src/utils/utils.dart';
+import 'package:flutter_carpooling/src/utils/helpers.dart';
 import 'package:flutter_carpooling/src/utils/colors.dart';
-import 'package:flutter_carpooling/src/prefs/user_prefs.dart';
+import 'package:flutter_carpooling/src/utils/user_prefs.dart';
 import 'package:flutter_carpooling/src/utils/responsive.dart';
 import 'package:flutter_carpooling/src/models/user_model.dart';
 // import 'package:flutter_carpooling/src/widgets/map_widget.dart';
 import 'package:flutter_carpooling/src/models/route_model.dart';
 import 'package:flutter_carpooling/src/widgets/alert_widget.dart';
-import 'package:flutter_carpooling/src/utils/report_options.dart';
 import 'package:flutter_carpooling/src/services/user_service.dart';
 import 'package:flutter_carpooling/src/widgets/loading_widget.dart';
 import 'package:flutter_carpooling/src/providers/map_provider.dart';
 import 'package:flutter_carpooling/src/services/route_service.dart';
 import 'package:flutter_carpooling/src/providers/user_provider.dart';
-import 'package:flutter_carpooling/src/models/report_route_model.dart';
+import 'package:flutter_carpooling/src/models/report_model.dart';
 import 'package:flutter_carpooling/src/widgets/simple_map_widget.dart';
 import 'package:flutter_carpooling/src/pages/route_register_page.dart';
 import 'package:flutter_carpooling/src/providers/routes_provider.dart';
 
 class RouteDetailPage extends StatefulWidget {
-
   final RouteModel route;
-  final String seatsAvailable;
-
-  RouteDetailPage({@required this.route, @required this.seatsAvailable});
+  RouteDetailPage({@required this.route});
 
   @override
   _RouteDetailPageState createState() => _RouteDetailPageState();
@@ -43,8 +39,8 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
   final _routeService = RouteService();
   final _formKey1 = GlobalKey<FormState>();
 
-  bool _userRegister;
-  bool _isADriver;
+  bool _isADriver = false;
+  bool _userRegister = false;
   bool _visibleWarning = false;
   UserModel _driverModel = UserModel();
   ReportModel _reportModel = ReportModel();
@@ -53,16 +49,11 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
   @override
   Widget build(BuildContext context) {
     final responsiveScreen = Responsive(context);
-    final mapProvider = Provider.of<MapProvider>(context);
-    final userProvider = Provider.of<UserProvider>(context);
-    final routesProvider = Provider.of<RoutesProvider>(context);
     _userRegister = verifyUserRegister(widget.route.users);
+    final userProvider = Provider.of<UserProvider>(context);
     _isADriver = widget.route.idDriver == userProvider.user.id ? true : false;
     return Scaffold(
-      floatingActionButton: 
-        (_prefs.mode == 'PASAJERO') 
-        ? Container()
-        : _speedDial(responsiveScreen, mapProvider, routesProvider),
+      floatingActionButton: (_prefs.mode == 'PASAJERO') ? Container() : _speedDial(responsiveScreen),
       body: FutureBuilder(
         future: _userService.readUser(widget.route.idDriver),
         builder: (BuildContext context, AsyncSnapshot<Map<String, dynamic>> snapshot) {
@@ -74,13 +65,18 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
                   _background(responsiveScreen),
                   _map(responsiveScreen),
                   _tabBar(responsiveScreen),
-                  _circularButtons(responsiveScreen, context),
-                  _suscribeButton(responsiveScreen, routesProvider, userProvider.user),
-                  _infoDriver(responsiveScreen, routesProvider)
+                  _circularButtons(responsiveScreen),
+                  _suscribeButton(responsiveScreen),
+                  _infoDriver(responsiveScreen)
                 ],
               );
             } else {
-              return AlertWidget(title: 'Ups!', icon: Icons.sentiment_dissatisfied, message: snapshot.data['message']);
+              return AlertWidget(
+                title: 'Ups!',
+                icon: Icons.sentiment_dissatisfied,
+                message: snapshot.data['message'],
+                onPressed: () => Navigator.pop(context),
+              );
             }
           } else {
             return LoadingWidget();
@@ -92,55 +88,57 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
     );
   }
 
-  Widget _speedDial(Responsive responsiveScreen, MapProvider mapProvider, RoutesProvider routesProvider) {
-    return SpeedDial(
-      animatedIcon: AnimatedIcons.menu_close,
-      animatedIconTheme: IconThemeData(size: responsiveScreen.ip(2.5), color: Colors.white),
-      closeManually: false,
-      curve: Curves.bounceIn,
-      overlayColor: Colors.black,
-      overlayOpacity: 0.5,
-      tooltip: 'Opciones',
-      heroTag: 'speed-dial-hero-tag1',
-      backgroundColor: OurColors.lightGreenishBlue,
-      foregroundColor: Colors.black,
-      elevation: 6.0,
-      shape: CircleBorder(),
-      children: [
-        SpeedDialChild(
-          child: Icon(Icons.delete, color: Color(0XFFE90000)),
-          backgroundColor: Colors.white,
-          label: 'Eliminar',
-          labelStyle: TextStyle(fontFamily: "WorkSansLight", fontSize: responsiveScreen.ip(1.6), color: Colors.black),
-          onTap: () async {
-            // TODO: notificar a los usuarios que se ha eliminado una ruta
-            await _routeService.removeRoute(widget.route.id);
-            routesProvider.removeMyDriverRoutes = widget.route;
-            Navigator.pushReplacementNamed(context, 'home');
-          }
-        ),
-        SpeedDialChild(
-          child: Icon(Icons.edit, color: Color(0XFF00B900)),
-          backgroundColor: Colors.white,
-          label: 'Editar',
-          labelStyle: TextStyle(fontFamily: "WorkSansLight", fontSize: responsiveScreen.ip(1.6), color: Colors.black),
-          onTap: () {
-            // TODO: notificar a los usuarios que se ha editado una ruta
-            mapProvider.clearValues();
-            mapProvider.auxiliary = true;
-            mapProvider.seat = widget.route.seat;
-            mapProvider.numUsers = widget.route.users == null ? 0 : widget.route.users.length;
-            mapProvider.kGooglePlex = CameraPosition(target: LatLng(widget.route.coordinates.lat, widget.route.coordinates.lng), zoom: 16);
-            mapProvider.geolocation = widget.route.coordinates;
-            mapProvider.setMarkers = widget.route.coordinates;
-            mapProvider.description = widget.route.address;
-            mapProvider.schedule = widget.route.schedule;
-            mapProvider.hour = widget.route.hour;
-            Navigator.push(context, MaterialPageRoute(builder: (context) => RouteRegisterPage(routeUid: widget.route.id)));
-          }
-        )
-      ]
-    );
+  Widget _speedDial(Responsive responsiveScreen) {
+    return Consumer2<MapProvider, RoutesProvider>(builder: (context, mapProvider, routesProvider, child) {
+      return SpeedDial(
+        animatedIcon: AnimatedIcons.menu_close,
+        animatedIconTheme: IconThemeData(size: responsiveScreen.ip(2.5), color: Colors.white),
+        closeManually: false,
+        curve: Curves.bounceIn,
+        overlayColor: Colors.black,
+        overlayOpacity: 0.5,
+        tooltip: 'Opciones',
+        heroTag: 'speed-dial-hero-tag2',
+        backgroundColor: OurColors.lightGreenishBlue,
+        foregroundColor: Colors.black,
+        elevation: 6.0,
+        shape: CircleBorder(),
+        children: [
+          SpeedDialChild(
+            child: Icon(Icons.delete, color: Color(0XFFE90000)),
+            backgroundColor: Colors.white,
+            label: 'Eliminar',
+            labelStyle: TextStyle(fontFamily: "WorkSansLight", fontSize: responsiveScreen.ip(1.6), color: Colors.black),
+            onTap: () async {
+              // TODO: notificar a los usuarios que se ha eliminado una ruta
+              await _routeService.removeRoute(widget.route.id);
+              routesProvider.removeMyDriverRoutes = widget.route;
+              Navigator.pushReplacementNamed(context, 'home');
+            }
+          ),
+          SpeedDialChild(
+            child: Icon(Icons.edit, color: Color(0XFF00B900)),
+            backgroundColor: Colors.white,
+            label: 'Editar',
+            labelStyle: TextStyle(fontFamily: "WorkSansLight", fontSize: responsiveScreen.ip(1.6), color: Colors.black),
+            onTap: () {
+              // TODO: notificar a los usuarios que se ha editado una ruta
+              mapProvider.clearValues();
+              mapProvider.auxiliary = true;
+              mapProvider.seat = widget.route.seat;
+              mapProvider.idUsers = widget.route.idUsers;
+              mapProvider.kGooglePlex = CameraPosition(target: LatLng(widget.route.coordinates.lat, widget.route.coordinates.lng), zoom: 16);
+              mapProvider.geolocation = widget.route.coordinates;
+              mapProvider.setMarkers = widget.route.coordinates;
+              mapProvider.description = widget.route.address;
+              mapProvider.schedule = widget.route.schedule;
+              mapProvider.hour = widget.route.hour;
+              Navigator.push(context, MaterialPageRoute(builder: (context) => RouteRegisterPage(route: widget.route)));
+            }
+          )
+        ]
+      );
+    });
   }
 
   Widget _background(Responsive responsiveScreen) {
@@ -181,9 +179,9 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
             TabBar(
               indicatorColor: OurColors.lightGreenishBlue,
               tabs: [
-                Tab(icon: Icon(FontAwesomeIcons.mapMarkerAlt, color: OurColors.darkGray, size: responsiveScreen.ip(3))),
-                Tab(icon: Icon(FontAwesomeIcons.car, color: OurColors.darkGray, size: responsiveScreen.ip(3))),
-                Tab(icon: Icon(FontAwesomeIcons.users, color: OurColors.darkGray, size: responsiveScreen.ip(3))),
+                Tab(icon: Icon(FontAwesomeIcons.mapMarkerAlt, color: OurColors.black, size: responsiveScreen.ip(3))),
+                Tab(icon: Icon(FontAwesomeIcons.car, color: OurColors.black, size: responsiveScreen.ip(3))),
+                Tab(icon: Icon(FontAwesomeIcons.users, color: OurColors.black, size: responsiveScreen.ip(3))),
               ],
             ),
             Container(
@@ -208,7 +206,7 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
     return TextFormField(
       initialValue: value,
       enabled: false,
-      style: TextStyle(fontFamily: 'WorkSansMedium', fontSize: responsiveScreen.ip(1.8), color: OurColors.darkGray),
+      style: TextStyle(fontFamily: 'WorkSansMedium', fontSize: responsiveScreen.ip(1.8), color: OurColors.black),
       decoration: InputDecoration(
         border: InputBorder.none,
         icon: Icon(icon, color: OurColors.lightGreenishBlue, size: responsiveScreen.ip(2.8)),
@@ -236,6 +234,7 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
   }
 
   Widget _tabBarCar(Responsive responsiveScreen) {
+    String seatsAvailable = (widget.route.seat - (widget.route.idUsers == null ? 0 : widget.route.idUsers.length)).toString();
     return SingleChildScrollView(
       physics: BouncingScrollPhysics(),
       child: Row(
@@ -253,9 +252,9 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              Text(widget.seatsAvailable, style: TextStyle(fontFamily: "WorkSansMedium", fontSize: responsiveScreen.ip(5), color: OurColors.darkPurple)),
-              Text(widget.seatsAvailable != '1' ? 'Asientos' : 'Asiento', style: TextStyle(fontFamily: "WorkSansMedium", fontSize: responsiveScreen.ip(1.8), color: OurColors.darkPurple)),
-              Text(widget.seatsAvailable != '1' ? 'Disponibles' : 'Disponible', style: TextStyle(fontFamily: "WorkSansMedium", fontSize: responsiveScreen.ip(1.8), color: OurColors.darkPurple)),
+              Text(seatsAvailable, style: TextStyle(fontFamily: "WorkSansMedium", fontSize: responsiveScreen.ip(5), color: OurColors.darkPurple)),
+              Text(seatsAvailable != '1' ? 'Asientos' : 'Asiento', style: TextStyle(fontFamily: "WorkSansMedium", fontSize: responsiveScreen.ip(1.8), color: OurColors.darkPurple)),
+              Text(seatsAvailable != '1' ? 'Disponibles' : 'Disponible', style: TextStyle(fontFamily: "WorkSansMedium", fontSize: responsiveScreen.ip(1.8), color: OurColors.darkPurple)),
             ],
           ),
         ],
@@ -272,17 +271,14 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
           return Column(
             children: [
               Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Center(
-                    child: _photoUsers(widget.route.users[i].photo, responsiveScreen)
-                  ),
-                  Center(
-                    child: Text('${widget.route.users[i].name} ${widget.route.users[i].lastname}', style: TextStyle(fontFamily: 'WorkSansMedium', fontSize: 15.0))
-                  ),
+                  _photoUsers(widget.route.users[i].photo, responsiveScreen),
+                  Text('${widget.route.users[i].name} ${widget.route.users[i].lastname}', style: TextStyle(fontFamily: 'WorkSansMedium', fontSize: 15.0)),
                   IconButton(
                     icon: Icon(Icons.flag, size: responsiveScreen.ip(3.5)),
-                    onPressed: () => _showSheet(responsiveScreen, context, widget.route.users[i].id)
+                    onPressed: () => _showSheet(responsiveScreen, widget.route.users[i].id)
                   ),
                 ]
               ),
@@ -292,7 +288,8 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
         }
       ) : Container();  
     } else {
-      return (widget.route.users != null) ? SingleChildScrollView(
+      return (widget.route.users != null) 
+      ? SingleChildScrollView(
         physics: BouncingScrollPhysics(),
         child: Center(
           child: Wrap(
@@ -316,7 +313,7 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
     );
   }
 
-  Widget _infoDriver(Responsive responsiveScreen, RoutesProvider routesProvider) {
+  Widget _infoDriver(Responsive responsiveScreen) {
     return Container(
       height: responsiveScreen.hp(23),
       padding: EdgeInsets.all(15.0),
@@ -351,7 +348,7 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
                     _photoUser(responsiveScreen),
                     Visibility(
                       visible: _userRegister,
-                      child: _starButton(responsiveScreen, routesProvider)
+                      child: _starButton(responsiveScreen)
                     )
                   ],
                 ),
@@ -377,12 +374,12 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
     );
   }
 
-  Widget _starButton(Responsive responsiveScreen, RoutesProvider routesProvider) {
+  Widget _starButton(Responsive responsiveScreen) {
     return Positioned(
       bottom: 0,
       right: responsiveScreen.ip(7),
       child: InkWell(
-        onTap: () => _showModalRatingDriver(responsiveScreen, routesProvider),
+        onTap: () => _showModalRatingDriver(responsiveScreen),
         child: CircleAvatar(
           backgroundColor: Colors.white,
           radius: responsiveScreen.ip(1.8),
@@ -396,9 +393,10 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
     );
   }
 
-  Widget _suscribeButton(Responsive responsiveScreen, RoutesProvider routesProvider, UserModel userModel) {
+  Widget _suscribeButton(Responsive responsiveScreen) {
+    String seatsAvailable = (widget.route.seat - (widget.route.idUsers == null ? 0 : widget.route.idUsers.length)).toString();
     return Visibility(
-      visible: _prefs.mode == 'PASAJERO' && (widget.seatsAvailable != '0' || _userRegister) && !_isADriver,
+      visible: _prefs.mode == 'PASAJERO' && (seatsAvailable != '0' || _userRegister) && !_isADriver,
       child: Positioned(
         top: responsiveScreen.hp(65.5),
         right: 0.0,
@@ -408,35 +406,42 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
             color: _userRegister ? OurColors.red : OurColors.lightGreenishBlue,
             borderRadius: BorderRadius.all(Radius.circular(10.0))
           ),
-          child: MaterialButton(
-            highlightColor: Colors.transparent,
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 10.0),
-              child: Text(
-                _userRegister ? 'CANCELAR' : 'REGISTRARSE',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: responsiveScreen.ip(1.5), 
-                  fontFamily: "WorkSansMedium"
-                )
+          child: Consumer2<RoutesProvider, UserProvider>(builder: (context, routesProvider, userProvider, child) {
+            return MaterialButton(
+              highlightColor: Colors.transparent,
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 10.0),
+                child: Text(
+                  _userRegister ? 'CANCELAR' : 'REGISTRARSE',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: responsiveScreen.ip(1.5), 
+                    fontFamily: "WorkSansMedium"
+                  )
+                ),
               ),
-            ),
-            onPressed: () async {
-              if (_userRegister) {
-                await _routeService.canceleRegisterUserRoute(widget.route.id);
-                widget.route.users.removeWhere((user) => (user.id == userModel.id));
-                routesProvider.removeMyPaxRoutes = widget.route;
-              } else {
-                await _routeService.createRegisterUserRoute(widget.route.id);
-                if (widget.route.users == null) {
-                  widget.route.users = List<UserModel>();
+              onPressed: () async {
+                if (_userRegister) {
+                  await _routeService.canceleRegisterUserRoute(widget.route.id);
+                  widget.route.users.removeWhere((user) => (user.id == userProvider.user.id));
+                  routesProvider.removeMyPaxRoutes = widget.route;
+                  widget.route.seat = widget.route.seat + 1;
+                  _userRegister = false;
+                } else {
+                  await _routeService.createRegisterUserRoute(widget.route.id);
+                  if (widget.route.users == null) {
+                    widget.route.users = List<UserModel>();
+                  }
+                  widget.route.seat = widget.route.seat - 1;
+                  widget.route.users.add(userProvider.user);
+                  routesProvider.addMyPaxRoutes = widget.route;
+                  _userRegister = true;
                 }
-                widget.route.users.add(userModel);
-                routesProvider.addMyPaxRoutes = widget.route;
+                showAlert(context, '${_userRegister ? 'Usuario registrado!' : 'Viaje cancelado!'}', Icons.check_circle_outline, '${_userRegister ? 'El usuario se ha registrado correctamente.' : 'Ha cancelado su suscripción a este viaje.'}');
+                setState(() {});
               }
-              showAlert(context, '${!_userRegister ? 'Usuario registrado!' : 'Viaje cancelada!'}', Icons.check_circle_outline, '${!_userRegister ? 'El usuario se ha registrado correctamente.' : 'Ha cancelado su suscripción a este viaje.'}');
-            }
-          ),
+            );
+          }),
         ),
       ),
     );
@@ -457,7 +462,7 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
     );
   }
 
-  Widget _circularButtons(Responsive responsiveScreen, BuildContext context) {
+  Widget _circularButtons(Responsive responsiveScreen) {
     return SafeArea(
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -481,7 +486,7 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
                 borderRadius: BorderRadius.circular(30.0),
                 color: Colors.black26,
                 child: Icon(Icons.flag, color: Colors.white, size: responsiveScreen.ip(2.5)),
-                onPressed: () => _showSheet(responsiveScreen, context)
+                onPressed: () => _showSheet(responsiveScreen)
               )
             ),
           ),
@@ -490,7 +495,7 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
     );
   }
 
-  void _showSheet(Responsive responsiveScreen, BuildContext context, [String userReported]) {
+  void _showSheet(Responsive responsiveScreen, [String userReported]) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -514,10 +519,10 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('Denunciar', style: TextStyle(fontFamily: "WorkSansMedium", fontSize: responsiveScreen.ip(2), color: OurColors.darkGray)),
+                          Text('Denunciar', style: TextStyle(fontFamily: "WorkSansMedium", fontSize: responsiveScreen.ip(2), color: OurColors.black)),
                           IconButton(
                             alignment: Alignment.centerRight,
-                            icon: Icon(Icons.close, color: OurColors.darkGray),
+                            icon: Icon(Icons.close, color: OurColors.black),
                             onPressed: () => Navigator.pop(context),
                           ),
                         ],
@@ -529,7 +534,7 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
                     ),
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 10.0),
-                      child: Text('¿Por qué quieres denunciar ${(_prefs.mode == 'PASAJERO') ? 'esta publicación' : 'a este pasajero'}?', style: TextStyle(fontFamily: "WorkSansMedium", fontSize: responsiveScreen.ip(1.8), color: OurColors.darkGray)),
+                      child: Text('¿Por qué quieres denunciar ${(_prefs.mode == 'PASAJERO') ? 'esta publicación' : 'a este pasajero'}?', style: TextStyle(fontFamily: "WorkSansMedium", fontSize: responsiveScreen.ip(1.8), color: OurColors.black)),
                     ),
                     Container(
                       height: responsiveScreen.hp(45),
@@ -556,7 +561,7 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
                         child: TextFormField(
                           maxLines: 2,
                           maxLength: 120,
-                          style: TextStyle(fontFamily: "WorkSansLight", fontSize: responsiveScreen.ip(1.7), color: OurColors.darkGray),
+                          style: TextStyle(fontFamily: "WorkSansLight", fontSize: responsiveScreen.ip(1.7), color: OurColors.black),
                           keyboardType: TextInputType.multiline,
                           decoration: InputDecoration(
                             border: OutlineInputBorder(
@@ -613,13 +618,7 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
           splashColor: OurColors.lightGreenishBlue,
           child: Padding(
             padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 42.0),
-            child: Text(
-              "ENVIAR",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: responsiveScreen.ip(1.5),
-                fontFamily: "WorkSansMedium"
-              ),
+            child: Text("ENVIAR", style: TextStyle(color: Colors.white, fontSize: responsiveScreen.ip(1.5), fontFamily: "WorkSansMedium"),
             ),
           ),
           onPressed: () async {
@@ -637,6 +636,7 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
                 _reportModel.idDriver = _driverModel.id;
               }
               _reportModel.idRoute = widget.route.id;
+              _reportModel.date = DateTime.now().toString();
               _reportModel.description = _reportDescription();
               await _routeService.createReportRoute(_reportModel);
               Navigator.pop(context);
@@ -652,40 +652,43 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
     );
   }
 
-  void _showModalRatingDriver(Responsive responsiveScreen, RoutesProvider routesProvider) {
+  void _showModalRatingDriver(Responsive responsiveScreen) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20.0)
-        ),
-        title: Text("Valore al conductor:", style: TextStyle(fontSize: responsiveScreen.ip(2), fontFamily: 'WorkSansSemiBold', color: OurColors.darkGray)),
-        content: SmoothStarRating(
-          rating: (routesProvider.ratingDriver == 0) ? checkIfUserRated(_driverModel.rate, _prefs.uid) : routesProvider.ratingDriver,
-          allowHalfRating: true,
-          starCount: 5,
-          size: responsiveScreen.ip(5.5),
-          isReadOnly: false,
-          filledIconData: Icons.star,
-          halfFilledIconData: Icons.star_half,
-          defaultIconData: Icons.star_border,
-          color: OurColors.yellow,
-          borderColor: OurColors.yellow,
-          onRated: (value) async {
-            routesProvider.ratingDriver = value;
-            await _userService.addOrUpdateRating2Driver(_driverModel.id, value);
-          },
-        ),
-        actions: <Widget>[
-          FlatButton(
-            child: Text('OK', style: TextStyle(fontFamily: 'WorkSansSemiBold', color: OurColors.lightGreenishBlue, fontSize: responsiveScreen.ip(2))),
-            onPressed: () {
-              routesProvider.ratingDriver = 0;
-              Navigator.of(context).pop();
-            }
-          )
-        ],
-      )
+      builder: (context) => Consumer<RoutesProvider>(builder: (context, provider, child) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20.0)
+          ),
+          title: Text("Valore al conductor:", style: TextStyle(fontSize: responsiveScreen.ip(2), fontFamily: 'WorkSansSemiBold', color: OurColors.black)),
+          content: SmoothStarRating(
+            rating: (provider.ratingDriver == 0) ? checkIfUserRated(_driverModel.rate, _prefs.uid) : provider.ratingDriver,
+            allowHalfRating: true,
+            starCount: 5,
+            size: responsiveScreen.ip(5.5),
+            isReadOnly: false,
+            filledIconData: Icons.star,
+            halfFilledIconData: Icons.star_half,
+            defaultIconData: Icons.star_border,
+            color: OurColors.yellow,
+            borderColor: OurColors.yellow,
+            onRated: (value) async {
+              provider.ratingDriver = value;
+              await _userService.addOrUpdateRating2Driver(_driverModel.id, value);
+              setState(() {});
+            },
+          ),
+          actions: <Widget>[
+            FlatButton(
+              child: Text('OK', style: TextStyle(fontFamily: 'WorkSansSemiBold', color: OurColors.lightGreenishBlue, fontSize: responsiveScreen.ip(2))),
+              onPressed: () {
+                provider.ratingDriver = 0;
+                Navigator.of(context).pop();
+              }
+            )
+          ],
+        );
+      })
     );
   }
 
