@@ -1,22 +1,21 @@
-import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-
+import 'package:animate_do/animate_do.dart';
+import 'package:flutter_carpooling/src/utils/helpers.dart';
+import 'package:flutter_carpooling/src/utils/colors.dart';
 import 'package:flutter_carpooling/src/models/car_model.dart';
-import 'package:flutter_carpooling/src/services/car_service.dart';
-import 'package:flutter_carpooling/src/user_preferences/user_prefs.dart';
+import 'package:flutter_carpooling/src/utils/user_prefs.dart';
 import 'package:flutter_carpooling/src/utils/responsive.dart';
+import 'package:flutter_carpooling/src/services/car_service.dart';
 import 'package:flutter_carpooling/src/widgets/loading_widget.dart';
-import 'package:flutter_carpooling/src/utils/colors.dart' as Tema;
-import 'package:flutter_carpooling/src/utils/utils.dart' as utils;
 
-class RegistroAutoPage extends StatefulWidget {
+class AutoRegisterPage extends StatefulWidget {
+  
   @override
-  _RegistroAutoPageState createState() => _RegistroAutoPageState();
+  _AutoRegisterPageState createState() => _AutoRegisterPageState();
 }
 
-
-class _RegistroAutoPageState extends State<RegistroAutoPage> {
+class _AutoRegisterPageState extends State<AutoRegisterPage> {
 final TextEditingController _registryEdtCtr = TextEditingController();
   final TextEditingController _brandEdtCtr = TextEditingController();
   final TextEditingController _modelEdtCtr = TextEditingController();
@@ -61,7 +60,7 @@ final TextEditingController _registryEdtCtr = TextEditingController();
 
   Future<void> loadingData() async {
     try{
-      Map _carResult = await carProvider.carSearch(uid);
+      Map _carResult = await carProvider.searchCar(uid);
       CarModel carModel = _carResult["carData"];
       isloading = false;
       setState(() {
@@ -154,11 +153,11 @@ final TextEditingController _registryEdtCtr = TextEditingController();
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           SizedBox(height: responsiveScreen.hp(4),),
-          FadeInLeft(child: Text('Tu automóvil', style: TextStyle(fontSize: responsiveScreen.ip(4), fontFamily: 'WorkSansLight', color: Colors.white), )),
+          FadeInLeft(child: Text('Mi automóvil', style: TextStyle(fontSize: responsiveScreen.ip(4), fontFamily: 'WorkSansLight', color: Colors.white), )),
           SizedBox(height: responsiveScreen.hp(1),),
           FadeInLeft(
             child: Text(
-              'No olvides registrar correctamente la información de tu automóvil.',
+              'No olvides registrar correctamente la información del automóvil.',
               style: TextStyle(fontSize: responsiveScreen.ip(1.6) , fontWeight: FontWeight.w300, color: Colors.white),
               textAlign: TextAlign.justify,
             ),
@@ -176,7 +175,7 @@ final TextEditingController _registryEdtCtr = TextEditingController();
         gradient: LinearGradient(
           begin: FractionalOffset(0.0, 0.3),
           end: FractionalOffset(0.0, 0.0),
-          colors:[Tema.OurColors.initialPurple, Tema.OurColors.finalPurple]
+          colors:[OurColors.initialPurple, OurColors.finalPurple]
         )
       ),
     );
@@ -232,7 +231,7 @@ final TextEditingController _registryEdtCtr = TextEditingController();
     return TextFormField(
       controller: _registryEdtCtr,
       enabled: isEnabled,
-      textCapitalization: TextCapitalization.words,
+      textCapitalization: TextCapitalization.characters,
       style: _styleText,
       validator: (value){
         if(RegExp(r'^[A-Z0-9]+$').hasMatch(value) && value.length >= 6 && value.length <= 7){
@@ -243,7 +242,7 @@ final TextEditingController _registryEdtCtr = TextEditingController();
       onSaved: (value){car.registry = value;},
       decoration: InputDecoration(
         border: InputBorder.none,
-        hintText: "Ej placa: ABC-1234",
+        hintText: "Ejemplo: ABC123",
         hintStyle: _styleHint,
         labelText: "Placa",
         icon: Icon(Icons.chrome_reader_mode, color: Colors.black, size: 20.0,), 
@@ -254,7 +253,7 @@ final TextEditingController _registryEdtCtr = TextEditingController();
     return TextFormField(
       controller: _brandEdtCtr,
       enabled: isEnabled,
-      textCapitalization: TextCapitalization.sentences,
+      textCapitalization: TextCapitalization.words,
       style: _styleText,
       validator: (value){
         if(value.length >= 3 && value.length <= 50){
@@ -265,7 +264,7 @@ final TextEditingController _registryEdtCtr = TextEditingController();
       onSaved: (value){ car.brand = value;},
       decoration: InputDecoration(
         border: InputBorder.none,
-        hintText: "Ej marca: Chevrolet",
+        hintText: "Ejemplo: Chevrolet",
         hintStyle: _styleHint,
         labelText: "Marca",
         icon: Icon(Icons.directions_car, color: Colors.black, size: 20.0,)
@@ -287,7 +286,7 @@ final TextEditingController _registryEdtCtr = TextEditingController();
       onSaved: (value){ car.model = value;},
       decoration: InputDecoration(
         border: InputBorder.none,
-        hintText: "Ej modelo: Aveo",
+        hintText: "Ejemplo: Aveo",
         hintStyle: _styleHint,
         labelText: "Modelo",
         icon: Icon(Icons.perm_data_setting, color: Colors.black, size: 20.0,)
@@ -303,7 +302,7 @@ final TextEditingController _registryEdtCtr = TextEditingController();
       keyboardType: TextInputType.number,
       style: _styleText,
       validator: (value){
-        if(utils.isNumeric(value) && value.length == 1){
+        if(isNumeric(value) && value.length == 1){
           numSeat = int.parse(value);
           if(numSeat >= 2 && numSeat <= 8){
             return null;  
@@ -314,48 +313,66 @@ final TextEditingController _registryEdtCtr = TextEditingController();
       onSaved: (value){ car.seat = numSeat;},
       decoration: InputDecoration(
         border: InputBorder.none,
-        hintText: "Ej asientos: 3",
+        hintText: "Ejemplo: 3",
         hintStyle: _styleHint,
         labelText: "Número de asientos:",
         icon: Icon(Icons.format_list_numbered, color: Colors.black, size: responsiveScreen.ip(2.5),)
       ),
     );
   }
-
+  // TODO: ojo con este codigo
   Widget _btnReg(Responsive responsiveScreen){
-    return Center(
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.all(Radius.circular(2.5)),
-          boxShadow: <BoxShadow>[
-            BoxShadow(
-              color: Colors.black45,
-              offset: Offset(0.0, 1.0),
-              blurRadius: 10.0,
-            ),
-          ],
-        ),
-        child: MaterialButton(
+    // return Center(
+    //   child: Container(
+    //     decoration: BoxDecoration(
+    //       borderRadius: BorderRadius.all(Radius.circular(2.5)),
+    //       boxShadow: <BoxShadow>[
+    //         BoxShadow(
+    //           color: Colors.black45,
+    //           offset: Offset(0.0, 1.0),
+    //           blurRadius: 10.0,
+    //         ),
+    //       ],
+    //     ),
+    //     child: 
+    //     MaterialButton(
           
-          color: Color(0xFF0393A5),
-          highlightColor: Colors.transparent,
-          splashColor: Tema.OurColors.lightGreenishBlue,
-          child: Padding(
-            padding: EdgeInsets.symmetric(vertical: responsiveScreen.wp(1) , horizontal: responsiveScreen.wp(5)),
-            child: Text(
-              "GUARDAR",
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: responsiveScreen.ip(2),
-                fontFamily: "WorkSansBold"
-              ),
-            ),
+    //       color: Color(0xFF0393A5),
+    //       highlightColor: Colors.transparent,
+    //       splashColor: Tema.OurColors.lightGreenishBlue,
+    //       child: Padding(
+    //         padding: EdgeInsets.symmetric(vertical: responsiveScreen.wp(1) , horizontal: responsiveScreen.wp(5)),
+    //         child: Text(
+    //           "GUARDAR",
+    //           style: TextStyle(
+    //             color: Colors.white,
+    //             fontSize: responsiveScreen.ip(2),
+    //             fontFamily: "WorkSansBold"
+    //           ),
+    //         ),
+    //       ),
+    //       onPressed: isEnabled ? () async{
+    //         await _saveCar();}  : null,
+    //     )
+    //   ),
+    // ); 
+    return Center(
+      child: MaterialButton(
+        color: OurColors.lightGreenishBlue,
+        highlightColor: Colors.transparent,
+        splashColor: OurColors.lightGreenishBlue,
+        child: Padding(
+          padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 40.0),
+          child: Text("GUARDAR", style: TextStyle(color: Colors.white, fontSize: responsiveScreen.ip(1.5), fontFamily: "WorkSansMedium"),
           ),
-          onPressed: isEnabled? ()async{
-            await _saveCar();}  : null,
-        )
+        ),
+        onPressed: isEnabled 
+        ? () async{
+          await _saveCar();
+        }  
+        : null,
       ),
-    ); 
+    );
   }
 
 
@@ -480,19 +497,18 @@ final TextEditingController _registryEdtCtr = TextEditingController();
 
 
 
-  _saveCar() async{
-    
+  _saveCar() async{  
     if(!formRegisterAutoKey.currentState.validate()) return; 
     formRegisterAutoKey.currentState.save(); 
     if(isloading) return;
     setState(() {
       isloading = true; 
     });
-    await carProvider.carDb(uid, car);
+    await carProvider.createCar(uid, car);
     setState(() {
       isloading = false;
     });
-    Navigator.pushReplacementNamed(context, 'selectMode'); 
+    Navigator.pushReplacementNamed(context, 'after'); 
 
   }
 

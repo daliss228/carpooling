@@ -1,14 +1,15 @@
-import 'package:animate_do/animate_do.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_carpooling/src/services/user_service.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
+import 'package:animate_do/animate_do.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:flutter_carpooling/src/utils/colors.dart';
 import 'package:flutter_carpooling/src/utils/responsive.dart';
 import 'package:flutter_carpooling/src/widgets/alert_widget.dart';
-import 'package:flutter_carpooling/src/widgets/circle_widget.dart';
 import 'package:flutter_carpooling/src/widgets/input_widget.dart';
+import 'package:flutter_carpooling/src/widgets/circle_widget.dart';
+import 'package:flutter_carpooling/src/services/auth_service.dart';
 import 'package:flutter_carpooling/src/widgets/loading_widget.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:flutter_carpooling/src/utils/colors.dart' as Tema;
 
 class LoginPage extends StatefulWidget {
   @override
@@ -17,16 +18,11 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   
-  final usuarioService = new UserService(); // -------------------------
-  final formRegisterKey = GlobalKey<FormState>();
-  bool isloading = false; 
+  final _authService = new AuthService();
+  final _formLoginKey = GlobalKey<FormState>();
+  bool _isloading = false; 
   String _password = '';
   String _email = '';
-
-  @override
-  void initState() {
-    super.initState();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,39 +32,36 @@ class _LoginPageState extends State<LoginPage> {
         onTap: (){
           FocusScope.of(context).requestFocus(FocusNode());
         },
-        child: Container(
-          width: double.infinity,
-          height: double.infinity,
-          child: Stack(
-            children: <Widget>[
-              Positioned(
-                right: _responsiveScreen.wp(50),
-                top: _responsiveScreen.hp(60),
-                child: FadeInLeft(
-                  child: CircleWidget(radius: _responsiveScreen.wp(60), colors: [Tema.OurColors.lightBlue, Tema.OurColors.lightGreenishBlue.withOpacity(0.3)]))
-              ),
-              Positioned(
-                right: _responsiveScreen.wp(30),
-                top: _responsiveScreen.hp(75),
-                child: FadeInLeft(
-                  delay: Duration(milliseconds: 1000),
-                  child: CircleWidget(radius: _responsiveScreen.wp(60), colors: [Tema.OurColors.lightBlue, Tema.OurColors.lightGreenishBlue.withOpacity(0.6)]))
-              ),
-              Positioned(
-                right: _responsiveScreen.wp(50),
-                top: _responsiveScreen.hp(75),
-                child: FadeInLeft(
-                  delay: Duration(milliseconds: 500),
-                  child: CircleWidget(radius: _responsiveScreen.wp(40), colors: [Tema.OurColors.initialPurple, Tema.OurColors.finalPurple.withOpacity(0.8)]))
-              ),
-              SingleChildScrollView(
-                child: SafeArea(
-                  child: _form(_responsiveScreen), 
-                )
-              ),
-              isloading? LoadingWidget():Container(), 
-            ],
-          ),
+        child: Stack(
+          children: <Widget>[
+            Positioned(
+              right: _responsiveScreen.wp(50),
+              top: _responsiveScreen.hp(60),
+              child: FadeInLeft(
+                child: CircleWidget(radius: _responsiveScreen.wp(60), colors: [OurColors.lightBlue, OurColors.lightGreenishBlue.withOpacity(0.3)]))
+            ),
+            Positioned(
+              right: _responsiveScreen.wp(30),
+              top: _responsiveScreen.hp(75),
+              child: FadeInLeft(
+                delay: Duration(milliseconds: 1000),
+                child: CircleWidget(radius: _responsiveScreen.wp(60), colors: [OurColors.lightBlue, OurColors.lightGreenishBlue.withOpacity(0.6)]))
+            ),
+            Positioned(
+              right: _responsiveScreen.wp(50),
+              top: _responsiveScreen.hp(75),
+              child: FadeInLeft(
+                delay: Duration(milliseconds: 500),
+                child: CircleWidget(radius: _responsiveScreen.wp(40), colors: [OurColors.initialPurple, OurColors.finalPurple.withOpacity(0.8)]))
+            ),
+            SingleChildScrollView(
+              physics: BouncingScrollPhysics(),
+              child: SafeArea(
+                child: _form(_responsiveScreen), 
+              )
+            ),
+            _isloading ? LoadingWidget():Container(), 
+          ],
         ),
       ),
     );
@@ -92,7 +85,7 @@ class _LoginPageState extends State<LoginPage> {
                   child: FadeInLeft(
                     child: Text(
                       '¿Sabías qué Quito tiene un porcentaje de emisión (CO2) mayor al de Guayaquil?',
-                      style: TextStyle(fontSize: _responsiveScreen.ip(1.5), fontFamily: 'WorkSansLight'),
+                      style: TextStyle(fontSize: _responsiveScreen.ip(1.7), fontFamily: 'WorkSansLight'),
                       textAlign: TextAlign.justify,
                     ),
                   ),
@@ -102,8 +95,7 @@ class _LoginPageState extends State<LoginPage> {
             Expanded(child: Container())
           ],
         ),
-
-        SizedBox(height: _responsiveScreen.hp(10),),
+        SizedBox(height: _responsiveScreen.hp(10)),
         Column(
           children: <Widget>[
             Center(
@@ -111,15 +103,15 @@ class _LoginPageState extends State<LoginPage> {
                 elevation: 2.0,
                 color: Colors.white,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20.0)
+                  borderRadius: BorderRadius.circular(25.0)
                 ),
                 child: Container(
                   width: _responsiveScreen.wp(80),
                   padding: EdgeInsets.symmetric(vertical: 10),
                   child: Form(
-                    key: formRegisterKey,
+                    key: _formLoginKey,
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 25),
+                      padding: EdgeInsets.symmetric(horizontal: 25),
                       child: Column(
                         children: <Widget>[
                           InputWidget(
@@ -131,7 +123,7 @@ class _LoginPageState extends State<LoginPage> {
                               Pattern pattern = r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
                               RegExp regExp = new RegExp(pattern);
                               if(regExp.hasMatch(value)) return null;
-                              return 'Ingrese un email valido';
+                              return 'El email no es válido!';
                             },
                           ),
                           SizedBox(height: _responsiveScreen.hp(1),),
@@ -146,7 +138,7 @@ class _LoginPageState extends State<LoginPage> {
                               if(value.length > 6){
                                 return null;
                               }
-                              return 'Ingrese una contraseña mayor a 6 caracteres'; 
+                              return 'La contraseña es muy corta!'; 
                             },
                           ),
                         ],
@@ -170,11 +162,11 @@ class _LoginPageState extends State<LoginPage> {
         child: Column(
           children: <Widget>[
             MaterialButton(
-              color: Tema.OurColors.lightGreenishBlue,
+              color: OurColors.lightGreenishBlue,
               highlightColor: Colors.transparent,
-              splashColor: Tema.OurColors.lightGreenishBlue,
+              splashColor: OurColors.lightGreenishBlue,
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 42.0),
+                padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 42.0),
                 child: Text(
                   "INGRESAR",
                   style: TextStyle(
@@ -183,9 +175,8 @@ class _LoginPageState extends State<LoginPage> {
                     fontFamily: "WorkSansMedium"),
                 ),
               ),
-              onPressed: () async{
+              onPressed: () async {
                 await _login(context); 
-                setState(() {isloading = false;});
               }
             ),
             SizedBox(height: _responsiveScreen.hp(2),),
@@ -195,7 +186,7 @@ class _LoginPageState extends State<LoginPage> {
                 Text(
                   '¿Eres un usuario nuevo?',
                   style: TextStyle(
-                    fontSize: _responsiveScreen.ip(1.4), 
+                    fontSize: _responsiveScreen.ip(1.7), 
                     fontFamily: "WorkSansLight",
                     color: Colors.black54, 
                   ),
@@ -204,12 +195,12 @@ class _LoginPageState extends State<LoginPage> {
                   child: Text(
                     'Regístrate', 
                     style: TextStyle(
-                      fontSize: _responsiveScreen.ip(1.4),
+                      fontSize: _responsiveScreen.ip(1.7),
                       fontFamily: "WorkSansMedium",
-                      color: Tema.OurColors.finalPurple
+                      color: OurColors.finalPurple
                     ),
                   ), 
-                  onPressed: (){
+                  onPressed: () {
                     Navigator.pushReplacementNamed(context, 'register');
                   }
                 )
@@ -221,18 +212,19 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
- _login(BuildContext context) async {
-   if( !formRegisterKey.currentState.validate()) return;
-   formRegisterKey.currentState.save();
-   setState(() { isloading = true; });
-   dynamic response =  await usuarioService.signIn(_email, _password);
-   setState(() { isloading = false; });
-   if(response['ok'] == true){
-     Navigator.pushReplacementNamed(context, 'selectMode');
-   }else{
-     mostrarAlerta(context, 'Ups!', response['message']); 
-   }
- }
+  Future<void> _login(BuildContext context) async {
+    if( !_formLoginKey.currentState.validate()) return;
+    _formLoginKey.currentState.save();
+    SystemChannels.textInput.invokeMethod('TextInput.hide');
+    setState(() { _isloading = true; });
+    final response =  await _authService.signIn(_email, _password);
+    if (response['ok'] == true) {
+      Navigator.pushReplacementNamed(context, 'after');
+    } else {
+      setState(() { _isloading = false; });
+      showAlert(context, 'Ups!', Icons.sentiment_dissatisfied, response['message']);
+    }
+  }
 
   Widget _separador(Responsive _responsiveScreen){
     return Container(

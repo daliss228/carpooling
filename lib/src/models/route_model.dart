@@ -1,67 +1,64 @@
-import 'dart:convert';
-
 import 'package:flutter_carpooling/src/models/user_model.dart';
 import 'package:flutter_carpooling/src/models/locality_model.dart';
 
 List<RouteModel> routeModelList(Map data) => List<RouteModel>.from(data.entries.map((x) => RouteModel.fromJson(x.value)));
 
-RouteModel routeModelFromJson(String str) => RouteModel.fromJson(json.decode(str));
-
-String routeModelToJson(RouteModel data) => json.encode(data.toJson());
-
 class RouteModel {
 
   RouteModel({
-    this.uid,
+    this.id,
     this.address,
     this.date,
     this.group,
     this.coordinates,
-    this.driverUid,
+    this.idDriver,
     this.hour,
     this.schedule,
     this.status,
-    this.driver,
-    this.users
+    this.idUsers,
+    this.seat
   });
 
-  String uid;
+  String id;
   String address;
   String date;
   String group;
-  Locality coordinates;
-  String driverUid;
+  LocalityModel coordinates;
+  String idDriver;
   String hour;
   Schedule schedule;
   double distance;
   bool status;
-  UserModel driver;
+  Map<String, String> idUsers;
   List<UserModel> users;
+  int seat;
 
   factory RouteModel.fromJson(Map<dynamic, dynamic> json) => RouteModel(
-    uid: json["uid"] == null ? null : json["uid"],
+    id: json["id"] == null ? null : json["id"],
     address: json["address"] == null ? null : json["address"],
     date: json["date"] == null ? null : json["date"],
     group: json["group"] == null ? null : json["group"],
-    coordinates: json["coordinates"] == null ? null : Locality.fromJson(json["coordinates"]),
-    driverUid: json["id_driver"] == null ? null : json["id_driver"],
+    coordinates: json["coordinates"] == null ? null : LocalityModel.fromJson(json["coordinates"]),
+    idDriver: json["id_driver"] == null ? null : json["id_driver"],
     hour: json["hour"] == null ? null : json["hour"],
     schedule: json["schedule"] == null ? null : Schedule.fromJson(json["schedule"]),
     status: json["status"] == null ? null : json["status"],
-    users: json["users"] == null ? null : userModelList(json["users"])
+    idUsers: json["users"] == null ? null : Map.from(json["users"]).map((k, v) => MapEntry<String, String>(k, v)),
+    seat: json["seat"] == null ? null : json["seat"],
   );
 
   Map<String, dynamic> toJson() => {
-    "uid": uid == null ? null : uid,
+    "id": id == null ? null : id,
     "address": address == null ? null : address,
     "date": date == null ? null : date,
     "group" : group == null ? null : group,
     "coordinates": coordinates == null ? null : coordinates.toJson(),
-    "id_driver": driverUid == null ? null : driverUid,
+    "id_driver": idDriver == null ? null : idDriver,
     "hour": hour == null ? null : hour,
     "schedule": schedule == null ? null : schedule.toJson(),
     "status": status == null ? null : status,
-    "users": users == null ? null : List<dynamic>.from(users.map((x) => x.toJson())),
+    "users": idUsers == null ? null : Map.from(idUsers).map((k, v) => MapEntry<String, String>(k, v)),
+    "seat": seat == null ? null : seat,
   };
 }
 

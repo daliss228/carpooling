@@ -17,7 +17,7 @@ class InputWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final _responsiveScreen = new Responsive(context);
+    final responsiveScreen = Responsive(context);
     return TextFormField(
       textCapitalization: textCapitalization,
       obscureText: obscureText,
@@ -25,17 +25,18 @@ class InputWidget extends StatelessWidget {
       validator: validator,
       onChanged: onChanged,
       onSaved: onSaved,
-      style: TextStyle(fontFamily: "WorkSansLight", fontSize: _responsiveScreen.ip(1.9), color: Colors.black),
+      style: TextStyle(fontFamily: "WorkSansLight", fontSize: responsiveScreen.ip(1.9), color: Colors.black),
       decoration: InputDecoration(
         border: InputBorder.none,
         icon: Icon(
           icono,
           color: Colors.black,
-          size: _responsiveScreen.ip(2),
+          size: responsiveScreen.ip(2),
         ),
         hintText: label,
-        hintStyle: TextStyle(fontFamily: "WorkSansLight", fontSize: _responsiveScreen.ip(1.8)),
-        errorText:errorLabel,
+        errorStyle: TextStyle(fontFamily: "WorkSansMedium", color: Color(0XFFE81935)),
+        hintStyle: TextStyle(fontFamily: "WorkSansLight", fontSize: responsiveScreen.ip(1.8)),
+        errorText: errorLabel,
       ),
     );
   }

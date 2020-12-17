@@ -20,13 +20,19 @@ class LoadingWidget extends StatelessWidget {
 }
 
 class LoadingTwoWidget extends StatelessWidget {
+
+  final double size;
+
+  LoadingTwoWidget({@required this.size});
+
   @override
   Widget build(BuildContext context) {
     return Center(
       child: SpinKitDoubleBounce(
-        color: Thema.OurColors.darkPurple,
-        size: 25.0,
+        color: Thema.OurColors.lightGreenishBlue,
+        size: this.size,
       ),
     );
   }
+  
 }
