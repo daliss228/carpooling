@@ -10,6 +10,7 @@ import 'package:flutter_carpooling/src/widgets/input_widget.dart';
 import 'package:flutter_carpooling/src/widgets/circle_widget.dart';
 import 'package:flutter_carpooling/src/services/auth_service.dart';
 import 'package:flutter_carpooling/src/widgets/loading_widget.dart';
+import 'package:flutter_carpooling/src/utils/validator_response.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -218,11 +219,11 @@ class _LoginPageState extends State<LoginPage> {
     SystemChannels.textInput.invokeMethod('TextInput.hide');
     setState(() { _isloading = true; });
     final response =  await _authService.signIn(_email, _password);
-    if (response['ok'] == true) {
+    if (response.status) {
       Navigator.pushReplacementNamed(context, 'after');
     } else {
       setState(() { _isloading = false; });
-      showAlert(context, 'Ups!', Icons.sentiment_dissatisfied, response['message']);
+      showAlert(context, 'Ups!', ValidatorResponse.iconData(response.code), response.message);
     }
   }
 

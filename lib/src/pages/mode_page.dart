@@ -82,20 +82,20 @@ class ModePage extends StatelessWidget {
         return GestureDetector(
           onTap: () async {
             _prefs.mode = usuario;
-            mapProvider.clearValues();
+            mapProvider.clean();
             routesProvider.readGroupRoute();
             if (usuario == 'CONDUCTOR' ) {
               if (userProvider.user.car != null) {            
-                Navigator.pushReplacementNamed(context, 'home');
+                Navigator.pushNamed(context, 'home');
               } else {
-                Navigator.pushReplacementNamed(context, 'auto', arguments: true);
+                Navigator.pushNamed(context, 'auto', arguments: true);
               }
             } else {
               if(userProvider.user.coordinates != null){            
-                Navigator.pushReplacementNamed(context, 'home');
+                Navigator.pushNamed(context, 'home');
               }else{
                 uIProvider.backArrow = false;
-                Navigator.pushReplacementNamed(context, 'usualRoute');
+                Navigator.pushNamed(context, 'usualRoute');
               }
             }
           },

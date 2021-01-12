@@ -46,7 +46,7 @@ class MyApp extends StatelessWidget {
         title: 'Carpooling',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
-          textSelectionTheme: TextSelectionThemeData(cursorColor: OurColors.lightGreenishBlue),
+          textSelectionTheme: TextSelectionThemeData(cursorColor: OurColors.lightGreenishBlue, selectionHandleColor: OurColors.lightGreenishBlue, selectionColor: OurColors.lightGreenishBlue),
           primaryColor: OurColors.lightGreenishBlue,
           accentColor: OurColors.lightGreenishBlue
         ),

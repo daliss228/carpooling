@@ -16,6 +16,8 @@ import 'package:flutter_carpooling/src/services/route_service.dart';
 import 'package:flutter_carpooling/src/providers/map_provider.dart';
 import 'package:flutter_carpooling/src/providers/user_provider.dart';
 import 'package:flutter_carpooling/src/widgets/geocoder_widget.dart';
+import 'package:data_connection_checker/data_connection_checker.dart';
+import 'package:flutter_carpooling/src/utils/validator_response.dart';
 import 'package:flutter_carpooling/src/providers/routes_provider.dart';
 import 'package:flutter_carpooling/src/widgets/num_inc_dec_widget.dart';
 
@@ -30,12 +32,30 @@ class RouteRegisterPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final responsiveScreen = Responsive(context);
     return Scaffold(
-      body: Stack(
-        children: <Widget>[
-          _map(responsiveScreen),
-          _circularButtons(responsiveScreen, context),
-          _draggableSheet(responsiveScreen)
-        ],
+      body: FutureBuilder(
+        future: DataConnectionChecker().hasConnection,
+        builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
+          if (snapshot.hasData) {
+            if (snapshot.data) {
+              return Stack(
+                children: <Widget>[
+                  _map(responsiveScreen),
+                  _circularButtons(responsiveScreen, context),
+                  _draggableSheet(responsiveScreen)
+                ],
+              );
+            } else {
+              return AlertWidget(
+                title: 'Ups!',
+                icon: ValidatorResponse.iconData(5),
+                message: "No tiene internet, compruebe la conexión",
+                onPressed: () => Navigator.pop(context),
+              );
+            }
+          } else {
+            return Container(); 
+          }
+        }
       ), 
     ); 
   }
@@ -215,7 +235,7 @@ class RouteRegisterPage extends StatelessWidget {
                 child: Icon(Icons.arrow_back, color: Colors.white, size: responsiveScreen.ip(2.5)),
                 onPressed: () {
                   if (this.route != null) {
-                    provider.clearValues();
+                    provider.clean();
                   }
                   Navigator.pop(context);
                 } 
@@ -237,7 +257,7 @@ class RouteRegisterPage extends StatelessWidget {
               ],
             ),
             child: InkWell(
-              onTap: () => showSearch(context: context, delegate: DataSearch()),
+              onTap: () => showSearch(context: context, delegate: DataSearch(route: 'route')),
               child: Icon(Icons.search, color: Colors.white, size: responsiveScreen.ip(2.5)),
             )
           ),
@@ -257,14 +277,7 @@ class RouteRegisterPage extends StatelessWidget {
             splashColor: OurColors.lightGreenishBlue,
             child: Padding(
               padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 42.0),
-              child: Text(
-                "GUARDAR",
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: responsiveScreen.ip(1.5),
-                  fontFamily: "WorkSansMedium"
-                ),
-              ),
+              child: Text("GUARDAR", style: TextStyle(color: Colors.white, fontSize: responsiveScreen.ip(1.5), fontFamily: "WorkSansMedium")),
             ),
             onPressed: () async {
               if (mapProvider.geolocation != null 
@@ -291,23 +304,25 @@ class RouteRegisterPage extends StatelessWidget {
                 _route.seat = mapProvider.seat;
                 _route.hour = mapProvider.hour;
                 _route.idDriver = userProvider.user.id;
-                _route.group = userProvider.user.idGroup;
+                _route.idGroup = userProvider.user.idGroup;
                 _route.address = mapProvider.description;
                 _route.date = DateTime.now().toString();
                 _route.coordinates = LocalityModel(lat: mapProvider.geolocation.lat, lng: mapProvider.geolocation.lng);
                 _route.schedule = Schedule(monday: mapProvider.days[0], tuesday: mapProvider.days[1], wednesday: mapProvider.days[2], thursday: mapProvider.days[3], friday: mapProvider.days[4], saturday: mapProvider.days[5], sunday: mapProvider.days[6]);
                 final result = await _routeService.createOrUpdateRoute(_route);
-                if (result['ok']) {
+                if (result.status) {
                   if (_route.id == null) {
-                    _route.id = result['value'];
+                    _route.id = result.data;
                     routesProvider.addMyDriverRoutes = _route;
                   } else {
                     routesProvider.editMyDriverRoutes = _route;
                   }
+                  Navigator.pushReplacementNamed(context, 'home');
+                  showAlert(context, 'Viaje ${newRoute ? 'creado' : 'editado'} correctamente!', ValidatorResponse.iconData(result.code), 'Viaje se ha ${newRoute ? 'creado' : 'editado'} el día de hoy: ${readableDate(DateTime.now().toString())}.');
+                  mapProvider.clean();
+                } else {
+                  showAlert(context, 'Ups!', ValidatorResponse.iconData(result.code), result.message);
                 }
-                Navigator.pushReplacementNamed(context, 'home');
-                showAlert(context, 'Viaje ${newRoute ? 'creado' : 'editado'} correctamente!', Icons.check_circle_outline, 'Viaje se ha ${newRoute ? 'creado' : 'editado'} el día de hoy: ${readableDate(DateTime.now().toString())}.');
-                mapProvider.clearValues();
               } else {
                 showAlert(context, 'Ups!', Icons.sentiment_dissatisfied, 'Llene todos los campos.');
               }

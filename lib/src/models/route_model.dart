@@ -1,15 +1,14 @@
 import 'package:flutter_carpooling/src/models/user_model.dart';
 import 'package:flutter_carpooling/src/models/locality_model.dart';
 
-List<RouteModel> routeModelList(Map data) => List<RouteModel>.from(data.entries.map((x) => RouteModel.fromJson(x.value)));
+// List<RouteModel> routeModelList(Map data) => List<RouteModel>.from(data.entries.map((x) => RouteModel.fromJson(x.value)));
 
 class RouteModel {
-
   RouteModel({
     this.id,
     this.address,
     this.date,
-    this.group,
+    this.idGroup,
     this.coordinates,
     this.idDriver,
     this.hour,
@@ -22,7 +21,7 @@ class RouteModel {
   String id;
   String address;
   String date;
-  String group;
+  String idGroup;
   LocalityModel coordinates;
   String idDriver;
   String hour;
@@ -37,7 +36,7 @@ class RouteModel {
     id: json["id"] == null ? null : json["id"],
     address: json["address"] == null ? null : json["address"],
     date: json["date"] == null ? null : json["date"],
-    group: json["group"] == null ? null : json["group"],
+    idGroup: json["id_group"] == null ? null : json["id_group"],
     coordinates: json["coordinates"] == null ? null : LocalityModel.fromJson(json["coordinates"]),
     idDriver: json["id_driver"] == null ? null : json["id_driver"],
     hour: json["hour"] == null ? null : json["hour"],
@@ -51,7 +50,7 @@ class RouteModel {
     "id": id == null ? null : id,
     "address": address == null ? null : address,
     "date": date == null ? null : date,
-    "group" : group == null ? null : group,
+    "id_group" : idGroup == null ? null : idGroup,
     "coordinates": coordinates == null ? null : coordinates.toJson(),
     "id_driver": idDriver == null ? null : idDriver,
     "hour": hour == null ? null : hour,
@@ -60,6 +59,8 @@ class RouteModel {
     "users": idUsers == null ? null : Map.from(idUsers).map((k, v) => MapEntry<String, String>(k, v)),
     "seat": seat == null ? null : seat,
   };
+
+  static List<RouteModel> routeModelList(List data) => List<RouteModel>.from(data.map((x) => RouteModel.fromJson(x)));
 }
 
 class Schedule {

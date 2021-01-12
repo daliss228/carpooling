@@ -29,7 +29,7 @@ class AddImage {
   Future<List<FileModel>> _getImagesPath() async {
     try {
       final result = await StoragePath.imagesPath;
-      final imagesPath = fileModelFromJson(result);
+      final imagesPath = FileModel.fileModelFromJson(result);
       List<String> allPaths = List<String>();
       imagesPath.forEach((file) { allPaths.addAll(file.files);});
       imagesPath.insert(0 , FileModel(folderName: 'Galería', files: allPaths));

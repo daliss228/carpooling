@@ -1,7 +1,5 @@
 import 'dart:convert';
 
-List<FileModel> fileModelFromJson(String str) => List<FileModel>.from(json.decode(str).map((x) => FileModel.fromJson(x)));
-
 class FileModel {
   FileModel({
     this.files,
@@ -15,5 +13,7 @@ class FileModel {
     files: List<String>.from(json["files"].map((x) => x)),
     folderName: json["folderName"],
   );
+
+  static List<FileModel> fileModelFromJson(String str) => List<FileModel>.from(json.decode(str).map((x) => FileModel.fromJson(x)));
 
 }

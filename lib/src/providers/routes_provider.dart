@@ -100,8 +100,8 @@ class RoutesProvider with ChangeNotifier {
     this._myDriverRoutes.clear();
     final routeService = RouteService();
     final result = await routeService.readGroupRoute();
-    if (result["ok"] && result["value"].length != 0) {
-      this._myGroupRoutes = result["value"];
+    if (result.status && result.data.length != 0) {
+      this._myGroupRoutes = result.data;
       if (prefs.mode == "PASAJERO") {
         this._orderMyPaxRoutes();
       } else {
@@ -110,6 +110,12 @@ class RoutesProvider with ChangeNotifier {
     }
     this._loading = false;
     notifyListeners();
+  }
+
+  void clean() {
+    this._myPaxRoutes.clear();
+    this._myGroupRoutes.clear();
+    this._myDriverRoutes.clear();
   }
 
 }

@@ -19,12 +19,12 @@ class InputWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final responsiveScreen = Responsive(context);
     return TextFormField(
-      textCapitalization: textCapitalization,
-      obscureText: obscureText,
-      keyboardType: inputType,
-      validator: validator,
-      onChanged: onChanged,
       onSaved: onSaved,
+      onChanged: onChanged,
+      validator: validator,
+      keyboardType: inputType,
+      obscureText: obscureText,
+      textCapitalization: textCapitalization,
       style: TextStyle(fontFamily: "WorkSansLight", fontSize: responsiveScreen.ip(1.9), color: Colors.black),
       decoration: InputDecoration(
         border: InputBorder.none,

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_carpooling/src/utils/colors.dart';
 import 'package:flutter_carpooling/src/utils/responsive.dart';
 
-void showAlert(BuildContext context, String title, IconData icon, String message){
+void showAlert(BuildContext context, String title, IconData icon, String message, [Function onPressed]){
   final responsiveScreen = Responsive(context);
   showDialog(
     context: context, 
@@ -19,7 +19,7 @@ void showAlert(BuildContext context, String title, IconData icon, String message
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Icon(icon, size: responsiveScreen.ip(10)),
+            Icon(icon, size: responsiveScreen.ip(10), color: OurColors.darkPurple),
             SizedBox(height: 20.0),
             Text(
               message,
@@ -28,7 +28,10 @@ void showAlert(BuildContext context, String title, IconData icon, String message
           ],
         ),
         actions: <Widget>[
-          FlatButton(onPressed: ()=> Navigator.of(context).pop(), child: Text('OK', style: TextStyle(fontFamily: 'WorkSansSemiBold', color: OurColors.lightGreenishBlue, fontSize: responsiveScreen.ip(2))))
+          FlatButton(
+            onPressed: onPressed == null ? () => Navigator.of(context).pop() : () => onPressed(),
+            child: Text('OK', style: TextStyle(fontFamily: 'WorkSansSemiBold', color: OurColors.lightGreenishBlue, fontSize: responsiveScreen.ip(2)))
+          )
         ],
       ); 
     }
@@ -63,7 +66,7 @@ class AlertWidget extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Icon(icon, size: responsiveScreen.ip(10)),
+            Icon(icon, size: responsiveScreen.ip(10), color: OurColors.darkPurple),
             SizedBox(height: 20.0),
             Text(
               message,

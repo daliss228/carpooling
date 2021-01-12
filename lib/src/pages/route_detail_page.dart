@@ -6,6 +6,7 @@ import 'package:smooth_star_rating/smooth_star_rating.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:data_connection_checker/data_connection_checker.dart';
 import 'package:flutter_carpooling/src/utils/helpers.dart';
 import 'package:flutter_carpooling/src/utils/colors.dart';
 import 'package:flutter_carpooling/src/utils/user_prefs.dart';
@@ -13,32 +14,64 @@ import 'package:flutter_carpooling/src/utils/responsive.dart';
 import 'package:flutter_carpooling/src/models/user_model.dart';
 // import 'package:flutter_carpooling/src/widgets/map_widget.dart';
 import 'package:flutter_carpooling/src/models/route_model.dart';
+import 'package:flutter_carpooling/src/models/report_model.dart';
 import 'package:flutter_carpooling/src/widgets/alert_widget.dart';
 import 'package:flutter_carpooling/src/services/user_service.dart';
 import 'package:flutter_carpooling/src/widgets/loading_widget.dart';
 import 'package:flutter_carpooling/src/providers/map_provider.dart';
 import 'package:flutter_carpooling/src/services/route_service.dart';
 import 'package:flutter_carpooling/src/providers/user_provider.dart';
-import 'package:flutter_carpooling/src/models/report_model.dart';
+import 'package:flutter_carpooling/src/utils/validator_response.dart';
 import 'package:flutter_carpooling/src/widgets/simple_map_widget.dart';
 import 'package:flutter_carpooling/src/pages/route_register_page.dart';
 import 'package:flutter_carpooling/src/providers/routes_provider.dart';
 
-class RouteDetailPage extends StatefulWidget {
+class RouteDetailPage extends StatelessWidget {
   final RouteModel route;
   RouteDetailPage({@required this.route});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: FutureBuilder(
+        future: DataConnectionChecker().hasConnection,
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            if (snapshot.data) {
+              return _RouteDetailPage(route: route);
+            } else {
+              return AlertWidget(
+                title: 'Ups!',
+                icon: ValidatorResponse.iconData(5),
+                message: "No tiene internet, compruebe la conexión",
+                onPressed: () => Navigator.pop(context),
+              );
+            }
+          } else {
+            return Container();
+          }
+        }
+      )
+    );
+  }
+}
+
+class _RouteDetailPage extends StatefulWidget {
+  final RouteModel route;
+  _RouteDetailPage({@required this.route});
 
   @override
   _RouteDetailPageState createState() => _RouteDetailPageState();
 }
 
-class _RouteDetailPageState extends State<RouteDetailPage> {
+class _RouteDetailPageState extends State<_RouteDetailPage> {
 
   final _prefs = UserPreferences();
   final _userService = UserService();
   final _routeService = RouteService();
   final _formKey1 = GlobalKey<FormState>();
 
+  int _groupSelected;
   bool _isADriver = false;
   bool _userRegister = false;
   bool _visibleWarning = false;
@@ -56,10 +89,10 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
       floatingActionButton: (_prefs.mode == 'PASAJERO') ? Container() : _speedDial(responsiveScreen),
       body: FutureBuilder(
         future: _userService.readUser(widget.route.idDriver),
-        builder: (BuildContext context, AsyncSnapshot<Map<String, dynamic>> snapshot) {
+        builder: (BuildContext context, AsyncSnapshot<ValidatorResponse> snapshot) {
           if (snapshot.hasData) {
-            if (snapshot.data['ok']) {
-              _driverModel = snapshot.data['value']; 
+            if (snapshot.data.status) {
+              _driverModel = snapshot.data.data; 
               return Stack(
                 children: <Widget>[
                   _background(responsiveScreen),
@@ -73,8 +106,8 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
             } else {
               return AlertWidget(
                 title: 'Ups!',
-                icon: Icons.sentiment_dissatisfied,
-                message: snapshot.data['message'],
+                icon: ValidatorResponse.iconData(snapshot.data.code),
+                message: snapshot.data.message,
                 onPressed: () => Navigator.pop(context),
               );
             }
@@ -111,9 +144,14 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
             labelStyle: TextStyle(fontFamily: "WorkSansLight", fontSize: responsiveScreen.ip(1.6), color: Colors.black),
             onTap: () async {
               // TODO: notificar a los usuarios que se ha eliminado una ruta
-              await _routeService.removeRoute(widget.route.id);
-              routesProvider.removeMyDriverRoutes = widget.route;
-              Navigator.pushReplacementNamed(context, 'home');
+              final result = await _routeService.removeRoute(widget.route.id);
+              if (result.status) {
+                routesProvider.removeMyDriverRoutes = widget.route;
+                Navigator.pushReplacementNamed(context, 'home');  
+                showAlert(context, 'Ok!', ValidatorResponse.iconData(result.code), result.message); 
+              } else {
+                showAlert(context, 'Ups!', ValidatorResponse.iconData(result.code), result.message); 
+              }
             }
           ),
           SpeedDialChild(
@@ -123,7 +161,7 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
             labelStyle: TextStyle(fontFamily: "WorkSansLight", fontSize: responsiveScreen.ip(1.6), color: Colors.black),
             onTap: () {
               // TODO: notificar a los usuarios que se ha editado una ruta
-              mapProvider.clearValues();
+              mapProvider.clean();
               mapProvider.auxiliary = true;
               mapProvider.seat = widget.route.seat;
               mapProvider.idUsers = widget.route.idUsers;
@@ -422,22 +460,31 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
               ),
               onPressed: () async {
                 if (_userRegister) {
-                  await _routeService.canceleRegisterUserRoute(widget.route.id);
-                  widget.route.users.removeWhere((user) => (user.id == userProvider.user.id));
-                  routesProvider.removeMyPaxRoutes = widget.route;
-                  widget.route.seat = widget.route.seat + 1;
-                  _userRegister = false;
-                } else {
-                  await _routeService.createRegisterUserRoute(widget.route.id);
-                  if (widget.route.users == null) {
-                    widget.route.users = List<UserModel>();
+                  final result = await _routeService.canceleRegisterUserRoute(widget.route.id);
+                  if (result.status) {
+                    widget.route.users.removeWhere((user) => (user.id == userProvider.user.id));
+                    routesProvider.removeMyPaxRoutes = widget.route;
+                    widget.route.seat = widget.route.seat + 1;
+                    _userRegister = false;
+                    showAlert(context, 'Viaje cancelado!', ValidatorResponse.iconData(result.code), 'El usuario ha cancelado su suscripción a este viaje.');
+                  } else {
+                    showAlert(context, 'Ups!', ValidatorResponse.iconData(result.code), result.message);
                   }
-                  widget.route.seat = widget.route.seat - 1;
-                  widget.route.users.add(userProvider.user);
-                  routesProvider.addMyPaxRoutes = widget.route;
-                  _userRegister = true;
+                } else {
+                  final result = await _routeService.createRegisterUserRoute(widget.route.id);
+                  if (result.status) {
+                    if (widget.route.users == null) {
+                      widget.route.users = List<UserModel>();
+                    }
+                    widget.route.seat = widget.route.seat - 1;
+                    widget.route.users.add(userProvider.user);
+                    routesProvider.addMyPaxRoutes = widget.route;
+                    _userRegister = true;  
+                    showAlert(context, 'Usuario registrado!', ValidatorResponse.iconData(result.code), '${_userRegister ? 'El usuario se ha registrado correctamente.' : 'Ha cancelado su suscripción a este viaje.'}');
+                  } else {
+                    showAlert(context, 'Ups!', ValidatorResponse.iconData(result.code), result.message);
+                  }
                 }
-                showAlert(context, '${_userRegister ? 'Usuario registrado!' : 'Viaje cancelado!'}', Icons.check_circle_outline, '${_userRegister ? 'El usuario se ha registrado correctamente.' : 'Ha cancelado su suscripción a este viaje.'}');
                 setState(() {});
               }
             );
@@ -515,16 +562,15 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
-                      padding: EdgeInsets.only(top: 5.0, left: 15.0, right: 15.0),
+                      padding: EdgeInsets.only(right: 20.0, left: 15.0, top: 15.0, bottom: 5.0),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text('Denunciar', style: TextStyle(fontFamily: "WorkSansMedium", fontSize: responsiveScreen.ip(2), color: OurColors.black)),
-                          IconButton(
-                            alignment: Alignment.centerRight,
-                            icon: Icon(Icons.close, color: OurColors.black),
-                            onPressed: () => Navigator.pop(context),
-                          ),
+                          InkWell(
+                            onTap: () => Navigator.pop(context),
+                            child: Icon(Icons.close_outlined, color: OurColors.red, size: responsiveScreen.ip(3.0)),
+                          )
                         ],
                       ),
                     ),
@@ -534,24 +580,20 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
                     ),
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 15.0, vertical: 10.0),
-                      child: Text('¿Por qué quieres denunciar ${(_prefs.mode == 'PASAJERO') ? 'esta publicación' : 'a este pasajero'}?', style: TextStyle(fontFamily: "WorkSansMedium", fontSize: responsiveScreen.ip(1.8), color: OurColors.black)),
+                      child: Text('¿Por qué quieres denunciar ${(_prefs.mode == 'PASAJERO') ? 'ésta publicación' : 'a este pasajero'}?', style: TextStyle(fontFamily: "WorkSansMedium", fontSize: responsiveScreen.ip(1.8), color: OurColors.black)),
                     ),
                     Container(
                       height: responsiveScreen.hp(45),
                       child: ListView.builder(
                         physics: BouncingScrollPhysics(),
                         itemCount: Reports.list.length,
-                        itemBuilder: (BuildContext context, int i) => ListTile(
-                          onTap: () => _showCheck(modalState, i),
-                          trailing: Visibility(
-                            visible: _checks[i],
-                            child: Padding(
-                              padding: EdgeInsets.only(right: 10.0),
-                              child: Icon(FontAwesomeIcons.check, color: OurColors.green, size: responsiveScreen.ip(2.4)),
-                            ),
-                          ),
-                          title: Text(Reports.list[i], style: TextStyle(fontFamily: "WorkSansRegular", fontSize: responsiveScreen.ip(1.7)))
-                        ),
+                        itemBuilder: (BuildContext context, int i) => RadioListTile(
+                          value: i,
+                          groupValue: _groupSelected,
+                          onChanged: (value) => _showCheck(modalState, i, value),
+                          controlAffinity: ListTileControlAffinity.trailing,
+                          title: Text(Reports.list[i], style: TextStyle(fontFamily: "WorkSansLight", fontSize: responsiveScreen.ip(1.7)))
+                        )
                       ),
                     ),
                     Visibility(
@@ -561,6 +603,7 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
                         child: TextFormField(
                           maxLines: 2,
                           maxLength: 120,
+                          textCapitalization: TextCapitalization.sentences,
                           style: TextStyle(fontFamily: "WorkSansLight", fontSize: responsiveScreen.ip(1.7), color: OurColors.black),
                           keyboardType: TextInputType.multiline,
                           decoration: InputDecoration(
@@ -575,13 +618,12 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
                           ),
                           validator: (value) {
                             if (value != "") {
-                              modalState(() {
-                                _visibleWarning = true;
-                              });
+                              modalState(() =>_visibleWarning = true);
                               return null;
                             }
                             return "";
                           },
+                          onChanged: (value) => _reportModel.description = value,
                         ),
                       ),
                     ),
@@ -602,6 +644,7 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
       }
     ).whenComplete(() {
       setState(() {
+        _groupSelected = null;
         _visibleWarning = false;
         _checks = _checks.map((check) => false).toList();
       });
@@ -637,10 +680,14 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
               }
               _reportModel.idRoute = widget.route.id;
               _reportModel.date = DateTime.now().toString();
-              _reportModel.description = _reportDescription();
-              await _routeService.createReportRoute(_reportModel);
-              Navigator.pop(context);
-              showAlert(context, "Gracias por informarnos!", Icons.check_circle_outline,'Tus comentarios nos ayudan a que esta comunidad sea un lugar seguro.');
+              if (!_checks.last) {
+                _reportModel.description = _reportDescription();
+              }
+              final result = await _routeService.createReportRoute(_reportModel);
+              if (result.status) {
+                Navigator.pop(context);
+                showAlert(context, 'Gracias por informarnos!', ValidatorResponse.iconData(result.code), 'Tus comentarios nos ayudan a que esta comunidad sea un lugar seguro.');  
+              }
             } else {
               modalState(() {
                 _visibleWarning = true;
@@ -692,7 +739,8 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
     );
   }
 
-  void _showCheck(void modalState(void function()), int i) {
+  void _showCheck(void modalState(void function()), int i, int value) {
+    _groupSelected = value;
     modalState(() {
       _checks[i] = !_checks[i];
       _visibleWarning =  false;
@@ -716,7 +764,7 @@ class _RouteDetailPageState extends State<RouteDetailPage> {
   String _reportDescription() {
     for (int i = 0; i < _checks.length; i++) {
       if (_checks[i] == true) {
-        return _reportModel.description = Reports.list[i];
+        return Reports.list[i];
       }
     }
     return '';

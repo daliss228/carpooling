@@ -4,9 +4,9 @@ import 'package:flutter_carpooling/src/utils/responsive.dart';
 
 class NumIncDecWidget extends StatefulWidget {
 
-  final Function(int) onChanged;
-  final int initValue;
   final int difValue;
+  final int initValue;
+  final Function(int) onChanged;
 
   NumIncDecWidget({@required this.onChanged, this.initValue = 0, this.difValue = 0}) {
     assert(this.onChanged != null, this.initValue != null);
@@ -51,7 +51,6 @@ class _NumIncDecWidgetState extends State<NumIncDecWidget> {
         IconButton(
           icon: Icon(Icons.add_circle_outline, size: responsiveScreen.ip(3), color: OurColors.black),
           onPressed: () {
-            print('😏😏😏😏😏😏😏😏😏😏😏😏😏😏😏😏😏😏😏😏😏😏😏😏😏😏 $value + ${widget.difValue} = ${(value + widget.difValue)}');
             if ((value + widget.difValue) < 10) {
               setState(() {
                 value++;

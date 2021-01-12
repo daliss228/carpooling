@@ -25,7 +25,7 @@ class MapWidget extends StatelessWidget {
             )
           ),
           markers: mapProvider.markers,
-          onTap: (LatLng latLng){
+          onTap: (LatLng latLng) {
             mapProvider.auxiliary = false;
             mapProvider.geolocation = LocalityModel(lat: latLng.latitude, lng: latLng.longitude);
             mapProvider.setMarkers = LocalityModel(lat: latLng.latitude, lng: latLng.longitude);

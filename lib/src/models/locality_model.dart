@@ -1,5 +1,4 @@
 class LocalityModel {
-  
   LocalityModel({
     this.lat,
     this.lng,

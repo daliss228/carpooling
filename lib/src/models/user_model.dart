@@ -1,8 +1,5 @@
-// import 'dart:convert';
 import 'package:flutter_carpooling/src/models/car_model.dart';
 import 'package:flutter_carpooling/src/models/locality_model.dart';
-
-List<UserModel> userModelList(Map data) => List<UserModel>.from(data.entries.map((x) => UserModel.fromJson(x.value)));
 
 class UserModel {
   UserModel({
@@ -62,4 +59,6 @@ class UserModel {
     "id_group": idGroup == null ? null : idGroup,
     "rate": rate == null ? null : Map.from(rate).map((k, v) => MapEntry<String, dynamic>(k, v))
   };
+
+  // static List<UserModel> userModelList(Map data) => List<UserModel>.from(data.entries.map((x) => UserModel.fromJson(x.value)));
 }

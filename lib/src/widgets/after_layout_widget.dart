@@ -11,6 +11,7 @@ import 'package:flutter_carpooling/src/services/auth_service.dart';
 import 'package:flutter_carpooling/src/services/user_service.dart';
 import 'package:flutter_carpooling/src/widgets/loading_widget.dart';
 import 'package:flutter_carpooling/src/providers/user_provider.dart';
+import 'package:flutter_carpooling/src/utils/validator_response.dart';
 import 'package:flutter_carpooling/src/widgets/background_widget.dart';
 
 class AfterLayoutWidget extends StatelessWidget {
@@ -23,23 +24,21 @@ class AfterLayoutWidget extends StatelessWidget {
     final userProvider = Provider.of<UserProvider>(context);
     return FutureBuilder(
       future: _userService.readUser(),
-      builder: (BuildContext context, AsyncSnapshot snapshot) {
+      builder: (BuildContext context, AsyncSnapshot<ValidatorResponse> snapshot) {
         if (snapshot.hasData) {
-          if (snapshot.data['ok']) {
-            userProvider.user = snapshot.data['value'];
+          if (snapshot.data.status) {
+            userProvider.user = snapshot.data.data;
             if (userProvider.user.coordinates != null) {
               _prefs.lat = userProvider.user.coordinates.lat.toString();
               _prefs.lng = userProvider.user.coordinates.lng.toString();
             }
             if(_prefs.mode.toString().isEmpty){
               return ModePage();
-            }else if(_prefs.mode.toString() == 'PASAJERO'){
-              return HomePage();
-            }else {
+            } else {
               return HomePage();
             }
           } else {
-            return AlertPage(message: snapshot.data['message']);
+            return AlertPage(message: snapshot.data.message);
           }
         } else {
           return LoadingWidget();
