@@ -1,84 +1,94 @@
 import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter_carpooling/src/utils/user_prefs.dart';
 import 'package:flutter_carpooling/src/models/user_model.dart';
 import 'package:flutter_carpooling/src/models/locality_model.dart';
+import 'package:data_connection_checker/data_connection_checker.dart';
+import 'package:flutter_carpooling/src/utils/validator_response.dart';
 
 class UserService {
 
   final _prefs = UserPreferences();
-  final _dbRef = FirebaseDatabase.instance.reference(); 
+  final _dbRef = FirebaseFirestore.instance;
   final _storeRef = FirebaseStorage.instanceFor(bucket: 'gs://dev-carpooling.appspot.com').ref();
   
-  Future<Map<String, dynamic>> readUser([String userUid]) async {
+  Future<ValidatorResponse> readUser([String userUid]) async {
     try {
-      final result = (await _dbRef.child("users").child((userUid == null) ? _prefs.uid : userUid).once()).value;
+      final result = (await _dbRef.collection("users").doc((userUid == null) ? _prefs.uid : userUid).get()).data();
       final user = UserModel.fromJson(result);
       if (user.status) {
-        return {"ok": true, "value": user}; 
+        return ValidatorResponse(status: true, data: user, code: 2); 
       } else {
         throw("El usuario está deshabilitado!");
       }
     } on FirebaseException catch (e) {
-      return {"ok": false, "message": e.message}; 
+      return ValidatorResponse(status: false, message: e.message, code: 4); 
     } catch (e) {
-      return {"ok": false, "message": e.toString()}; 
+      return ValidatorResponse(status: false, message: e.toString(), code: 4); 
     }
   }
 
-  Future<Map<String, dynamic>> updateUser(String property, String value) async {
+  Future<ValidatorResponse> updateUser(String property, String value) async {
     try {
-      _dbRef.child("users").child(_prefs.uid).update({property: value});
-      return {"ok": true}; 
+      await _dbRef.collection("users").doc(_prefs.uid).update({property: value});
+      return ValidatorResponse(status: true, message: "Usuario actualizado con éxito!", code: 1); 
     } on FirebaseException catch (e) {
-      return {"ok": false, "message": e.message}; 
+      return ValidatorResponse(status: false, message: e.message, code: 4); 
     } catch (e) {
-      return {'ok': false, 'message': e.toString()}; 
+      return ValidatorResponse(status: false, message: e.toString(), code: 4); 
     }
   }
 
-  Future<Map<String, dynamic>> uploadPhotoUser(bool oldPhoto, File imageFile) async {
+  Future<ValidatorResponse> uploadPhotoUser(bool oldPhoto, File imageFile) async {
     try {
-      if (oldPhoto == true) {
-        await _storeRef.child("${_prefs.uid}.png").delete();
+      if (await DataConnectionChecker().hasConnection) {
+        if (oldPhoto == true) {
+          await _storeRef.child("${_prefs.uid}.png").delete();
+        }
+        String filePath = "${_prefs.uid}.png";
+        UploadTask uploadTask = _storeRef.child(filePath).putFile(imageFile);
+        TaskSnapshot storageTaskSnapshot = await uploadTask;
+        String downloadUrl = await storageTaskSnapshot.ref.getDownloadURL();
+        await _dbRef.collection("users").doc(_prefs.uid).update({"photo": downloadUrl});
+        return ValidatorResponse(status: true, message: "Imagen registrada correctamente", code: 1); 
+      } else {
+        return ValidatorResponse(status: false, message: "No tiene internet, compruebe la conexión.", code: 5);
       }
-      String filePath = "${_prefs.uid}.png";
-      UploadTask uploadTask = _storeRef.child(filePath).putFile(imageFile);
-      TaskSnapshot storageTaskSnapshot = await uploadTask;
-      String downloadUrl = await storageTaskSnapshot.ref.getDownloadURL();
-      await _dbRef.child("users").child(_prefs.uid).update({"photo": downloadUrl});
-      return {"ok": true, "message": "Imagen registrada correctamente"}; 
     } on FirebaseException catch (e) {
-      return {"ok": false, "message": e.message}; 
+      return ValidatorResponse(status: false, message: e.message, code: 4); 
     } catch (e) {
-      return {'ok': false, 'message': e.toString()}; 
+      return ValidatorResponse(status: false, message: e.toString(), code: 4); 
     }
   }
 
-  Future<Map<String, dynamic>> addLatLng2Pax(LocalityModel coordinates) async {
+  Future<ValidatorResponse> addLatLng2Pax(LocalityModel coordinates) async {
     try{
-      await _dbRef.child('users/${_prefs.uid}/coordinates').set(coordinates.toJson());
-      return {"ok": true, "message": "Coordenadas registradas correctamente"};
+      if (await DataConnectionChecker().hasConnection) {
+        await _dbRef.collection("users").doc(_prefs.uid).update({"coordinates": coordinates.toJson()});
+        return ValidatorResponse(status: true, message: "Coordenadas registradas correctamente", code: 2);
+      } else {
+        return ValidatorResponse(status: false, message: "No tiene internet, compruebe la conexión.", code: 5);
+      }
     } on FirebaseException catch (e) {
-      return {"ok": false, "message": e.message.toString()}; 
+      return ValidatorResponse(status: false, message: e.message.toString(), code: 4); 
     } catch (e) {
-      return {'ok': false, 'message': e.toString()}; 
+      return ValidatorResponse(status: false, message: e.toString(), code: 4); 
     }
   }
 
-  Future<Map<String, dynamic>> addOrUpdateRating2Driver(String idDriver, double value) async {
+  Future<ValidatorResponse> addOrUpdateRating2Driver(String idDriver, double value) async {
     try {
       if (value == 0) {
-        await _dbRef.child('users/$idDriver/rate').set({'${_prefs.uid}': value});
+        await _dbRef.collection("users").doc(idDriver).set({'rate.${_prefs.uid}': value});
       } else {
-        await _dbRef.child('users/$idDriver/rate').update({'${_prefs.uid}': value});
+        await _dbRef.collection("users").doc(idDriver).update({'rate.${_prefs.uid}': value});
       }
-      return {"ok": true, "message": "Calificación registrada correctamente"};
+      return ValidatorResponse(status: true, message: "Calificación registrada correctamente", code: 2);
     } on FirebaseException catch (e) {
-      return {"ok": false, "message": e.message}; 
+      return ValidatorResponse(status: false, message: e.message, code: 4); 
     } catch (e) {
-      return {'ok': false, 'message': e.toString()}; 
+      return ValidatorResponse(status: false, message: e.toString(), code: 4); 
     }
   }
 

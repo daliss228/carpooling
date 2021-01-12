@@ -48,6 +48,7 @@ class _CardsCamWidgetState extends State<CardsCamWidget> {
                 },
                 child: Row(
                   children: [
+                    SizedBox(width: 15.0),
                     Text('Siguiente', style: TextStyle(fontSize: responsive.ip(2.0), fontFamily: 'WorkSansRegular', color: Colors.white)),
                     SizedBox(width: 15.0)
                   ],

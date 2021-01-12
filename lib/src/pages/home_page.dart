@@ -62,27 +62,18 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       resizeToAvoidBottomPadding: true,
       extendBody: false,
       floatingActionButtonLocation: FloatingActionButtonLocation.startDocked,
-      floatingActionButton: showFab ? (mode
+      floatingActionButton: showFab 
       ? FloatingActionButton(
-        heroTag: 'FabDriver',
-        onPressed: () {
-          Navigator.pushNamed(context, 'route');
-        },
-        child: Icon(Icons.add, size: responsiveScreen.ip(2.5)),
-        backgroundColor: OurColors.darkPurple,
-      )
-      : FloatingActionButton(
-        heroTag: 'FabPax',
-        onPressed: () {
+        onPressed: mode 
+        ? () => Navigator.pushNamed(context, 'route') 
+        : () {
           uIProvider.backArrow = true;
           Navigator.pushNamed(context, 'usualRoute');
         },
-        child: Icon(
-          Icons.search,
-          size: responsiveScreen.ip(2.5),
-        ),
+        child: mode ? Icon(Icons.add, size: responsiveScreen.ip(2.5)) : Icon(Icons.search, size: responsiveScreen.ip(2.5)),
         backgroundColor: OurColors.darkPurple,
-      )) : null,
+      )
+      : null,
       bottomNavigationBar: mode ? _bottomAppBarDriver(responsiveScreen) : _bottomAppBarPax(responsiveScreen),
       body: PageView(
         controller: _pageController,

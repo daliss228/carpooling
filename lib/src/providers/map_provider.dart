@@ -6,7 +6,6 @@ import 'package:flutter_carpooling/src/models/locality_model.dart';
 class MapProvider with ChangeNotifier {
   
   String _hour;
-  // int _numUsers;
   String _description;
   Map<String, String> _idUsers;
   
@@ -24,13 +23,6 @@ class MapProvider with ChangeNotifier {
     this._idUsers = idUsers;
     notifyListeners();
   }
-
-  // int get numUsers => this._numUsers;
-
-  // set numUsers(int numUsers) {
-  //   this._numUsers = numUsers;
-  //   notifyListeners();
-  // }
 
   int get seat => this._seat;
 
@@ -100,10 +92,9 @@ class MapProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void clearValues() {
+  void clean() {
     this._seat = 0;
     this._hour = null;
-    // this._numUsers = null;
     this._idUsers = null;
     this._auxiliary = false;
     this._description = null;

@@ -68,6 +68,7 @@ class _GalleryPageState extends State<GalleryPage> with SingleTickerProviderStat
                 },
                 child: Row(
                   children: [
+                    SizedBox(width: 15.0),
                     Text('Siguiente', style: TextStyle(fontSize: responsive.ip(2.0), fontFamily: 'WorkSansRegular', color: Colors.white)),
                     SizedBox(width: 15.0)
                   ],
@@ -106,8 +107,8 @@ class _GalleryPageState extends State<GalleryPage> with SingleTickerProviderStat
                     children: [
                       Image.file(
                         File(_addImage.listPath[_currentCategory].files[index]),
-                        cacheWidth: 200,
-                        cacheHeight: 200,
+                        cacheWidth: 150,
+                        cacheHeight: 150,
                         fit: BoxFit.contain,
                       ),
                       _imageSelected == index 

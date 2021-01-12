@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:data_connection_checker/data_connection_checker.dart';
 import 'package:flutter_carpooling/src/utils/colors.dart';
 import 'package:flutter_carpooling/src/utils/user_prefs.dart';
 import 'package:flutter_carpooling/src/utils/responsive.dart';
@@ -13,6 +14,7 @@ import 'package:flutter_carpooling/src/providers/ui_provider.dart';
 import 'package:flutter_carpooling/src/utils/search_delegate.dart';
 import 'package:flutter_carpooling/src/providers/map_provider.dart';
 import 'package:flutter_carpooling/src/widgets/geocoder_widget.dart';
+import 'package:flutter_carpooling/src/utils/validator_response.dart';
 import 'package:flutter_carpooling/src/providers/routes_provider.dart';
 
 class UsualRoutePage extends StatefulWidget {
@@ -29,17 +31,36 @@ class _UsualRoutePageState extends State<UsualRoutePage> {
   Widget build(BuildContext context) {
     final responsiveScreen = Responsive(context);
     return Scaffold(
-      body: Column(
-        children: [
-          Stack(
-            children: <Widget>[
-              _map(responsiveScreen),
-              _circularButtons(responsiveScreen),
-              _containerInfo(responsiveScreen),
-              _saveButton(responsiveScreen)
-            ],
-          ),
-        ],
+      body: FutureBuilder(
+        future: DataConnectionChecker().hasConnection,
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            if (snapshot.data) {
+              return Column(
+                children: [
+                  Stack(
+                    children: <Widget>[
+                      _map(responsiveScreen),
+                      _circularButtons(responsiveScreen),
+                      _containerInfo(responsiveScreen),
+                      _saveButton(responsiveScreen)
+                    ],
+                  ),
+                ],
+              );
+            } else {
+              return AlertWidget(
+                title: 'Ups!',
+                icon: ValidatorResponse.iconData(5),
+                message: "No tiene internet, compruebe la conexión",
+                onPressed: () => Navigator.pop(context),
+              );
+            }
+          } else {
+            return Container();
+          }
+          
+        }
       )
     );
   }
@@ -105,7 +126,7 @@ class _UsualRoutePageState extends State<UsualRoutePage> {
                 ],
               ),
               child: InkWell(
-                onTap: () => showSearch(context: context, delegate: DataSearch()),
+                onTap: () => showSearch(context: context, delegate: DataSearch(route: 'usualRoute')),
                 child: Icon(Icons.search, color: Colors.white, size: responsiveScreen.ip(2.5)),
               )
             ),
@@ -170,7 +191,7 @@ class _UsualRoutePageState extends State<UsualRoutePage> {
                 onPressed: () async {
                   if (mapProvider.geolocation != null){
                     final result = await _userService.addLatLng2Pax(mapProvider.geolocation);
-                    if (result["ok"]) {
+                    if (result.status) {
                       _prefs.lat = mapProvider.geolocation.lat.toString();
                       _prefs.lng = mapProvider.geolocation.lng.toString();
                       await routesProvider.readGroupRoute();
@@ -180,7 +201,7 @@ class _UsualRoutePageState extends State<UsualRoutePage> {
                         Navigator.pushReplacementNamed(context, 'after');
                       }
                     } else {
-                      showAlert(context, 'Ups!', Icons.sentiment_dissatisfied, result['message']);  
+                      showAlert(context, 'Ups!', ValidatorResponse.iconData(result.code), result.message);  
                     }
                   } else {
                     showAlert(context, 'Ups!', Icons.sentiment_dissatisfied, 'Ingresa una ruta');

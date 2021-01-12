@@ -1,126 +1,141 @@
 import 'dart:async';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:google_maps_webservice/places.dart';
-import 'package:firebase_database/firebase_database.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_carpooling/src/utils/user_prefs.dart';
 import 'package:flutter_carpooling/src/models/user_model.dart';
 import 'package:flutter_carpooling/src/models/route_model.dart';
-import 'package:flutter_carpooling/src/services/user_service.dart';
 import 'package:flutter_carpooling/src/models/report_model.dart';
+import 'package:flutter_carpooling/src/services/user_service.dart';
+import 'package:data_connection_checker/data_connection_checker.dart';
+import 'package:flutter_carpooling/src/utils/validator_response.dart';
 
 class RouteService {
 
   final _prefs = UserPreferences();
   final _userService = UserService();
-  final _dbRef = FirebaseDatabase.instance.reference();
+  final _dbRef = FirebaseFirestore.instance;
   final _mapPlaces = GoogleMapsPlaces(apiKey: "AIzaSyDGTNY3kaJaonzA8idDWA4lbxLvWJQDlNg");
 
-  Future<Map<String, dynamic>> searchRouteByText(String destination) async {
+  Future<ValidatorResponse> searchRouteByText(String destination) async {
     try {
       final PlacesSearchResponse result = await _mapPlaces.searchByText(destination, location: Location(-0.198964, -78.505659), radius: 25000, language: 'es');
       if (result.status == "OK") {
-        return {"ok": true, "value": result.results};
+        return ValidatorResponse(status: true, data: result.results, code: 2);
       } else {
         throw "Status code is different from OK";
       }
     } catch (e) {
-      return {"ok": false, "message": e.toString()};
+      return ValidatorResponse(status: false, message: e.toString(), code: 4);
     }
   }
 
-  Future<Map<String, dynamic>> createOrUpdateRoute(RouteModel route) async {
+  Future<ValidatorResponse> createOrUpdateRoute(RouteModel route) async {
     try {
-      if (route.id != null) {
-        await _dbRef.child("routes").child(route.id).update(route.toJson());
-        return {"ok": true, "message": "Ruta actualizada con éxito", "value": route.id};
+      if (await DataConnectionChecker().hasConnection) {
+        if (route.id != null) {
+          await _dbRef.collection("routes").doc(route.id).update(route.toJson());
+          return ValidatorResponse(status: true, message: "Ruta actualizada con éxito", data: route.id, code: 1);
+        } else {
+          final result = _dbRef.collection("routes").doc();
+          route.id = result.id;
+          await _dbRef.collection("routes").doc(result.id).set(route.toJson());
+          return ValidatorResponse(status: true, message: "Ruta creada con éxito", data: result.id, code: 1);
+        }
       } else {
-        final routeUid = _dbRef.child("routes").push().key;
-        route.id = routeUid;
-        _dbRef.child("routes").child(routeUid).set(route.toJson());
-        return {"ok": true, "message": "Ruta creada con éxito", "value": routeUid};
+        return ValidatorResponse(status: false, message: "No tiene internet, compruebe la conexión.", code: 5);
       }
     } on FirebaseException catch (e) {
-      return {"ok": false, "message": e.message};
+      return ValidatorResponse(status: false, message: e.message, code: 4);
     } catch (e) {
-      return {'ok': false, 'message': e.toString()}; 
+      return ValidatorResponse(status: false, message: e.toString(), code: 4); 
     }
   }
 
-  Future<Map<String, dynamic>> readGroupRoute() async {
+  Future<ValidatorResponse> readGroupRoute() async {
     try {
       List<RouteModel> routes = List<RouteModel>();
-      final response = (await _dbRef.child("routes").orderByChild("group").equalTo(_prefs.uidGroup).once()).value;
-      if (response != null) {
-        routes = routeModelList(response);
-        routes = routes.where((route) => route.status == true).toList();
+      final result = (await _dbRef.collection("routes").where("id_group", isEqualTo: _prefs.uidGroup).where("status", isEqualTo: true).get()).docs.map((doc) => doc.data()).toList();
+      if (result != null) {
+        routes = RouteModel.routeModelList(result);
         for (RouteModel route in routes) {
           List<UserModel> users = List<UserModel>();
           if (route.idUsers != null) {
             for (String key in route.idUsers.keys) {
               final paxResult = await _userService.readUser(key);
-              if (paxResult["ok"]) {
-                users.add(paxResult["value"]);
+              if (paxResult.status) {
+                users.add(paxResult.data);
               } else {
-                throw paxResult["message"];
+                throw paxResult.message;
               }
             }
             route.users = users;
           }
         }
       }
-      return {"ok": true, "value": routes};
+      return ValidatorResponse(status: true, data: routes, code: 2);
     } on FirebaseException catch (e) {
-      return {"ok": false, "message": e.message};
+      return ValidatorResponse(status:false, message: e.message, code: 4);
     } catch (e) {
-      return {'ok': false, 'message': e.toString()}; 
+      return ValidatorResponse(status:false, message: e.toString(), code: 4); 
     }
   }
 
-  Future<Map<String, dynamic>> createRegisterUserRoute(String routeUid) async {
+  Future<ValidatorResponse> createRegisterUserRoute(String routeUid) async {
     try {
-      await _dbRef.child("routes").child(routeUid).child("users").update({"${_prefs.uid}": DateTime.now().toString()});
-      return {"ok": true, "message": "Pasajero registrado con éxito"};
-    } on FirebaseException catch (e) {
-      return {"ok": false, "message": e.message};
-    } catch (e) {
-      return {'ok': false, 'message': e.toString()};
-    }
-  }
-
-  Future<Map<String, dynamic>> canceleRegisterUserRoute(String routeUid) async {
-    try {
-      await _dbRef.child("routes").child(routeUid).child("users").child(_prefs.uid).remove();
-      return {"ok": true, "message": "Pasajero canceló la ruta con éxito"};
-    } on FirebaseException catch (e) {
-      return {"ok": false, "message": e.message};
-    } catch (e) {
-      return {'ok': false, 'message': e.toString()}; 
-    }
-  }
-
-  Future<Map<String, dynamic>> removeRoute(String routeUid) async {
-    try {
-      await _dbRef.child("routes").child(routeUid).remove();
-      return {"ok": true};
-    } on FirebaseException catch (e) {
-      return {"ok": false, "message": e.message};
-    }
-  }
-
-  Future<Map<String, dynamic>> createReportRoute(ReportModel report) async {
-    try {
-      if (report.type == 1) {
-        report.type = null;
-        await _dbRef.child("reports").child(_prefs.uidGroup).child("drivers").child(report.idRoute).push().set(report.toJson());
+      if (await DataConnectionChecker().hasConnection) {
+        await _dbRef.collection("routes").doc(routeUid).update({'users.${_prefs.uid}': DateTime.now().toString()});
+        return ValidatorResponse(status: true, message: "Pasajero registrado con éxito", code: 1);        
       } else {
-        report.type = null;
-        await _dbRef.child("reports").child(_prefs.uidGroup).child("paxs").child(report.idUser).push().set(report.toJson());
+        return ValidatorResponse(status: false, message: "No tiene internet, compruebe la conexión.", code: 5);
       }
-      return {"ok": true};
     } on FirebaseException catch (e) {
-      return {"ok": false, "message": e.message};
+      return ValidatorResponse(status: false, message: e.message, code: 4);
     } catch (e) {
-      return {'ok': false, 'message': e.toString()}; 
+      return ValidatorResponse(status: false, message: e.toString(), code: 4);
+    }
+  }
+
+  Future<ValidatorResponse> canceleRegisterUserRoute(String routeUid) async {
+    try {
+      if (await DataConnectionChecker().hasConnection) {
+        await _dbRef.collection("routes").doc(routeUid).update({"users.${_prefs.uid}": FieldValue.delete()});
+        return ValidatorResponse(status: true, message: "Pasajero canceló la ruta con éxito", code: 1);
+      } else {
+        return ValidatorResponse(status: false, message: "No tiene internet, compruebe la conexión.", code: 5);
+      }
+    } on FirebaseException catch (e) {
+      return ValidatorResponse(status: false, message: e.message, code: 4);
+    } catch (e) {
+      return ValidatorResponse(status: false, message: e.toString(), code: 4); 
+    }
+  }
+
+  Future<ValidatorResponse> removeRoute(String routeUid) async {
+    try {
+      if (await DataConnectionChecker().hasConnection) {
+        await _dbRef.collection("routes").doc(routeUid).delete();
+        return ValidatorResponse(status: true, message: "Ruta eliminada con éxito!", code: 1);  
+      } else {
+        return ValidatorResponse(status: false, message: "No tiene internet, compruebe la conexión.", code: 5);
+      }
+    } on FirebaseException catch (e) {
+      return ValidatorResponse(status: false, message: e.message, code: 4);
+    }
+  }
+
+  Future<ValidatorResponse> createReportRoute(ReportModel report) async {
+    try {
+      if (await DataConnectionChecker().hasConnection) {
+        await _dbRef.collection("reports").doc().set(report.toJson());
+        return ValidatorResponse(status: true, message: "Reporte creado con éxito", code: 2);
+      } else {
+        return ValidatorResponse(status: false, message: "No tiene internet, compruebe la conexión.", code: 5);
+      }
+    } on FirebaseException catch (e) {
+      return ValidatorResponse(status: false, message: e.message, code: 4);
+    } catch (e) {
+      return ValidatorResponse(status: false, message: e.toString(), code: 4); 
     }
   }
 

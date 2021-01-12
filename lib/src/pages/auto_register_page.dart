@@ -60,19 +60,19 @@ final TextEditingController _registryEdtCtr = TextEditingController();
 
   Future<void> loadingData() async {
     try{
-      Map _carResult = await carProvider.searchCar(uid);
-      CarModel carModel = _carResult["carData"];
+      // Map _carResult = await carProvider.searchCar(uid);
+      // CarModel carModel = _carResult["carData"];
       isloading = false;
-      setState(() {
-        if(_carResult["ok"]){
-          isEnabled = false;
-          _registryEdtCtr.text = carModel.registry; 
-          _brandEdtCtr.text = carModel.brand;
-          _modelEdtCtr.text = carModel.model;
-          _seatEdtCtr.text = carModel.seat.toString();
-          selectDataRBtn(carModel.color);
-        }
-      });
+      // setState(() {
+      //   if(_carResult["ok"]){
+      //     isEnabled = false;
+      //     _registryEdtCtr.text = carModel.registry; 
+      //     _brandEdtCtr.text = carModel.brand;
+      //     _modelEdtCtr.text = carModel.model;
+      //     _seatEdtCtr.text = carModel.seat.toString();
+      //     selectDataRBtn(carModel.color);
+      //   }
+      // });
     }catch (e){
       isloading = false;
       setState(() {

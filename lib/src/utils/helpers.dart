@@ -120,9 +120,11 @@ String firebaseErrorMessages(String err) {
       return "Contraseña no válida."; 
     case "user-not-found":
     case "invalid_email":
-    case "email-already-in-use":
     case "account-exists-with-different-credential":
       return "Correo electrónico no válido."; 
+      break;
+    case "email-already-in-use":
+      return "Este email ya está en uso. \nPor favor, inténte usando otro email."; 
       break;
     case "too-many-requests":
       return "Demasiados intentos fallidos. \nPor favor, inténtelo de nuevo más tarde."; 

@@ -9,12 +9,14 @@ import 'package:flutter_carpooling/src/utils/colors.dart';
 import 'package:flutter_carpooling/src/utils/user_prefs.dart';
 import 'package:flutter_carpooling/src/utils/responsive.dart';
 import 'package:flutter_carpooling/src/models/user_model.dart';
+import 'package:flutter_carpooling/src/models/groups_model.dart';
 import 'package:flutter_carpooling/src/widgets/input_widget.dart';
 import 'package:flutter_carpooling/src/widgets/alert_widget.dart';
 import 'package:flutter_carpooling/src/providers/ui_provider.dart';
 import 'package:flutter_carpooling/src/widgets/circle_widget.dart';
 import 'package:flutter_carpooling/src/services/auth_service.dart';
 import 'package:flutter_carpooling/src/widgets/loading_widget.dart';
+import 'package:flutter_carpooling/src/utils/validator_response.dart';
 
 class RegisterPage extends StatefulWidget {
   @override
@@ -30,6 +32,10 @@ class _RegisterPageState extends State<RegisterPage> {
 
   String _password= ''; 
   bool _isloading = false;
+  bool _userRegisterGroup;
+  
+  int _groupSelected;
+  GroupModel _groupModel;
 
   @override
   Widget build(BuildContext context) {
@@ -40,8 +46,8 @@ class _RegisterPageState extends State<RegisterPage> {
           FocusScope.of(context).requestFocus(FocusNode());
         },
         child: Container(
-          height: double.infinity,
           width: double.infinity,
+          height: double.infinity,
           child: Stack(
             children: <Widget>[
               Positioned(
@@ -124,7 +130,7 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
           ],
         ),
-        SizedBox(width: responsiveScreen.wp(4),),
+        SizedBox(width: responsiveScreen.wp(4)),
       ],
     );
   }
@@ -210,9 +216,9 @@ class _RegisterPageState extends State<RegisterPage> {
                               return 'El email no es válido!';
                             },
                           ),
-                          SizedBox(height: responsiveScreen.hp(0.5),),
+                          SizedBox(height: responsiveScreen.hp(0.5)),
                           _separator(responsiveScreen),
-                          SizedBox(height: responsiveScreen.hp(0.5),),
+                          SizedBox(height: responsiveScreen.hp(0.5)),
                           InputWidget(
                             label: 'Teléfono', 
                             icono: FontAwesomeIcons.list,
@@ -241,9 +247,9 @@ class _RegisterPageState extends State<RegisterPage> {
                               return 'La contraseña es muy corta!'; 
                             },
                           ),
-                          SizedBox(height: responsiveScreen.hp(0.5),),
+                          SizedBox(height: responsiveScreen.hp(0.5)),
                           _separator(responsiveScreen),
-                          SizedBox(height: responsiveScreen.hp(0.5),), 
+                          SizedBox(height: responsiveScreen.hp(0.5)), 
                           InputWidget(
                             label: 'Verifica tu contraseña', 
                             icono: FontAwesomeIcons.lock,
@@ -275,27 +281,23 @@ class _RegisterPageState extends State<RegisterPage> {
     return Center(
       child: Column(
         children: <Widget>[  
-          Consumer<UIProvider>(builder: (context, provider, child) {
-            return MaterialButton(
-              color: OurColors.lightGreenishBlue,
-              highlightColor: Colors.transparent,
-              splashColor: OurColors.lightGreenishBlue,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 40.0),
-                child: Text(
-                  "REGISTRAME",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: responsiveScreen.ip(1.5),
-                    fontFamily: "WorkSansMedium"
-                  ),
+          MaterialButton(
+            color: OurColors.lightGreenishBlue,
+            highlightColor: Colors.transparent,
+            splashColor: OurColors.lightGreenishBlue,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 40.0),
+              child: Text(
+                "REGISTRAME",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: responsiveScreen.ip(1.5),
+                  fontFamily: "WorkSansMedium"
                 ),
               ),
-              onPressed: () async{
-                await _userRegister(provider);
-              }
-            );
-          }),
+            ),
+            onPressed: () async => await _registerUser(responsiveScreen),
+          ),
           SizedBox(height: responsiveScreen.hp(2)),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -328,47 +330,133 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-  Future _userRegister(UIProvider uiProvider) async{
-    if(!_formRegisterKey.currentState.validate()) return;
-    _formRegisterKey.currentState.save(); 
-    SystemChannels.textInput.invokeMethod('TextInput.hide');
-    setState(() { _isloading = true; });
-    final resultCI = await _authService.searchCi(_user.ci);
-    if(resultCI['ok']){
-      _user.idGroup = _prefs.uidGroup; 
-      final resultSingUp = await _authService.singUp(_user.email, _password);
-      if (resultSingUp['ok']) {
-        _user.status = true;
-        _user.id = _prefs.uid; 
-        _authService.createUser(_user); 
-        final resultRegisterUser = await _authService.createUser(_user); 
-        if (resultRegisterUser['ok']) {
-          uiProvider.backArrow = false;
-          Navigator.pushReplacementNamed(context, 'photo');
-        } else {
-          setState(() { _isloading = false; });
-          showAlert(context, 'Ups!', Icons.sentiment_dissatisfied, resultRegisterUser['message']);
-        }
-      } else {
-        setState(() { _isloading = false; });
-        showAlert(context, 'Ups!', Icons.sentiment_dissatisfied, resultSingUp['message']); 
-        return; 
+  Future<void> _showUserGroups(Responsive responsiveScreen, List<GroupModel> groups) async {
+    return await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.0)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(builder: (BuildContext context, StateSetter modalState) {
+          return Container(
+            height: responsiveScreen.hp(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: EdgeInsets.only(right: 20.0, left: 15.0, top: 15.0, bottom: 5.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(child: Text('Elija un grupo para registrarse:', style: TextStyle(fontFamily: "WorkSansMedium", fontSize: responsiveScreen.ip(1.8), color: OurColors.black))),
+                      SizedBox(width: 10.0),
+                      Visibility(
+                        visible: _groupSelected != null ? true : false,
+                        child: InkWell(
+                          onTap: () {
+                            _userRegisterGroup = true;
+                            if (_prefs.uidGroup == "") {
+                              _prefs.uidGroup = _groupModel.id;
+                            }
+                            Navigator.pop(context);
+                          },
+                          child: Icon(Icons.check_circle_outline, color: OurColors.green, size: responsiveScreen.ip(3.0))
+                        )
+                      ),
+                    ],
+                  ),
+                ),
+                Divider(),
+                Expanded(
+                  child: Container(
+                    child: ListView.builder(
+                      itemCount: groups.length,
+                      physics: BouncingScrollPhysics(),
+                      itemBuilder: (BuildContext context, int i) => 
+                      RadioListTile(
+                        value: i,
+                        groupValue: _groupSelected,
+                        onChanged: (value) => modalState(() {
+                          _groupSelected = value;
+                          _groupModel = groups[value];
+                        }),
+                        controlAffinity: ListTileControlAffinity.trailing,
+                        title: Text(groups[i].name, style: TextStyle(fontFamily: "WorkSansLight", fontSize: responsiveScreen.ip(1.7)))
+                      )
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        });
       }
-    } else{
-      setState(() { _isloading = false; });
-      showAlert(context, 'Ups!', Icons.sentiment_dissatisfied, resultCI['message']); 
-      return; 
-    }
-    setState(() {
-      _isloading = false; 
+    ).whenComplete(() {
+      _groupSelected = null;
     });
   }
 
-  Widget _separator(Responsive responsiveScreen){
+  Future<void> _registerUser(Responsive responsiveScreen) async {
+    final provider = Provider.of<UIProvider>(context, listen: false);
+    if(!_formRegisterKey.currentState.validate()) return;
+    _formRegisterKey.currentState.save(); 
+    FocusScope.of(context).requestFocus(FocusNode());
+    setState(() => _isloading = true);
+    final resultCI = await _authService.searchUserInGroups(_user.ci);
+    if(resultCI.status){
+      List<GroupModel> groups = resultCI.data;
+      if (groups.length > 1) {
+        _userRegisterGroup = false;
+        setState(() => _isloading = false);
+        await _showUserGroups(responsiveScreen, groups);
+        if (!_userRegisterGroup) { 
+          return;
+        } else if (_userRegisterGroup && _groupModel != null) {
+          setState(() => _isloading = true);
+        }
+      } else if (groups.length == 1) {
+        _prefs.uidGroup = groups[0].id;
+        _groupModel = groups[0];
+      }
+      final resultSingUp = await _authService.singUp(_user.email, _password);
+      if (resultSingUp.status) {
+        _user.status = true;
+        _user.id = _prefs.uid;
+        _user.idGroup = _prefs.uidGroup; 
+        final resultRegisterUser = await _authService.createUser(_user);
+        if (resultRegisterUser.status) {
+          provider.backArrow = false;
+          final resultUserInGroup =  await _authService.registerUserInGroup(_user.ci);
+          if (resultUserInGroup.status) {
+            setState(() => _isloading = false);
+            showAlert(context, 'Registro correcto!', Icons.sentiment_very_satisfied, 'Usted se ha inscrito en el grupo: ${_groupModel.name}', () => Navigator.pushReplacementNamed(context, 'photo'));  
+          } else {
+            setState(() => _isloading = false);
+            showAlert(context, 'Ups!', ValidatorResponse.iconData(resultUserInGroup.code), resultUserInGroup.message);  
+          }
+        } else {
+          setState(() => _isloading = false);
+          showAlert(context, 'Ups!', ValidatorResponse.iconData(resultRegisterUser.code), resultRegisterUser.message);
+        }
+      } else {
+        setState(() => _isloading = false);
+        showAlert(context, 'Ups!', ValidatorResponse.iconData(resultSingUp.code), resultSingUp.message); 
+        return; 
+      }
+    } else{
+      setState(() => _isloading = false);
+      showAlert(context, 'Ups!', ValidatorResponse.iconData(resultCI.code), resultCI.message); 
+      return; 
+    }
+  }
+
+  Widget _separator(Responsive responsiveScreen) {
     return Container(
       width: responsiveScreen.wp(70),
       height: responsiveScreen.hp(0.1),
       color: Colors.grey,
     );
   }
+
 }

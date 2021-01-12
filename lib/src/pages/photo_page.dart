@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_carpooling/src/providers/user_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:animate_do/animate_do.dart';
@@ -16,13 +17,14 @@ import 'package:flutter_carpooling/src/widgets/camera_widget.dart';
 import 'package:flutter_carpooling/src/services/user_service.dart';
 import 'package:flutter_carpooling/src/widgets/gallery_widget.dart';
 import 'package:flutter_carpooling/src/widgets/loading_widget.dart';
+import 'package:flutter_carpooling/src/utils/validator_response.dart';
 
 // pagina para capturar o elegir la imagen
 class PhotoPage extends StatefulWidget {
   createState() => _PhotoPageState();
 }
 
-class _PhotoPageState extends State<PhotoPage> with TickerProviderStateMixin{
+class _PhotoPageState extends State<PhotoPage> with TickerProviderStateMixin {
   
   final _addImage = AddImage();
   final _userService = UserService();
@@ -129,7 +131,7 @@ class _PhotoPageState extends State<PhotoPage> with TickerProviderStateMixin{
               )
             ),
             SizedBox(height: responsiveScreen.hp(5.0)),
-            provider.image != null ? _butonUploader(responsiveScreen, provider) : Container()
+            provider.image != null ? _butonUploader(responsiveScreen) : Container()
           ],
         );
       }),
@@ -159,7 +161,7 @@ class _PhotoPageState extends State<PhotoPage> with TickerProviderStateMixin{
     );
   }
 
-  Widget _butonUploader(Responsive responsiveScreen, UIProvider uIProvider){
+  Widget _butonUploader(Responsive responsiveScreen){
     return Center(
       child: MaterialButton(
         color: OurColors.lightGreenishBlue,
@@ -177,19 +179,24 @@ class _PhotoPageState extends State<PhotoPage> with TickerProviderStateMixin{
           ),
         ),
         onPressed: () {
-          _uploadPhotoUser(uIProvider);
+          _uploadPhotoUser();
         }
       )
     );
   }
 
   // subir la url de la imagen al realtime
-  Future<void> _uploadPhotoUser(UIProvider uiProvider) async {
-    setState(() {_isLoading = true;});
+
+  Future<void> _uploadPhotoUser() async {
+    final uiProvider = Provider.of<UIProvider>(context, listen: false);
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    setState(() => _isLoading = true);
     final compressed = await FlutterNativeImage.compressImage(uiProvider.image, quality: 25);
-    final result = await _userService.uploadPhotoUser(uiProvider.backArrow, compressed);
-    if (!result["ok"]) {
-      showAlert(context, 'Error', Icons.sentiment_dissatisfied, result["message"]); 
+    final result = await _userService.uploadPhotoUser(userProvider.user == null ? false : (userProvider.user.photo == null ? false : true), compressed);
+    if (!result.status) {
+      setState(() => _isLoading = false);
+      showAlert(context, 'Ups!', ValidatorResponse.iconData(result.code), result.message); 
+      return;
     }
     uiProvider.image = null;
     Navigator.pushReplacementNamed(context, 'after');

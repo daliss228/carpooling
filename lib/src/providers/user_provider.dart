@@ -11,4 +11,8 @@ class UserProvider with ChangeNotifier{
     this._userModel = userModel;
   }
 
+  void clean() {
+    this._userModel = null;
+  }
+
 }

@@ -5,6 +5,7 @@ import 'package:animate_do/animate_do.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:keyboard_visibility/keyboard_visibility.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:data_connection_checker/data_connection_checker.dart';
 import 'package:flutter_carpooling/src/utils/colors.dart';
 import 'package:flutter_carpooling/src/utils/user_prefs.dart';
 import 'package:flutter_carpooling/src/utils/responsive.dart';
@@ -12,7 +13,10 @@ import 'package:flutter_carpooling/src/widgets/alert_widget.dart';
 import 'package:flutter_carpooling/src/services/user_service.dart';
 import 'package:flutter_carpooling/src/providers/ui_provider.dart';
 import 'package:flutter_carpooling/src/services/auth_service.dart';
+import 'package:flutter_carpooling/src/providers/map_provider.dart';
 import 'package:flutter_carpooling/src/providers/user_provider.dart';
+import 'package:flutter_carpooling/src/utils/validator_response.dart';
+import 'package:flutter_carpooling/src/providers/routes_provider.dart';
 import 'package:flutter_carpooling/src/widgets/background_widget.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -232,6 +236,9 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
           labelStyle: TextStyle(fontFamily: "WorkSansLight", fontSize: responsiveScreen.ip(1.6), color: Colors.black),
           onTap: () async {
             await _authService.signOut();
+            Provider.of<MapProvider>(context, listen: false).clean();
+            Provider.of<UserProvider>(context, listen: false).clean();
+            Provider.of<RoutesProvider>(context, listen: false).clean();
             Navigator.pushReplacementNamed(context, 'login');
           },
         ),
@@ -261,16 +268,41 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
   // Widgets para los campos a recibir
   Widget _photoUser(Responsive responsiveScreen) {
     return Consumer<UserProvider>(builder: (context, provider, child) {
-      return ClipOval(
-        child: (provider.user.photo != null)
-        ? FadeInImage(
-            image: NetworkImage(provider.user.photo),
-            placeholder: AssetImage('assets/img/ripple-loading.gif'),
-            height: responsiveScreen.ip(11),
-            width: responsiveScreen.ip(11),
-            fit: BoxFit.cover,
-          )
-        : Container()
+      return FutureBuilder(
+        future: DataConnectionChecker().hasConnection,
+        builder: (BuildContext context, AsyncSnapshot snapshot) {
+          if (snapshot.hasData) {
+            if (snapshot.data) {
+              return ClipOval(
+                child: (provider.user.photo != null)
+                ? FadeInImage(
+                    image: NetworkImage(provider.user.photo),
+                    placeholder: AssetImage('assets/img/ripple-loading.gif'),
+                    height: responsiveScreen.ip(11),
+                    width: responsiveScreen.ip(11),
+                    fit: BoxFit.cover,
+                  )
+                : Container(
+                  color: OurColors.gray,
+                  width: responsiveScreen.ip(11),
+                  height: responsiveScreen.ip(11),
+                  child: Icon(Icons.account_circle, color: OurColors.lightGreenishBlue, size: responsiveScreen.ip(3.5))
+                )
+              );
+            } else {
+              return ClipOval(
+                child: Container(
+                  color: OurColors.gray,
+                  width: responsiveScreen.ip(11),
+                  height: responsiveScreen.ip(11),
+                  child: Icon(Icons.account_circle, color: OurColors.lightGreenishBlue, size: responsiveScreen.ip(3.5))
+                ),
+              );
+            }
+          } else {
+            return Container();
+          }
+        }
       );
     });
   }
@@ -568,7 +600,7 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
         _activeEditLastname = !_activeEditLastname;
       });
       if (!_activeEditLastname) {
-        await _uploadUser("lastName", _lastnameController.text);
+        await _uploadUser("lastname", _lastnameController.text);
       }
     }
   }
@@ -593,10 +625,8 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
         final response = await _authService.reAuth(_emailController.text, _oldPassController.text, _newPassController.text);
         _oldPassController.clear();
         _newPassController.clear();
-        if (response['ok'] == false) {
-          showAlert(context, 'Ups!', Icons.sentiment_dissatisfied, response['message']);
-        } else {
-          showAlert(context, 'Ups!', Icons.sentiment_satisfied, response['message']);
+        if (!response.status) {
+          showAlert(context, 'Ups!', ValidatorResponse.iconData(response.code), response.message);
         }
       } else if (_oldPassController.text != "" || _newPassController.text != "") {
         setState(() {
@@ -612,7 +642,7 @@ class _ProfilePageState extends State<ProfilePage> with AutomaticKeepAliveClient
 
   Future<void> _uploadUser(String property, String value) async {
     final result = await _userService.updateUser(property, value);
-    if (!result["ok"]) showAlert(context, "Error", Icons.sentiment_dissatisfied, result["message"]);
+    if (!result.status) showAlert(context, "Error", ValidatorResponse.iconData(result.code), result.message);
   }
 
   void _showTextPass() {

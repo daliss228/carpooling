@@ -32,5 +32,4 @@ class ReportModel {
     "id_driver": idDriver == null ? null : idDriver,
     "description": description == null ? null : description,
   };
-  
 }
